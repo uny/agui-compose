@@ -1,0 +1,71 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# What the token may do. Nothing here writes to the repository -- the job checks out, builds, and
+# uploads a failure artifact, and that upload authenticates with the runtime token rather than this
+# one -- and no step runs an authenticated git command, which is why the checkout also drops the
+# credential rather than leaving it in `.git/config` for the length of a build that runs this
+# repository's own Gradle scripts.
+#
+# The repository default is already read-only; written down rather than relied upon, because a
+# default is a setting someone can change without touching this file.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to a commit, not to `@v5`. A major-version tag is a moving pointer the action's
+# owner can repoint at any commit, and these run with the repository checked out; the trailing
+# comment is the release that commit was, since the hash alone says nothing about how old it is.
+# To move one deliberately:
+#
+#   gh api repos/<owner>/<repo>/commits/<tag> --jq .sha
+#
+# `dependabot.yml` moves them on a schedule and rewrites the comment with the hash.
+
+jobs:
+  # One job, on macOS.
+  #
+  # The sibling `a2ui-compose` splits its build three ways because Kotlin/JS and Kotlin/Wasm are 60%
+  # of its wall clock. This repository publishes neither backend (see
+  # `docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md`), so there is nothing to split off
+  # and a second runner would only add a cold Gradle cache.
+  #
+  # macOS rather than Linux, because on Linux the three Apple targets are silently *skipped* --
+  # `kotlin.native.ignoreDisabledTargets=true` turns them off rather than failing -- and a green
+  # build that skipped three of five targets says nothing. `checkLegacyAbi` needs the same runner
+  # for the same reason: the checked-in klib dump covers the Apple targets, so on Linux the
+  # regenerated dump would be missing them and the check would compare against something the build
+  # cannot produce.
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Build
+        run: ./gradlew build checkLegacyAbi --stacktrace
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports
+          path: '**/build/reports/**'
+          retention-days: 7

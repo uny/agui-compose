@@ -1,0 +1,241 @@
+public final class dev/ynagai/agui/model/ActivityPart : dev/ynagai/agui/model/UiPart {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)Ldev/ynagai/agui/model/ActivityPart;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/ActivityPart;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Ldev/ynagai/agui/model/ActivityPart;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActivityType ()Ljava/lang/String;
+	public final fun getContent ()Lkotlinx/serialization/json/JsonElement;
+	public fun getId ()Ljava/lang/String;
+	public final fun getMessageId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/EncryptedReasoningValue {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/ynagai/agui/model/EncryptedReasoningValue;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/EncryptedReasoningValue;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/EncryptedReasoningValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntityId ()Ljava/lang/String;
+	public final fun getSubtype ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/FilePart : dev/ynagai/agui/model/UiPart {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/ynagai/agui/model/FilePart;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/FilePart;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/FilePart;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/lang/String;
+	public final fun getFilename ()Ljava/lang/String;
+	public fun getId ()Ljava/lang/String;
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getRemoteId ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/ReasoningPart : dev/ynagai/agui/model/UiPart {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;)Ldev/ynagai/agui/model/ReasoningPart;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/ReasoningPart;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/model/ReasoningPart;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEncryptedValues ()Ljava/util/List;
+	public fun getId ()Ljava/lang/String;
+	public final fun getMessageId ()Ljava/lang/String;
+	public final fun getStreaming ()Z
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/ynagai/agui/model/RunState {
+}
+
+public final class dev/ynagai/agui/model/RunState$Failed : dev/ynagai/agui/model/RunState {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Ldev/ynagai/agui/model/RunState$Failed;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/RunState$Failed;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/RunState$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/RunState$Finished : dev/ynagai/agui/model/RunState {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Z)Ldev/ynagai/agui/model/RunState$Finished;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/RunState$Finished;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ZILjava/lang/Object;)Ldev/ynagai/agui/model/RunState$Finished;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInterrupted ()Z
+	public final fun getResult ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getRunId ()Ljava/lang/String;
+	public final fun getThreadId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/RunState$Idle : dev/ynagai/agui/model/RunState {
+	public static final field INSTANCE Ldev/ynagai/agui/model/RunState$Idle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/RunState$Running : dev/ynagai/agui/model/RunState {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Ldev/ynagai/agui/model/RunState$Running;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/RunState$Running;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/RunState$Running;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRunId ()Ljava/lang/String;
+	public final fun getThreadId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/TextPart : dev/ynagai/agui/model/UiPart {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ldev/ynagai/agui/model/TextPart;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/TextPart;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ldev/ynagai/agui/model/TextPart;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getId ()Ljava/lang/String;
+	public final fun getMessageId ()Ljava/lang/String;
+	public final fun getStreaming ()Z
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/ToolCallPart : dev/ynagai/agui/model/UiPart {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ldev/ynagai/agui/model/ToolCallStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ldev/ynagai/agui/model/ToolCallStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component6 ()Ldev/ynagai/agui/model/ToolCallStatus;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ldev/ynagai/agui/model/ToolCallStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/ynagai/agui/model/ToolCallPart;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/ToolCallPart;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ldev/ynagai/agui/model/ToolCallStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/ToolCallPart;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArguments ()Ljava/lang/String;
+	public final fun getError ()Ljava/lang/String;
+	public fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParentMessageId ()Ljava/lang/String;
+	public final fun getParsedArguments ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getResult ()Ljava/lang/String;
+	public final fun getStatus ()Ldev/ynagai/agui/model/ToolCallStatus;
+	public final fun getToolCallId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/ToolCallStatus : java/lang/Enum {
+	public static final field AWAITING_RESULT Ldev/ynagai/agui/model/ToolCallStatus;
+	public static final field COMPLETE Ldev/ynagai/agui/model/ToolCallStatus;
+	public static final field FAILED Ldev/ynagai/agui/model/ToolCallStatus;
+	public static final field STREAMING_ARGUMENTS Ldev/ynagai/agui/model/ToolCallStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/ynagai/agui/model/ToolCallStatus;
+	public static fun values ()[Ldev/ynagai/agui/model/ToolCallStatus;
+}
+
+public final class dev/ynagai/agui/model/UiMessage {
+	public fun <init> (Ljava/lang/String;Ldev/ynagai/agui/model/UiRole;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/ynagai/agui/model/UiRole;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ldev/ynagai/agui/model/UiRole;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ldev/ynagai/agui/model/UiRole;Ljava/util/List;Ljava/lang/String;)Ldev/ynagai/agui/model/UiMessage;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/UiMessage;Ljava/lang/String;Ldev/ynagai/agui/model/UiRole;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/model/UiMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParts ()Ljava/util/List;
+	public final fun getRole ()Ldev/ynagai/agui/model/UiRole;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isStreaming ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/ynagai/agui/model/UiPart {
+	public abstract fun getId ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/model/UiRole : java/lang/Enum {
+	public static final field ACTIVITY Ldev/ynagai/agui/model/UiRole;
+	public static final field ASSISTANT Ldev/ynagai/agui/model/UiRole;
+	public static final field DEVELOPER Ldev/ynagai/agui/model/UiRole;
+	public static final field SYSTEM Ldev/ynagai/agui/model/UiRole;
+	public static final field USER Ldev/ynagai/agui/model/UiRole;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/ynagai/agui/model/UiRole;
+	public static fun values ()[Ldev/ynagai/agui/model/UiRole;
+}
+
+public final class dev/ynagai/agui/model/UiTranscript {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ldev/ynagai/agui/model/RunState;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ldev/ynagai/agui/model/RunState;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ldev/ynagai/agui/model/RunState;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ldev/ynagai/agui/model/RunState;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;)Ldev/ynagai/agui/model/UiTranscript;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/model/UiTranscript;Ljava/util/List;Ldev/ynagai/agui/model/RunState;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/model/UiTranscript;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessages ()Ljava/util/List;
+	public final fun getRun ()Ldev/ynagai/agui/model/RunState;
+	public final fun getSharedState ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getSteps ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

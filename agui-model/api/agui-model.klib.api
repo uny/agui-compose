@@ -1,0 +1,305 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-model>
+final enum class dev.ynagai.agui.model/ToolCallStatus : kotlin/Enum<dev.ynagai.agui.model/ToolCallStatus> { // dev.ynagai.agui.model/ToolCallStatus|null[0]
+    enum entry AWAITING_RESULT // dev.ynagai.agui.model/ToolCallStatus.AWAITING_RESULT|null[0]
+    enum entry COMPLETE // dev.ynagai.agui.model/ToolCallStatus.COMPLETE|null[0]
+    enum entry FAILED // dev.ynagai.agui.model/ToolCallStatus.FAILED|null[0]
+    enum entry STREAMING_ARGUMENTS // dev.ynagai.agui.model/ToolCallStatus.STREAMING_ARGUMENTS|null[0]
+
+    final val entries // dev.ynagai.agui.model/ToolCallStatus.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.ynagai.agui.model/ToolCallStatus> // dev.ynagai.agui.model/ToolCallStatus.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.ynagai.agui.model/ToolCallStatus // dev.ynagai.agui.model/ToolCallStatus.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.ynagai.agui.model/ToolCallStatus> // dev.ynagai.agui.model/ToolCallStatus.values|values#static(){}[0]
+}
+
+final enum class dev.ynagai.agui.model/UiRole : kotlin/Enum<dev.ynagai.agui.model/UiRole> { // dev.ynagai.agui.model/UiRole|null[0]
+    enum entry ACTIVITY // dev.ynagai.agui.model/UiRole.ACTIVITY|null[0]
+    enum entry ASSISTANT // dev.ynagai.agui.model/UiRole.ASSISTANT|null[0]
+    enum entry DEVELOPER // dev.ynagai.agui.model/UiRole.DEVELOPER|null[0]
+    enum entry SYSTEM // dev.ynagai.agui.model/UiRole.SYSTEM|null[0]
+    enum entry USER // dev.ynagai.agui.model/UiRole.USER|null[0]
+
+    final val entries // dev.ynagai.agui.model/UiRole.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.ynagai.agui.model/UiRole> // dev.ynagai.agui.model/UiRole.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.ynagai.agui.model/UiRole // dev.ynagai.agui.model/UiRole.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.ynagai.agui.model/UiRole> // dev.ynagai.agui.model/UiRole.values|values#static(){}[0]
+}
+
+sealed interface dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState|null[0]
+    final class Failed : dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState.Failed|null[0]
+        constructor <init>(kotlin/String, kotlin/String? = ...) // dev.ynagai.agui.model/RunState.Failed.<init>|<init>(kotlin.String;kotlin.String?){}[0]
+
+        final val code // dev.ynagai.agui.model/RunState.Failed.code|{}code[0]
+            final fun <get-code>(): kotlin/String? // dev.ynagai.agui.model/RunState.Failed.code.<get-code>|<get-code>(){}[0]
+        final val message // dev.ynagai.agui.model/RunState.Failed.message|{}message[0]
+            final fun <get-message>(): kotlin/String // dev.ynagai.agui.model/RunState.Failed.message.<get-message>|<get-message>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.model/RunState.Failed.component1|component1(){}[0]
+        final fun component2(): kotlin/String? // dev.ynagai.agui.model/RunState.Failed.component2|component2(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String? = ...): dev.ynagai.agui.model/RunState.Failed // dev.ynagai.agui.model/RunState.Failed.copy|copy(kotlin.String;kotlin.String?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/RunState.Failed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/RunState.Failed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.model/RunState.Failed.toString|toString(){}[0]
+    }
+
+    final class Finished : dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState.Finished|null[0]
+        constructor <init>(kotlin/String, kotlin/String, kotlinx.serialization.json/JsonElement? = ..., kotlin/Boolean = ...) // dev.ynagai.agui.model/RunState.Finished.<init>|<init>(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Boolean){}[0]
+
+        final val interrupted // dev.ynagai.agui.model/RunState.Finished.interrupted|{}interrupted[0]
+            final fun <get-interrupted>(): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.interrupted.<get-interrupted>|<get-interrupted>(){}[0]
+        final val result // dev.ynagai.agui.model/RunState.Finished.result|{}result[0]
+            final fun <get-result>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/RunState.Finished.result.<get-result>|<get-result>(){}[0]
+        final val runId // dev.ynagai.agui.model/RunState.Finished.runId|{}runId[0]
+            final fun <get-runId>(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.runId.<get-runId>|<get-runId>(){}[0]
+        final val threadId // dev.ynagai.agui.model/RunState.Finished.threadId|{}threadId[0]
+            final fun <get-threadId>(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.threadId.<get-threadId>|<get-threadId>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.component1|component1(){}[0]
+        final fun component2(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.component2|component2(){}[0]
+        final fun component3(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/RunState.Finished.component3|component3(){}[0]
+        final fun component4(): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.component4|component4(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/Boolean = ...): dev.ynagai.agui.model/RunState.Finished // dev.ynagai.agui.model/RunState.Finished.copy|copy(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Boolean){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/RunState.Finished.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.toString|toString(){}[0]
+    }
+
+    final class Running : dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState.Running|null[0]
+        constructor <init>(kotlin/String, kotlin/String) // dev.ynagai.agui.model/RunState.Running.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+        final val runId // dev.ynagai.agui.model/RunState.Running.runId|{}runId[0]
+            final fun <get-runId>(): kotlin/String // dev.ynagai.agui.model/RunState.Running.runId.<get-runId>|<get-runId>(){}[0]
+        final val threadId // dev.ynagai.agui.model/RunState.Running.threadId|{}threadId[0]
+            final fun <get-threadId>(): kotlin/String // dev.ynagai.agui.model/RunState.Running.threadId.<get-threadId>|<get-threadId>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.model/RunState.Running.component1|component1(){}[0]
+        final fun component2(): kotlin/String // dev.ynagai.agui.model/RunState.Running.component2|component2(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String = ...): dev.ynagai.agui.model/RunState.Running // dev.ynagai.agui.model/RunState.Running.copy|copy(kotlin.String;kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/RunState.Running.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/RunState.Running.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.model/RunState.Running.toString|toString(){}[0]
+    }
+
+    final object Idle : dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState.Idle|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/RunState.Idle.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/RunState.Idle.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.model/RunState.Idle.toString|toString(){}[0]
+    }
+}
+
+sealed interface dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/UiPart|null[0]
+    abstract val id // dev.ynagai.agui.model/UiPart.id|{}id[0]
+        abstract fun <get-id>(): kotlin/String // dev.ynagai.agui.model/UiPart.id.<get-id>|<get-id>(){}[0]
+}
+
+final class dev.ynagai.agui.model/ActivityPart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/ActivityPart|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlinx.serialization.json/JsonElement) // dev.ynagai.agui.model/ActivityPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement){}[0]
+
+    final val activityType // dev.ynagai.agui.model/ActivityPart.activityType|{}activityType[0]
+        final fun <get-activityType>(): kotlin/String // dev.ynagai.agui.model/ActivityPart.activityType.<get-activityType>|<get-activityType>(){}[0]
+    final val content // dev.ynagai.agui.model/ActivityPart.content|{}content[0]
+        final fun <get-content>(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.model/ActivityPart.content.<get-content>|<get-content>(){}[0]
+    final val id // dev.ynagai.agui.model/ActivityPart.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/ActivityPart.id.<get-id>|<get-id>(){}[0]
+    final val messageId // dev.ynagai.agui.model/ActivityPart.messageId|{}messageId[0]
+        final fun <get-messageId>(): kotlin/String // dev.ynagai.agui.model/ActivityPart.messageId.<get-messageId>|<get-messageId>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/ActivityPart.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/ActivityPart.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.ynagai.agui.model/ActivityPart.component3|component3(){}[0]
+    final fun component4(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.model/ActivityPart.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement = ...): dev.ynagai.agui.model/ActivityPart // dev.ynagai.agui.model/ActivityPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/ActivityPart.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/ActivityPart.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/ActivityPart.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/EncryptedReasoningValue { // dev.ynagai.agui.model/EncryptedReasoningValue|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String) // dev.ynagai.agui.model/EncryptedReasoningValue.<init>|<init>(kotlin.String;kotlin.String;kotlin.String){}[0]
+
+    final val entityId // dev.ynagai.agui.model/EncryptedReasoningValue.entityId|{}entityId[0]
+        final fun <get-entityId>(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.entityId.<get-entityId>|<get-entityId>(){}[0]
+    final val subtype // dev.ynagai.agui.model/EncryptedReasoningValue.subtype|{}subtype[0]
+        final fun <get-subtype>(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.subtype.<get-subtype>|<get-subtype>(){}[0]
+    final val value // dev.ynagai.agui.model/EncryptedReasoningValue.value|{}value[0]
+        final fun <get-value>(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ...): dev.ynagai.agui.model/EncryptedReasoningValue // dev.ynagai.agui.model/EncryptedReasoningValue.copy|copy(kotlin.String;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/EncryptedReasoningValue.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/EncryptedReasoningValue.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/EncryptedReasoningValue.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/FilePart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/FilePart|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // dev.ynagai.agui.model/FilePart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val data // dev.ynagai.agui.model/FilePart.data|{}data[0]
+        final fun <get-data>(): kotlin/String? // dev.ynagai.agui.model/FilePart.data.<get-data>|<get-data>(){}[0]
+    final val filename // dev.ynagai.agui.model/FilePart.filename|{}filename[0]
+        final fun <get-filename>(): kotlin/String? // dev.ynagai.agui.model/FilePart.filename.<get-filename>|<get-filename>(){}[0]
+    final val id // dev.ynagai.agui.model/FilePart.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/FilePart.id.<get-id>|<get-id>(){}[0]
+    final val mimeType // dev.ynagai.agui.model/FilePart.mimeType|{}mimeType[0]
+        final fun <get-mimeType>(): kotlin/String // dev.ynagai.agui.model/FilePart.mimeType.<get-mimeType>|<get-mimeType>(){}[0]
+    final val remoteId // dev.ynagai.agui.model/FilePart.remoteId|{}remoteId[0]
+        final fun <get-remoteId>(): kotlin/String? // dev.ynagai.agui.model/FilePart.remoteId.<get-remoteId>|<get-remoteId>(){}[0]
+    final val url // dev.ynagai.agui.model/FilePart.url|{}url[0]
+        final fun <get-url>(): kotlin/String? // dev.ynagai.agui.model/FilePart.url.<get-url>|<get-url>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/FilePart.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/FilePart.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // dev.ynagai.agui.model/FilePart.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.ynagai.agui.model/FilePart.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // dev.ynagai.agui.model/FilePart.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // dev.ynagai.agui.model/FilePart.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): dev.ynagai.agui.model/FilePart // dev.ynagai.agui.model/FilePart.copy|copy(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/FilePart.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/FilePart.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/FilePart.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/ReasoningPart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/ReasoningPart|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/Boolean = ..., kotlin.collections/List<dev.ynagai.agui.model/EncryptedReasoningValue> = ...) // dev.ynagai.agui.model/ReasoningPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.Boolean;kotlin.collections.List<dev.ynagai.agui.model.EncryptedReasoningValue>){}[0]
+
+    final val encryptedValues // dev.ynagai.agui.model/ReasoningPart.encryptedValues|{}encryptedValues[0]
+        final fun <get-encryptedValues>(): kotlin.collections/List<dev.ynagai.agui.model/EncryptedReasoningValue> // dev.ynagai.agui.model/ReasoningPart.encryptedValues.<get-encryptedValues>|<get-encryptedValues>(){}[0]
+    final val id // dev.ynagai.agui.model/ReasoningPart.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.id.<get-id>|<get-id>(){}[0]
+    final val messageId // dev.ynagai.agui.model/ReasoningPart.messageId|{}messageId[0]
+        final fun <get-messageId>(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.messageId.<get-messageId>|<get-messageId>(){}[0]
+    final val streaming // dev.ynagai.agui.model/ReasoningPart.streaming|{}streaming[0]
+        final fun <get-streaming>(): kotlin/Boolean // dev.ynagai.agui.model/ReasoningPart.streaming.<get-streaming>|<get-streaming>(){}[0]
+    final val text // dev.ynagai.agui.model/ReasoningPart.text|{}text[0]
+        final fun <get-text>(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.text.<get-text>|<get-text>(){}[0]
+    final val title // dev.ynagai.agui.model/ReasoningPart.title|{}title[0]
+        final fun <get-title>(): kotlin/String? // dev.ynagai.agui.model/ReasoningPart.title.<get-title>|<get-title>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.ynagai.agui.model/ReasoningPart.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean // dev.ynagai.agui.model/ReasoningPart.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/List<dev.ynagai.agui.model/EncryptedReasoningValue> // dev.ynagai.agui.model/ReasoningPart.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/Boolean = ..., kotlin.collections/List<dev.ynagai.agui.model/EncryptedReasoningValue> = ...): dev.ynagai.agui.model/ReasoningPart // dev.ynagai.agui.model/ReasoningPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.Boolean;kotlin.collections.List<dev.ynagai.agui.model.EncryptedReasoningValue>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/ReasoningPart.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/ReasoningPart.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/ReasoningPart.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/TextPart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/TextPart|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/Boolean = ...) // dev.ynagai.agui.model/TextPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+
+    final val id // dev.ynagai.agui.model/TextPart.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/TextPart.id.<get-id>|<get-id>(){}[0]
+    final val messageId // dev.ynagai.agui.model/TextPart.messageId|{}messageId[0]
+        final fun <get-messageId>(): kotlin/String // dev.ynagai.agui.model/TextPart.messageId.<get-messageId>|<get-messageId>(){}[0]
+    final val streaming // dev.ynagai.agui.model/TextPart.streaming|{}streaming[0]
+        final fun <get-streaming>(): kotlin/Boolean // dev.ynagai.agui.model/TextPart.streaming.<get-streaming>|<get-streaming>(){}[0]
+    final val text // dev.ynagai.agui.model/TextPart.text|{}text[0]
+        final fun <get-text>(): kotlin/String // dev.ynagai.agui.model/TextPart.text.<get-text>|<get-text>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/TextPart.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/TextPart.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.ynagai.agui.model/TextPart.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // dev.ynagai.agui.model/TextPart.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Boolean = ...): dev.ynagai.agui.model/TextPart // dev.ynagai.agui.model/TextPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/TextPart.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/TextPart.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/TextPart.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/ToolCallPart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/ToolCallPart|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // dev.ynagai.agui.model/ToolCallPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val arguments // dev.ynagai.agui.model/ToolCallPart.arguments|{}arguments[0]
+        final fun <get-arguments>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.arguments.<get-arguments>|<get-arguments>(){}[0]
+    final val error // dev.ynagai.agui.model/ToolCallPart.error|{}error[0]
+        final fun <get-error>(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.error.<get-error>|<get-error>(){}[0]
+    final val id // dev.ynagai.agui.model/ToolCallPart.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.id.<get-id>|<get-id>(){}[0]
+    final val name // dev.ynagai.agui.model/ToolCallPart.name|{}name[0]
+        final fun <get-name>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.name.<get-name>|<get-name>(){}[0]
+    final val parentMessageId // dev.ynagai.agui.model/ToolCallPart.parentMessageId|{}parentMessageId[0]
+        final fun <get-parentMessageId>(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.parentMessageId.<get-parentMessageId>|<get-parentMessageId>(){}[0]
+    final val parsedArguments // dev.ynagai.agui.model/ToolCallPart.parsedArguments|{}parsedArguments[0]
+        final fun <get-parsedArguments>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/ToolCallPart.parsedArguments.<get-parsedArguments>|<get-parsedArguments>(){}[0]
+    final val result // dev.ynagai.agui.model/ToolCallPart.result|{}result[0]
+        final fun <get-result>(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.result.<get-result>|<get-result>(){}[0]
+    final val status // dev.ynagai.agui.model/ToolCallPart.status|{}status[0]
+        final fun <get-status>(): dev.ynagai.agui.model/ToolCallStatus // dev.ynagai.agui.model/ToolCallPart.status.<get-status>|<get-status>(){}[0]
+    final val toolCallId // dev.ynagai.agui.model/ToolCallPart.toolCallId|{}toolCallId[0]
+        final fun <get-toolCallId>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.toolCallId.<get-toolCallId>|<get-toolCallId>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component2|component2(){}[0]
+    final fun component3(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component3|component3(){}[0]
+    final fun component4(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component4|component4(){}[0]
+    final fun component5(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/ToolCallPart.component5|component5(){}[0]
+    final fun component6(): dev.ynagai.agui.model/ToolCallStatus // dev.ynagai.agui.model/ToolCallPart.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component8|component8(){}[0]
+    final fun component9(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): dev.ynagai.agui.model/ToolCallPart // dev.ynagai.agui.model/ToolCallPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/ToolCallPart.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/ToolCallPart.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/UiMessage { // dev.ynagai.agui.model/UiMessage|null[0]
+    constructor <init>(kotlin/String, dev.ynagai.agui.model/UiRole, kotlin.collections/List<dev.ynagai.agui.model/UiPart> = ..., kotlin/String? = ...) // dev.ynagai.agui.model/UiMessage.<init>|<init>(kotlin.String;dev.ynagai.agui.model.UiRole;kotlin.collections.List<dev.ynagai.agui.model.UiPart>;kotlin.String?){}[0]
+
+    final val id // dev.ynagai.agui.model/UiMessage.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/UiMessage.id.<get-id>|<get-id>(){}[0]
+    final val isStreaming // dev.ynagai.agui.model/UiMessage.isStreaming|{}isStreaming[0]
+        final fun <get-isStreaming>(): kotlin/Boolean // dev.ynagai.agui.model/UiMessage.isStreaming.<get-isStreaming>|<get-isStreaming>(){}[0]
+    final val name // dev.ynagai.agui.model/UiMessage.name|{}name[0]
+        final fun <get-name>(): kotlin/String? // dev.ynagai.agui.model/UiMessage.name.<get-name>|<get-name>(){}[0]
+    final val parts // dev.ynagai.agui.model/UiMessage.parts|{}parts[0]
+        final fun <get-parts>(): kotlin.collections/List<dev.ynagai.agui.model/UiPart> // dev.ynagai.agui.model/UiMessage.parts.<get-parts>|<get-parts>(){}[0]
+    final val role // dev.ynagai.agui.model/UiMessage.role|{}role[0]
+        final fun <get-role>(): dev.ynagai.agui.model/UiRole // dev.ynagai.agui.model/UiMessage.role.<get-role>|<get-role>(){}[0]
+    final val text // dev.ynagai.agui.model/UiMessage.text|{}text[0]
+        final fun <get-text>(): kotlin/String // dev.ynagai.agui.model/UiMessage.text.<get-text>|<get-text>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/UiMessage.component1|component1(){}[0]
+    final fun component2(): dev.ynagai.agui.model/UiRole // dev.ynagai.agui.model/UiMessage.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<dev.ynagai.agui.model/UiPart> // dev.ynagai.agui.model/UiMessage.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.ynagai.agui.model/UiMessage.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., dev.ynagai.agui.model/UiRole = ..., kotlin.collections/List<dev.ynagai.agui.model/UiPart> = ..., kotlin/String? = ...): dev.ynagai.agui.model/UiMessage // dev.ynagai.agui.model/UiMessage.copy|copy(kotlin.String;dev.ynagai.agui.model.UiRole;kotlin.collections.List<dev.ynagai.agui.model.UiPart>;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/UiMessage.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/UiMessage.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/UiMessage.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.model/UiTranscript { // dev.ynagai.agui.model/UiTranscript|null[0]
+    constructor <init>(kotlin.collections/List<dev.ynagai.agui.model/UiMessage> = ..., dev.ynagai.agui.model/RunState = ..., kotlinx.serialization.json/JsonElement = ..., kotlin.collections/List<kotlin/String> = ...) // dev.ynagai.agui.model/UiTranscript.<init>|<init>(kotlin.collections.List<dev.ynagai.agui.model.UiMessage>;dev.ynagai.agui.model.RunState;kotlinx.serialization.json.JsonElement;kotlin.collections.List<kotlin.String>){}[0]
+
+    final val messages // dev.ynagai.agui.model/UiTranscript.messages|{}messages[0]
+        final fun <get-messages>(): kotlin.collections/List<dev.ynagai.agui.model/UiMessage> // dev.ynagai.agui.model/UiTranscript.messages.<get-messages>|<get-messages>(){}[0]
+    final val run // dev.ynagai.agui.model/UiTranscript.run|{}run[0]
+        final fun <get-run>(): dev.ynagai.agui.model/RunState // dev.ynagai.agui.model/UiTranscript.run.<get-run>|<get-run>(){}[0]
+    final val sharedState // dev.ynagai.agui.model/UiTranscript.sharedState|{}sharedState[0]
+        final fun <get-sharedState>(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.model/UiTranscript.sharedState.<get-sharedState>|<get-sharedState>(){}[0]
+    final val steps // dev.ynagai.agui.model/UiTranscript.steps|{}steps[0]
+        final fun <get-steps>(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.model/UiTranscript.steps.<get-steps>|<get-steps>(){}[0]
+
+    final fun component1(): kotlin.collections/List<dev.ynagai.agui.model/UiMessage> // dev.ynagai.agui.model/UiTranscript.component1|component1(){}[0]
+    final fun component2(): dev.ynagai.agui.model/RunState // dev.ynagai.agui.model/UiTranscript.component2|component2(){}[0]
+    final fun component3(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.model/UiTranscript.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.model/UiTranscript.component4|component4(){}[0]
+    final fun copy(kotlin.collections/List<dev.ynagai.agui.model/UiMessage> = ..., dev.ynagai.agui.model/RunState = ..., kotlinx.serialization.json/JsonElement = ..., kotlin.collections/List<kotlin/String> = ...): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.model/UiTranscript.copy|copy(kotlin.collections.List<dev.ynagai.agui.model.UiMessage>;dev.ynagai.agui.model.RunState;kotlinx.serialization.json.JsonElement;kotlin.collections.List<kotlin.String>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/UiTranscript.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/UiTranscript.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/UiTranscript.toString|toString(){}[0]
+}
