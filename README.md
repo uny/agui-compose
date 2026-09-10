@@ -150,6 +150,9 @@ defaults draw black text at Compose's default size,** because the module sits be
 system and has nothing ambient to read; under Material 3, hand it the ambient values:
 
 ```kotlin
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+
 val renderer = remember {
     MarkdownAguiTextRenderer(
         colors = { markdownAguiColors(text = LocalContentColor.current) },
@@ -157,6 +160,9 @@ val renderer = remember {
     )
 }
 ```
+
+Both locals come from `material3`, which `agui-markdown` does not depend on — you already have it if
+you are under `ProvideMaterial3Agui`, and you need to declare it if you are not.
 
 Those are `@Composable` lambdas rather than values so that one `remember` with no keys still follows
 a theme change — reconstructing the renderer to pick one up would re-parse every visible run on

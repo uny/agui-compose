@@ -95,6 +95,17 @@ dependency or a hard-coded palette, and both were rejected above. A `agui-markdo
 bridge -- two functions, no new grammar -- would close it, and is deliberately not written yet: one
 module is not evidence of a pattern.
 
+**Parsing agent text makes it clickable, and that is a security consequence rather than a visual
+one.** Before this module the same string was drawn as characters; now a URL in it is a link
+carrying the agent's own destination, with no scheme filtering in this module or in the parser, and
+GFM autolinks bare URLs so no `[](...)` syntax is needed. A tap reaches the ambient
+`LocalUriHandler`, which on every platform will happily open an application's own deep-link scheme
+— so an application with authenticated deep links should provide a handler that decides what it
+acts on. This is recorded rather than filtered here because a scheme allow-list belongs to the
+application that owns the schemes, and a library-level one is either too narrow to be safe or too
+broad to be worth having. Images are not the same story: the parser's default image transformer is
+a no-op, so nothing here reaches the network by itself.
+
 Feeding an append-only parser from an accumulated string means noticing when the run is not an
 extension of itself -- a regenerated message, a renderer reused across two runs -- and starting the
 parser over. The parser and everything drawn from it therefore share one `key`, because replacing

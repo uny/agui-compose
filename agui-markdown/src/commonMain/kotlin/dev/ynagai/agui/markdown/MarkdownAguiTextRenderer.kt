@@ -53,6 +53,17 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
  * }
  * ```
  *
+ * **This makes agent text clickable, which is a change of posture and not only of appearance.**
+ * [PlainAguiTextRenderer][dev.ynagai.agui.compose.PlainAguiTextRenderer] draws a URL as the
+ * characters it is; this draws it as a link, and `TEXT_MESSAGE_CONTENT` is written by a model that
+ * may be relaying whatever it was told to relay. The parser emits a `LinkAnnotation.Url` carrying
+ * the agent's own string, with no scheme filtering here or in the parser, so a tap reaches the
+ * ambient `LocalUriHandler` -- and under GFM, bare autolinked URLs are tap targets too, without any
+ * `[](...)` syntax. An application with its own deep-link scheme should assume the transcript can
+ * ask to open one, and provide a `LocalUriHandler` that decides what it will act on. Note that
+ * images are not fetched: the parser's default transformer is a no-op, so nothing here reaches the
+ * network on its own.
+ *
  * @param colors read in composition rather than passed as a value, so that a caller reading
  *   `MaterialTheme` gets a renderer that follows a theme change without being reconstructed --
  *   which is what lets the whole thing sit behind a single `remember` with no keys.
@@ -101,8 +112,14 @@ public class MarkdownAguiTextRenderer(
      * parser's streaming state is append-only, so the delta is recovered here by comparing what
      * has been fed in against what has now arrived. That is worth doing rather than re-parsing the
      * accumulated string on every token: the streaming parser keeps the settled prefix of the
-     * document and re-parses only the tail, which turns a quadratic cost over the length of a
-     * response into a linear one.
+     * document and re-parses only the tail, so the *parse* stops repeating work it has already
+     * done.
+     *
+     * The comparison that recovers the delta does still walk the whole prefix -- `content` is
+     * declared `CharSequence`, so `startsWith` compares character by character rather than taking
+     * `String`'s intrinsic. That is the same shape of growth as the re-parse it replaces, at a
+     * constant factor low enough not to matter; what this path removes is the parsing, not the
+     * comparing.
      *
      * The unsettled tail is drawn, not held back -- that is the parser's own behaviour and it is
      * the behaviour worth having. Syntax that is not finished is on screen as whatever it currently

@@ -126,8 +126,12 @@ class MarkdownAguiTextRendererTest {
 
         onNodeWithText("Done, in full.").assertIsDisplayed()
 
+        // One frame, not `waitForIdle`. Idling drains the asynchronous parse too, so this test
+        // would pass with `immediate = false` and assert nothing about the frame the reader
+        // actually sees at the moment a run finishes -- which is the whole claim.
+        mainClock.autoAdvance = false
         streaming = false
-        waitForIdle()
+        mainClock.advanceTimeByFrame()
 
         onNodeWithText("Done, in full.").assertIsDisplayed()
     }
