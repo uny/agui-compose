@@ -37,9 +37,10 @@ jobs:
   # `docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md`), so there is nothing to split off
   # and a second runner would only add a cold Gradle cache.
   #
-  # macOS rather than Linux, because on Linux the three Apple targets are silently *skipped* --
+  # macOS rather than Linux, because on Linux the Apple targets are silently *skipped* --
   # `kotlin.native.ignoreDisabledTargets=true` turns them off rather than failing -- and a green
-  # build that skipped three of five targets says nothing. `checkLegacyAbi` needs the same runner
+  # build that skipped three of the five targets the lower modules publish, or two of the four
+  # `agui-compose` does, says nothing. `checkKotlinAbi` needs the same runner
   # for the same reason: the checked-in klib dump covers the Apple targets, so on Linux the
   # regenerated dump would be missing them and the check would compare against something the build
   # cannot produce.
@@ -60,7 +61,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
       - name: Build
-        run: ./gradlew build checkLegacyAbi --stacktrace
+        run: ./gradlew build checkKotlinAbi --stacktrace
 
       - name: Upload reports
         if: failure()

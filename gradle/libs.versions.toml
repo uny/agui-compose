@@ -6,6 +6,16 @@ serialization = "1.11.0"
 publish = "0.37.0"
 dokka = "2.2.0"
 
+# Compose Multiplatform. 1.12.0 is what fixes this repository's UI target set: its `foundation`,
+# `ui` and `runtime` modules publish `ios_arm64` and `ios_simulator_arm64` and no `ios_x64`, so a
+# module that draws cannot reach an Intel simulator however it is configured. See the target block
+# in `agui-compose/build.gradle.kts`.
+composeMultiplatform = "1.12.0"
+
+# material3 ships on its own version line, independent of the Compose Multiplatform release. Here
+# for `agui-material3`; no module consumes it yet.
+composeMaterial3 = "1.9.0"
+
 # The upstream AG-UI Kotlin SDK. The Maven group is `com.ag-ui.community`; `com.agui` is only the
 # package prefix, which is easy to mistake for the coordinate.
 #
@@ -36,9 +46,19 @@ agui-core = { module = "com.ag-ui.community:kotlin-core", version.ref = "agui" }
 
 json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
 
+# Compose Multiplatform artifacts are declared explicitly rather than through the `compose.runtime`
+# shorthand on the plugin extension, which is deprecated as of CMP 1.12.
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
+compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" }
+
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
