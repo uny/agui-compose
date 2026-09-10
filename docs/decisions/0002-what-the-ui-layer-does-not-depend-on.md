@@ -99,6 +99,26 @@ thing to give up. The judgement is that a skeleton which cannot be overridden is
 that starts plain, and that this direction is the reversible one: a default can be added later,
 while a baked-in parser cannot be removed without breaking consumers.
 
+`AguiComponents` is a `data class`, and that freezes `copy`, `copy$default` and `component1..6`
+into the published ABI. Adding the seventh slot -- which this record expects, since a new `UiPart`
+kind is exactly what the exhaustive `when` is designed to catch -- changes those descriptors, so a
+consumer who upgrades `agui-compose` without recompiling gets `NoSuchMethodError` on the `copy` the
+README told them to call.
+
+Kept anyway, because the alternative costs something measured rather than something hypothetical.
+`data class` equality is what lets a `copy(...)` whose overrides capture nothing compare equal to
+the table it replaced, and both slot locals are `staticCompositionLocalOf`: an unequal value
+recomposes the whole transcript with skipping disabled. Measured on a three-message transcript, a
+non-capturing `copy(...)` re-runs zero part slots per recomposition and a hand-rolled type without
+`equals` would re-run all three, on every frame of a streaming response. Trading a break that
+happens once, at a version boundary, for a cost that happens on every frame is the wrong way round.
+
+So the break is planned rather than left to be discovered. **When a slot is added, the previous
+`copy` stays as a `@Deprecated` overload** for at least one minor cycle, which is how
+`androidx.compose.material3.ColorScheme` handles the identical problem. The decision has a
+deadline: it is free to revisit before the first publish and expensive after, so it is recorded
+here rather than in a comment.
+
 `agui-compose` has no test coverage on Android. Every test in the module needs a composition on
 screen, Compose's UI test harness needs Robolectric or an instrumentation host to provide one there,
 and this module carries neither. The tests run on `jvm` and `iosSimulatorArm64`. This is a gap
