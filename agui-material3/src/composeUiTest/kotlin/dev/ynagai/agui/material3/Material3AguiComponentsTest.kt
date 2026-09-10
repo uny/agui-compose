@@ -3,6 +3,7 @@ package dev.ynagai.agui.material3
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -10,9 +11,12 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.ynagai.agui.compose.AguiMessage
 import dev.ynagai.agui.compose.AguiTextRenderer
 import dev.ynagai.agui.compose.AguiTranscript
@@ -236,6 +240,99 @@ class Material3AguiComponentsTest {
         )
     }
 
+    /**
+     * The second local earns its place: prose drawn through this module reads the theme's type.
+     *
+     * This is the module's central claim -- `ProvideMaterial3Agui` provides a text renderer as well
+     * as a slot table, because `agui-compose`'s default draws through `BasicText`, which has no
+     * ambient text style. Nothing asserted it. Swapping `Material3AguiTextRenderer`'s `Text` for a
+     * `BasicText`, or defaulting the parameter to `PlainAguiTextRenderer`, left every other test in
+     * this suite green while prose silently ignored the theme.
+     *
+     * Both renderers draw the same string in one composition under a deliberately enormous
+     * `bodyLarge`, so the comparison is about which one reads it and not about the words.
+     */
+    @Test
+    fun theMaterialTextRendererReadsTheThemeTypeScaleAndThePlainOneDoesNot() = runComposeUiTest {
+        val transcript = UiTranscript(
+            messages = listOf(
+                UiMessage(
+                    id = "m1",
+                    role = UiRole.ASSISTANT,
+                    parts = listOf(TextPart(id = "t1", text = "sized-prose", messageId = "m1")),
+                ),
+            ),
+        )
+
+        setContent {
+            MaterialTheme(typography = Typography(bodyLarge = TextStyle(fontSize = 40.sp))) {
+                Column {
+                    ProvideMaterial3Agui { AguiTranscript(transcript) }
+                    ProvideMaterial3Agui(textRenderer = PlainAguiTextRenderer) {
+                        AguiTranscript(transcript)
+                    }
+                }
+            }
+        }
+
+        val material = onAllNodesWithText("sized-prose")[0].getBoundsInRoot()
+        val plain = onAllNodesWithText("sized-prose")[1].getBoundsInRoot()
+        assertTrue(
+            material.bottom - material.top > plain.bottom - plain.top,
+            "prose drawn through this module should pick up the theme's 40.sp body while the " +
+                "plain renderer stays at BasicText's default, but they measured " +
+                "${material.bottom - material.top} and ${plain.bottom - plain.top}",
+        )
+    }
+
+    /**
+     * System and developer messages are labelled, and drawn smaller than the conversation.
+     *
+     * Both halves were untestable from the outside before: inverting the label so a system message
+     * read "Developer", or deleting the `ProvideTextStyle` that shrinks the body, left the suite
+     * green. The size comparison pins the text style; the ambient content colour that dims them
+     * alongside it is still unasserted, because a colour needs a screenshot to read.
+     *
+     * The labels are checked by their *order*, not merely by being present. Both words are on
+     * screen either way round, so asserting each one exists survives the two being swapped -- the
+     * system message is drawn first, so its label has to sit above the developer message's.
+     */
+    @Test
+    fun systemAndDeveloperAreLabelledAndDrawnSmallerThanTheConversation() = runComposeUiTest {
+        fun messageOf(role: UiRole) = UiMessage(
+            id = "m-$role",
+            role = role,
+            parts = listOf(TextPart(id = "t-$role", text = "aside", messageId = "m-$role")),
+        )
+
+        setContent {
+            Material3TestSurface {
+                Column {
+                    AguiMessage(messageOf(UiRole.ASSISTANT))
+                    AguiMessage(messageOf(UiRole.SYSTEM))
+                    AguiMessage(messageOf(UiRole.DEVELOPER))
+                }
+            }
+        }
+
+        val systemLabel = onNodeWithText(AguiStrings.SYSTEM).getBoundsInRoot()
+        val developerLabel = onNodeWithText(AguiStrings.DEVELOPER).getBoundsInRoot()
+        assertTrue(
+            systemLabel.top < developerLabel.top,
+            "the system message is drawn first, so its label belongs above the developer " +
+                "message's: System at ${systemLabel.top}, Developer at ${developerLabel.top}",
+        )
+
+        val assistant = onAllNodesWithText("aside")[0].getBoundsInRoot()
+        val system = onAllNodesWithText("aside")[1].getBoundsInRoot()
+        assertTrue(
+            system.bottom - system.top < assistant.bottom - assistant.top,
+            "a system message should draw at bodySmall against the assistant's bodyLarge, but " +
+                "they measured ${system.bottom - system.top} and " +
+                "${assistant.bottom - assistant.top}",
+        )
+    }
+
     /** The failure state has to be visible without reading an enum name. */
     @Test
     fun aFailedToolCallSaysSo() = runComposeUiTest {
@@ -261,6 +358,39 @@ class Material3AguiComponentsTest {
 
         onNodeWithText("broken_tool").assertIsDisplayed()
         onNodeWithText("failed").assertIsDisplayed()
+    }
+
+    /**
+     * And the finished state, which no other test reaches.
+     *
+     * `STREAMING_ARGUMENTS` and `AWAITING_RESULT` are both covered above; without this,
+     * `AguiStrings.toolCallStatus` could report a completed call as still running with the whole
+     * suite green.
+     */
+    @Test
+    fun aCompletedToolCallSaysSo() = runComposeUiTest {
+        val transcript = UiTranscript(
+            messages = listOf(
+                UiMessage(
+                    id = "m1",
+                    role = UiRole.ASSISTANT,
+                    parts = listOf(
+                        ToolCallPart(
+                            id = "c1",
+                            toolCallId = "c1",
+                            name = "finished_tool",
+                            status = ToolCallStatus.COMPLETE,
+                            result = "3 hits",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        setContent { Material3TestSurface { AguiTranscript(transcript) } }
+
+        onNodeWithText("finished_tool").assertIsDisplayed()
+        onNodeWithText("done").assertIsDisplayed()
     }
 }
 
