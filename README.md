@@ -10,7 +10,9 @@ produced things in, and the Compose UI that draws it. The one function this libr
 and why, is in
 [docs/decisions/0001](docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md); the UI layer's own
 three — no design system, no Markdown parser, one fewer target — are in
-[docs/decisions/0002](docs/decisions/0002-what-the-ui-layer-does-not-depend-on.md).
+[docs/decisions/0002](docs/decisions/0002-what-the-ui-layer-does-not-depend-on.md), and what the
+Material 3 layer decides on your behalf is in
+[docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -25,8 +27,9 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | not yet |
 | `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | not yet |
 | `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | not yet |
+| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
 
-`agui-material3`, `agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an
+`agui-markdown`, `agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an
 optional dependency) and the `agui-provider-*` adapters come next.
 
 ## Targets
@@ -130,6 +133,55 @@ CompositionLocalProvider(LocalAguiTextRenderer provides renderer) { AguiTranscri
 The renderer is handed the whole run as it currently stands rather than the latest delta, so
 re-parsing on every recomposition is correct; an incremental parser is an optimisation, not a
 requirement. The `streaming` flag is there so a parser can hold back half-typed syntax.
+
+### Making it look like something
+
+`agui-material3` is that slot table, filled in:
+
+```kotlin
+import dev.ynagai.agui.material3.ProvideMaterial3Agui
+
+MaterialTheme {
+    Surface {
+        ProvideMaterial3Agui {
+            AguiTranscript(transcript)
+        }
+    }
+}
+```
+
+User messages become end-aligned tonal bubbles, assistant answers stay full width, reasoning
+collapses into a disclosure when its stream ends, and tool calls and attachments get surfaces of
+their own. `MaterialTheme` stays yours — this provides no theme of its own, so your colour scheme
+and type scale are what it draws with.
+
+The `Surface` is not decoration. `MaterialTheme` sets a colour scheme but does not provide
+`LocalContentColor`, which is left at Material 3's own default of black; a `Surface` is what
+derives it from the background it paints. Without one, a dark theme draws this transcript's prose
+black on a dark ground. Any `Scaffold` or `Surface` you already have counts — but the two-composable
+version of this snippet is a trap in dark mode, so it is written with three.
+
+It provides **two** composition locals, and that is why the function exists: the slot table, and a
+text renderer that draws through Material 3's `Text` instead of `BasicText`. Providing only the
+first would leave prose ignoring your theme entirely.
+
+Overriding is the same `copy` as above, and fitting a Markdown renderer is the same
+`LocalAguiTextRenderer` — the prose slots here draw *through* it rather than calling `Text`
+themselves, so a renderer you fit keeps every Material 3 frame around it:
+
+```kotlin
+ProvideMaterial3Agui(
+    textRenderer = remember { AguiTextRenderer { text, _, modifier -> Markdown(text, modifier) } },
+    components = remember { Material3AguiComponents().copy(file = ::MyAttachmentTile) },
+) {
+    AguiTranscript(transcript)
+}
+```
+
+What it deliberately does not do: parse Markdown (that is `agui-markdown`), load images for
+attachments, or render an `ACTIVITY_SNAPSHOT` payload (that is `agui-a2ui`). Each of those is a
+dependency with an opinion, and each is one `copy` away for an application that wants it. The
+reasoning is in [docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md).
 
 ## Building
 
