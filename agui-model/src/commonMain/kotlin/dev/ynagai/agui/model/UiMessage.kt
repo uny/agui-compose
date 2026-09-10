@@ -15,6 +15,20 @@ package dev.ynagai.agui.model
  * `TOOL_CALL_RESULT` lands on the [ToolCallPart] rather than opening a message of its own.
  */
 public data class UiMessage(
+    /**
+     * Identity within one transcript, and the key a list renderer is meant to use.
+     *
+     * **Unique across [UiTranscript.messages]** -- Compose's `LazyColumn` throws outright on a
+     * duplicate key, so this is a guarantee a renderer is entitled to lean on rather than a
+     * coincidence. The producer is what upholds it: `agui-core` disambiguates on sight, because
+     * the wire promises nothing of the sort and a run that renumbers its message ids from one is
+     * an ordinary thing for an agent to do.
+     *
+     * Usually the protocol message id this turn opened under, and equal to it whenever nothing
+     * forced a rename. It is *not* the field to correlate against the wire: a turn folds several
+     * protocol messages together, and each part keeps its own protocol id
+     * ([TextPart.messageId] and its siblings) for exactly that.
+     */
     public val id: String,
     public val role: UiRole,
     public val parts: List<UiPart> = emptyList(),
