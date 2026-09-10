@@ -81,7 +81,7 @@ public class UiTranscriptReducer(
 ) {
     private val messages = mutableListOf<MessageBuilder>()
 
-    /** Every [UiMessage.id] currently in [messages], so a reused one is caught as it is minted. */
+    /** Every `UiMessage.id` currently in [messages], so a reused one is caught as it is minted. */
     private val messageIds = mutableSetOf<String>()
 
     /**
