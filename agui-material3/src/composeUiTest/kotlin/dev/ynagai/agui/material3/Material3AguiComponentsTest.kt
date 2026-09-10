@@ -1,6 +1,7 @@
 package dev.ynagai.agui.material3
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.unit.dp
 import dev.ynagai.agui.compose.AguiMessage
 import dev.ynagai.agui.compose.AguiTextRenderer
 import dev.ynagai.agui.compose.AguiTranscript
@@ -27,6 +29,12 @@ import dev.ynagai.agui.model.UiTranscript
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonPrimitive
+
+/** A frame width the alignment assertions can be stated against. */
+private const val TRANSCRIPT_WIDTH = 400
+
+/** The bubble's own `insideContainer` padding, which its text starts inside of. */
+private const val PADDING_SLACK = 16
 
 @OptIn(ExperimentalTestApi::class)
 class Material3AguiComponentsTest {
@@ -176,6 +184,13 @@ class Material3AguiComponentsTest {
      * filled its row would still be tonally a bubble and would look nothing like one. The two
      * messages carry the same string so that the comparison is about the frames and not about how
      * wide the words are.
+     *
+     * `bubble.left > answer.left` alone does **not** say that. The bubble pads its content by
+     * `insideContainer` and the assistant branch pads nothing horizontally, so that comparison
+     * holds at 12.dp vs 0.dp however the row is arranged -- it stays green with
+     * `Arrangement.Start`, with `fill = true`, and with the `fillMaxWidth` removed. Measured
+     * against a known frame width instead: the bubble has to start past the middle of the row and
+     * end at its trailing edge, which is false for every one of those three regressions.
      */
     @Test
     fun aUserMessageIsEndAlignedAndAnAssistantMessageIsNot() = runComposeUiTest {
@@ -194,14 +209,30 @@ class Material3AguiComponentsTest {
             ),
         )
 
-        setContent { Material3TestSurface { AguiTranscript(transcript) } }
+        setContent {
+            Material3TestSurface {
+                AguiTranscript(transcript, modifier = Modifier.width(TRANSCRIPT_WIDTH.dp))
+            }
+        }
 
         val bubble = onNodeWithText("asked").getBoundsInRoot()
         val answer = onNodeWithText("answered").getBoundsInRoot()
+
         assertTrue(
             bubble.left > answer.left,
             "the user bubble should be pushed to the end of the row while the answer starts at " +
                 "the leading edge: bubble text began at ${bubble.left}, answer at ${answer.left}",
+        )
+        assertTrue(
+            bubble.left > (TRANSCRIPT_WIDTH / 2).dp,
+            "a five-character message should sit in the trailing half of a " +
+                "${TRANSCRIPT_WIDTH}.dp row, not stretch across it: bubble text began at " +
+                "${bubble.left}",
+        )
+        assertTrue(
+            bubble.right > (TRANSCRIPT_WIDTH - PADDING_SLACK).dp,
+            "the bubble should end at the row's trailing edge: bubble text ended at " +
+                "${bubble.right} in a ${TRANSCRIPT_WIDTH}.dp row",
         )
     }
 
