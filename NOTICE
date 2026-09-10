@@ -1,0 +1,14 @@
+agui-compose
+Copyright 2026 Yuki Nagai
+
+This product depends on software developed by the AG-UI project
+(https://github.com/ag-ui-protocol/ag-ui), whose community Kotlin SDK is published as
+`com.ag-ui.community:kotlin-core` and `com.ag-ui.community:kotlin-client` under the MIT
+License. Those artifacts are consumed as dependencies; no part of them is copied into
+this repository.
+
+The behaviour of `ACTIVITY_SNAPSHOT` and `ACTIVITY_DELTA` implemented in `agui-core` is
+specified by the same project's protocol documentation, which is licensed under the MIT
+License (see `docs/LICENSE` in that repository). Sentences from it are quoted in the
+tests that check the behaviour they define. No specification document is redistributed
+here.

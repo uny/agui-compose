@@ -1,0 +1,18 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-core>
+final class dev.ynagai.agui.core/UiTranscriptReducer { // dev.ynagai.agui.core/UiTranscriptReducer|null[0]
+    constructor <init>(kotlin/Function1<kotlin/String, kotlin/Unit> = ...) // dev.ynagai.agui.core/UiTranscriptReducer.<init>|<init>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+
+    final var transcript // dev.ynagai.agui.core/UiTranscriptReducer.transcript|{}transcript[0]
+        final fun <get-transcript>(): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.core/UiTranscriptReducer.transcript.<get-transcript>|<get-transcript>(){}[0]
+
+    final fun accept(com.agui.core.types/BaseEvent): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.core/UiTranscriptReducer.accept|accept(com.agui.core.types.BaseEvent){}[0]
+}
+
+final fun (kotlinx.coroutines.flow/Flow<com.agui.core.types/BaseEvent>).dev.ynagai.agui.core/foldToTranscript(kotlin/Function1<kotlin/String, kotlin/Unit> = ...): kotlinx.coroutines.flow/Flow<dev.ynagai.agui.model/UiTranscript> // dev.ynagai.agui.core/foldToTranscript|foldToTranscript@kotlinx.coroutines.flow.Flow<com.agui.core.types.BaseEvent>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]

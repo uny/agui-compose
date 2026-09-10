@@ -1,0 +1,44 @@
+[versions]
+kotlin = "2.4.10"
+agp = "9.3.2"
+coroutines = "1.11.0"
+serialization = "1.11.0"
+publish = "0.37.0"
+dokka = "2.2.0"
+
+# The upstream AG-UI Kotlin SDK. The Maven group is `com.ag-ui.community`; `com.agui` is only the
+# package prefix, which is easy to mistake for the coordinate.
+#
+# 0.4.1 is both the newest release and the newest commit on `sdks/community/kotlin/library`
+# (`9770f32`, 2026-06-02), so pinning the release leaves nothing on the branch behind.
+agui = "0.4.1"
+
+# RFC 6902 patch application, for STATE_DELTA and ACTIVITY_DELTA. The same library and version the
+# upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
+jsonPatch = "1.0.0"
+
+# The published floor: this becomes `minCompileSdk` in the AAR metadata, so it is what every
+# Android consumer must compile against. One value for the whole repository rather than a lower one
+# for the non-UI modules -- the Compose modules this repository will ship force 37 through
+# androidx.compose, and a consumer taking any of them needs 37 regardless.
+android-compileSdk = "37"
+android-minSdk = "24"
+
+[libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# `kotlin-core` carries the protocol types and nothing else. `kotlin-client` -- the transport, the
+# SSE parser, the event verifier -- arrives with the agent layer; it is not needed to fold events
+# into a render model, and it would put Ktor on the classpath of a module that opens no socket.
+agui-core = { module = "com.ag-ui.community:kotlin-core", version.ref = "agui" }
+
+json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
