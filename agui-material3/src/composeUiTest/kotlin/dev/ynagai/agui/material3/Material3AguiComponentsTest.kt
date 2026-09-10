@@ -10,8 +10,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.text.TextStyle
@@ -37,7 +37,8 @@ import kotlinx.serialization.json.JsonPrimitive
 /** A frame width the alignment assertions can be stated against. */
 private const val TRANSCRIPT_WIDTH = 400
 
-/** The bubble's own `insideContainer` padding, which its text starts inside of. */
+/** The bubble's own `insideContainer` padding (12.dp), plus a little, so the trailing-edge
+ *  assertion is about alignment rather than about the exact padding value. */
 private const val PADDING_SLACK = 16
 
 @OptIn(ExperimentalTestApi::class)
