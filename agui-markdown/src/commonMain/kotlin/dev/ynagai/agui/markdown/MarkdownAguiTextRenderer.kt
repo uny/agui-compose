@@ -127,7 +127,13 @@ public class MarkdownAguiTextRenderer(
         // value until the new parser emits, while reading the text to slice through the parser it
         // was just handed -- so for one frame it indexes the old document's nodes into an empty
         // string.
-        key(generation) {
+        //
+        // `flavour` is in the key for that reason and not for its own. `rememberStreamingMarkdownState`
+        // keys on it, so a new flavour builds a new parser whether this code asks for one or not --
+        // and the default `GFMFlavourDescriptor()` is a fresh instance per renderer, so *any* new
+        // renderer arriving mid-run is a new flavour. Without it here, a caller who provides an
+        // unremembered renderer gets that crash rather than the re-parse the KDoc warns about.
+        key(generation, flavour) {
             val state = rememberStreamingMarkdownState(flavour = flavour)
 
             // Every write to the parser happens here rather than in the composition body. A parser

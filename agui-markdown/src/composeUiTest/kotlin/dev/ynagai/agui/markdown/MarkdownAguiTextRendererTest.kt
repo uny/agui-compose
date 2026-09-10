@@ -44,12 +44,47 @@ class MarkdownAguiTextRendererTest {
 
         setContent { Rendered(text = text, streaming = true) }
 
+        // Asserted after every piece, not only at the end. Feeding the parser the whole run each
+        // time doubles the document -- but only until the *next* piece fails the prefix check,
+        // which restarts the parser and launders the damage away. A single assertion on the
+        // settled last frame therefore passes while the delta reconstruction is broken; these
+        // intermediate ones are what fail.
+        onNodeWithText("A bold").assertIsDisplayed()
+
         text = "A **bold** claim"
         waitForIdle()
+        onNodeWithText("A bold claim").assertIsDisplayed()
+
         text = "A **bold** claim, at last."
         waitForIdle()
-
         onNodeWithText("A bold claim, at last.").assertIsDisplayed()
+    }
+
+    /**
+     * A renderer replaced while a run is still arriving does not take the transcript down with it.
+     *
+     * The KDoc tells a caller to `remember` the renderer and gives re-parsing every frame as the
+     * cost of not doing so. That understated it: `rememberStreamingMarkdownState` keys on the
+     * flavour, and the default `GFMFlavourDescriptor()` is a fresh instance per renderer, so a new
+     * renderer arriving mid-run replaced the parser *without* replacing the `Markdown` around it --
+     * which then indexed the previous snapshot's node ranges into an empty buffer and threw
+     * `StringIndexOutOfBoundsException`. An unremembered renderer is the single easiest mistake to
+     * make against this API, and it crashed rather than merely being slow.
+     */
+    @Test
+    fun aRendererReplacedMidRunDoesNotCrash() = runComposeUiTest {
+        var renderer by mutableStateOf(MarkdownAguiTextRenderer())
+
+        setContent {
+            renderer.Render(text = "A **bold** claim.", streaming = true, modifier = Modifier)
+        }
+
+        onNodeWithText("A bold claim.").assertIsDisplayed()
+
+        renderer = MarkdownAguiTextRenderer()
+        waitForIdle()
+
+        onNodeWithText("A bold claim.").assertIsDisplayed()
     }
 
     /**
