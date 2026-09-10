@@ -44,6 +44,14 @@ private val DefaultFontSize: TextUnit = 14.sp
  * light text means a dark surface behind it -- rather than leaving a dark-theme transcript with
  * light-theme alerts. A caller who knows better passes their own.
  *
+ * The threshold is 0.15 rather than the midpoint, because relative luminance is not perceptual
+ * lightness and the two populations are nowhere near it. Measured: Material 3's light-theme
+ * `onSurface` is 0.011 and its `onSurfaceVariant` 0.062, while its dark-theme `onSurface` is 0.760,
+ * `onSurfaceVariant` 0.566 and `outline` 0.281. Everything a light theme uses for text sits below
+ * 0.07; everything a dark theme uses sits above 0.28. A midpoint cut would put dimmed light-on-dark
+ * text -- `outline`, or a hand-picked grey like `0xFF9E9E9E` at 0.32 -- on the light side and give
+ * a near-black surface light-theme alerts.
+ *
  * The default is black, for the reason
  * [PlainAguiTextRenderer][dev.ynagai.agui.compose.PlainAguiTextRenderer] draws black: this module
  * sits below any design system and has no ambient text colour to read. See
@@ -55,7 +63,7 @@ public fun markdownAguiColors(
     inlineCodeBackground: Color = text.copy(alpha = 0.08f),
     dividerColor: Color = text.copy(alpha = 0.24f),
     tableBackground: Color = text.copy(alpha = 0.04f),
-    alert: MarkdownAlertColors = markdownAlertColors(darkTheme = text.luminance() > 0.5f),
+    alert: MarkdownAlertColors = markdownAlertColors(darkTheme = text.luminance() > 0.15f),
 ): MarkdownColors = DefaultMarkdownColors(
     text = text,
     codeBackground = codeBackground,

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
+import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import kotlin.test.Test
 
 /**
@@ -61,6 +62,55 @@ class MarkdownAguiTextRendererTest {
     }
 
     /**
+     * The constructor's flavour is the one that parses, asserted against a dialect that differs.
+     *
+     * `**bold**` is in every dialect, so no other test here would notice the flavour going astray.
+     * Nor would asserting GFM alone: the parser's *own* default is GFM too, so dropping
+     * `flavour = flavour` at either call site changes nothing observable. What pins the wiring is a
+     * caller passing something else and getting it -- CommonMark has no strikethrough, so the
+     * tildes stay on screen as the characters they are.
+     */
+    @Test
+    fun theConstructorsFlavourIsTheOneThatParses() = runComposeUiTest {
+        val commonMark = MarkdownAguiTextRenderer(flavour = CommonMarkFlavourDescriptor())
+
+        setContent {
+            commonMark.Render(text = "A ~~struck~~ claim.", streaming = false, modifier = Modifier)
+        }
+
+        onNodeWithText("A ~~struck~~ claim.").assertIsDisplayed()
+    }
+
+    /** The default dialect is GitHub's, which is the one that reads `~~struck~~` as struck. */
+    @Test
+    fun theDefaultFlavourIsGitHubs() = runComposeUiTest {
+        setContent { Rendered(text = "A ~~struck~~ claim.", streaming = false) }
+
+        onNodeWithText("A struck claim.").assertIsDisplayed()
+    }
+
+    /**
+     * A run that begins empty is parsed from its first real token.
+     *
+     * `TEXT_MESSAGE_START` arrives before any content does, so the first frame of every streamed
+     * message has `text == ""` -- a production path no other test here supplies. It is covered
+     * rather than pinned: the arm it lands in does nothing, and the neighbouring `>=` spelling
+     * would append an empty string instead, which is a wasted call and not a defect. What this
+     * asserts is that starting from empty does not read as a replaced run.
+     */
+    @Test
+    fun aRunThatBeginsEmptyIsParsedFromItsFirstToken() = runComposeUiTest {
+        var text by mutableStateOf("")
+
+        setContent { Rendered(text = text, streaming = true) }
+
+        text = "Now **it** starts."
+        waitForIdle()
+
+        onNodeWithText("Now it starts.").assertIsDisplayed()
+    }
+
+    /**
      * A renderer replaced while a run is still arriving does not take the transcript down with it.
      *
      * The KDoc tells a caller to `remember` the renderer and gives re-parsing every frame as the
@@ -108,7 +158,6 @@ class MarkdownAguiTextRendererTest {
 
         onNodeWithText("First attempt.").assertDoesNotExist()
         onNodeWithText("Second attempt.").assertIsDisplayed()
-        onNodeWithText("First attempt.Second attempt.").assertDoesNotExist()
     }
 
     /**

@@ -125,4 +125,24 @@ class MarkdownAguiStyleTest {
         assertEquals(markdownAlertColors(darkTheme = false).warning, onLight.warning)
         assertNotEquals(onLight.warning, onDark.warning)
     }
+
+    /**
+     * Dimmed light-on-dark text still reads as a dark surface.
+     *
+     * Black and white are the easy ends. The threshold has to sit below what a dark theme uses for
+     * *secondary* text, which is where the real values are: Material 3's dark `outline` has a
+     * relative luminance of ~0.28 and a hand-picked dim grey is around 0.32 -- both far below the
+     * midpoint, and both light-on-dark. A threshold that split the difference between black and
+     * white would hand a near-black surface the light-theme alert palette.
+     */
+    @Test
+    fun dimmedTextOnADarkSurfaceStillGetsDarkAlerts() {
+        val m3DarkOutline = markdownAguiColors(text = Color(0xFF938F99)).alert
+        val dimGrey = markdownAguiColors(text = Color(0xFF9E9E9E)).alert
+        val m3LightOnSurfaceVariant = markdownAguiColors(text = Color(0xFF49454F)).alert
+
+        assertEquals(markdownAlertColors(darkTheme = true).warning, m3DarkOutline.warning)
+        assertEquals(markdownAlertColors(darkTheme = true).warning, dimGrey.warning)
+        assertEquals(markdownAlertColors(darkTheme = false).warning, m3LightOnSurfaceVariant.warning)
+    }
 }
