@@ -32,10 +32,12 @@ import dev.ynagai.agui.model.UiTranscript
  * The virtualisation stops at the message boundary, which matters for the shape this model
  * produces: [AguiMessage] composes every part of one message eagerly, and `agui-core` folds a
  * whole assistant turn -- reasoning, each run of prose, every tool call -- into a single
- * [UiMessage]. So one long turn is one lazy item holding all of it, composed and measured whether
- * or not any of it is on screen. Splitting a turn across items would key on [UiPart.id] and give
- * up the message frame, which is the wrong trade for a transcript of ordinary turns; an
- * application that expects unbounded single turns wants its own list rather than this one.
+ * [UiMessage]. A turn entirely off screen still costs nothing. But the item is all-or-nothing: the
+ * moment any one part of a turn scrolls into view, every part of that turn composes and measures,
+ * however far the rest of it extends past the viewport. Splitting a turn across items would key on
+ * [UiPart.id] and give up the message frame, which is the wrong trade for a transcript of ordinary
+ * turns; an application that expects unbounded single turns wants its own list rather than this
+ * one.
  *
  * @param state hoisted so the caller can drive it. Following a streaming response means scrolling
  *   as text arrives, and only the application knows whether to keep doing that after the reader has

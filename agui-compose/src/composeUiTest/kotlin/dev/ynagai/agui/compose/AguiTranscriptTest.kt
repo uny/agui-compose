@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -21,6 +22,7 @@ import dev.ynagai.agui.model.UiRole
 import dev.ynagai.agui.model.UiTranscript
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.JsonPrimitive
 
 @OptIn(ExperimentalTestApi::class)
@@ -211,6 +213,11 @@ class AguiTranscriptTest {
      *
      * `agui-core` guarantees the ids are distinct; this asserts the renderer draws one item per
      * message and does not collapse, reorder or drop any of them.
+     *
+     * Order is asserted by position rather than by presence, because presence cannot see it: a
+     * renderer that walked the list backwards would still put all three on screen. Keeping the
+     * order an agent produced things in is the whole thesis of this library, so it is the one
+     * property here worth the extra assertion.
      */
     @Test
     fun everyMessageInATranscriptDraws() = runComposeUiTest {
@@ -239,6 +246,12 @@ class AguiTranscriptTest {
         onNodeWithText("asked-a-question").assertIsDisplayed()
         onNodeWithText("gave-an-answer").assertIsDisplayed()
         onNodeWithText("and-a-follow-up").assertIsDisplayed()
+
+        val asked = onNodeWithText("asked-a-question").getBoundsInRoot().top
+        val answered = onNodeWithText("gave-an-answer").getBoundsInRoot().top
+        val followedUp = onNodeWithText("and-a-follow-up").getBoundsInRoot().top
+        assertTrue(asked < answered, "the question must draw above the answer")
+        assertTrue(answered < followedUp, "the answer must draw above the follow-up")
     }
 
     /**
