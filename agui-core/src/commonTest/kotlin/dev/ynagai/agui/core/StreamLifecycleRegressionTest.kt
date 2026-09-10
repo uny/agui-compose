@@ -4,6 +4,7 @@ import com.agui.core.types.AssistantMessage
 import com.agui.core.types.FunctionCall
 import com.agui.core.types.MessagesSnapshotEvent
 import com.agui.core.types.ReasoningEndEvent
+import com.agui.core.types.ReasoningMessageChunkEvent
 import com.agui.core.types.ReasoningMessageContentEvent
 import com.agui.core.types.ReasoningMessageEndEvent
 import com.agui.core.types.ReasoningMessageStartEvent
@@ -28,6 +29,7 @@ import dev.ynagai.agui.model.TextPart
 import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
 import dev.ynagai.agui.model.UiPart
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -49,13 +51,40 @@ class StreamLifecycleRegressionTest {
     fun a_chunked_call_whose_result_arrived_stays_complete_when_the_run_ends() {
         val reducer = UiTranscriptReducer()
         reducer.accept(RunStartedEvent(threadId = "t", runId = "r"))
-        reducer.accept(ToolCallChunkEvent(toolCallId = "c1", toolCallName = "search", delta = "{}"))
+        reducer.accept(ToolCallChunkEvent(toolCallId = "c1", toolCallName = "search", delta = """{"q":"kt"}"""))
         reducer.accept(ToolCallResultEvent(messageId = "tm1", toolCallId = "c1", content = "3 hits"))
         reducer.accept(RunFinishedEvent(threadId = "t", runId = "r"))
 
         val call = reducer.transcript.messages.flatMap { it.parts }.filterIsInstance<ToolCallPart>().single()
         assertEquals(ToolCallStatus.COMPLETE, call.status, "the run boundary undid a landed result")
         assertEquals("3 hits", call.result)
+        // The arguments arrived whole; guarding the status must not also skip parsing them.
+        assertEquals(Json.parseToJsonElement("""{"q":"kt"}"""), call.parsedArguments)
+    }
+
+    @Test
+    fun a_thinking_delta_without_a_start_still_lands() {
+        val warnings = mutableListOf<String>()
+        val reducer = UiTranscriptReducer { warnings += it }
+        reducer.accept(RunStartedEvent(threadId = "t", runId = "r"))
+        reducer.accept(ThinkingTextMessageContentEvent(delta = "hmm"))
+
+        val part = reducer.transcript.messages.flatMap { it.parts }.filterIsInstance<ReasoningPart>().single()
+        assertEquals("hmm", part.text)
+        assertContentEquals(emptyList(), warnings)
+    }
+
+    @Test
+    fun a_run_boundary_leaves_no_reasoning_id_for_an_id_less_chunk_to_find() {
+        val reducer = UiTranscriptReducer()
+        reducer.accept(RunStartedEvent(threadId = "t", runId = "r"))
+        reducer.accept(ThinkingStartEvent(title = "Planning"))
+        reducer.accept(ThinkingTextMessageContentEvent(delta = "hmm"))
+        reducer.accept(RunFinishedEvent(threadId = "t", runId = "r"))
+        reducer.accept(ReasoningMessageChunkEvent(messageId = null, delta = "more"))
+
+        val part = reducer.transcript.messages.flatMap { it.parts }.filterIsInstance<ReasoningPart>().single()
+        assertEquals("hmm", part.text, "a settled run's reasoning part grew after the run ended")
     }
 
     @Test

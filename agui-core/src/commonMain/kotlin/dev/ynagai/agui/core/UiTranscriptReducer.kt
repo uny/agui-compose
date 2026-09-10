@@ -301,7 +301,13 @@ public class UiTranscriptReducer(
 
             is ThinkingStartEvent -> openReasoning(startThinkingBlock(), title = event.title)
             is ThinkingTextMessageStartEvent -> openReasoning(thinkingBlock(), title = null)
-            is ThinkingTextMessageContentEvent -> appendReasoning(thinkingBlock(), event.delta)
+            is ThinkingTextMessageContentEvent -> {
+                // A block whose start never arrived still has content worth keeping, and the
+                // synthetic id is not one `appendReasoning` can lazily open on its own.
+                val id = thinkingBlock()
+                if (id !in reasoningParts) openReasoning(id, title = null)
+                appendReasoning(id, event.delta)
+            }
             is ThinkingTextMessageEndEvent -> Unit
 
             is ThinkingEndEvent -> {
@@ -371,9 +377,6 @@ public class UiTranscriptReducer(
      *   arguments, when there is one to record.
      */
     private fun finalizeTurn(reason: String? = null) {
-        // The deprecated THINKING_* events carry no message id, so the synthetic one is all that
-        // scopes them -- and a run is the only scope they can have. Dropped here, or a second
-        // run's deliberation would append to the first run's part, in a message already settled.
         // A chunk stream ends implicitly, and the run ending is one of the two ways it can. Closed
         // before the sweep below so a tool call delivered entirely by TOOL_CALL_CHUNK parses its
         // arguments and reaches AWAITING_RESULT, rather than being swept up as a failure.
@@ -386,6 +389,7 @@ public class UiTranscriptReducer(
         pendingToolChunkId = null
         openReasoningStreamId = null
         thinkingPartId = null
+        lastReasoningMessageId = null
 
         // Every message, not just the open turn. `detachTurn` releases a turn that still holds
         // streaming parts -- an activity or a user message arriving mid-stream does exactly that --
@@ -411,6 +415,13 @@ public class UiTranscriptReducer(
         detachTurn()
     }
 
+    /** Opens a new `THINKING_*` block and returns the id its part will carry. */
+    private fun startThinkingBlock(): String =
+        "$THINKING_ID_PREFIX${++thinkingBlocks}".also { thinkingPartId = it }
+
+    /** The open block's id, minting one if a `THINKING_TEXT_*` event arrived without a start. */
+    private fun thinkingBlock(): String = thinkingPartId ?: startThinkingBlock()
+
     /**
      * Drops the id bookkeeping the finished run owned, so the next run starts from a clean map.
      *
@@ -425,13 +436,6 @@ public class UiTranscriptReducer(
      * that result with nothing to land on. `activityMessages` survives for the same reason: an
      * activity outlives the run that opened it.
      */
-    /** Opens a new `THINKING_*` block and returns the id its part will carry. */
-    private fun startThinkingBlock(): String =
-        "$THINKING_ID_PREFIX${++thinkingBlocks}".also { thinkingPartId = it }
-
-    /** The open block's id, opening one if a `THINKING_TEXT_*` event arrived without a start. */
-    private fun thinkingBlock(): String = thinkingPartId ?: startThinkingBlock()
-
     private fun startNewRun() {
         steps.clear()
         thinkingPartId = null
@@ -537,15 +541,21 @@ public class UiTranscriptReducer(
         if (pendingToolChunkId == toolCallId) pendingToolChunkId = null
         val ref = toolParts[toolCallId] ?: return
         val part = ref.part<ToolCallPart>()
-        // Only a call still streaming its arguments has an end left to reach. A chunked call whose
-        // TOOL_CALL_RESULT arrived before the run ended is already COMPLETE, and the implicit end
-        // the run boundary performs must not walk it back to AWAITING_RESULT.
-        if (part.status != ToolCallStatus.STREAMING_ARGUMENTS) return
         ref.message.replace(
             ref.index,
             part.copy(
-                status = ToolCallStatus.AWAITING_RESULT,
-                parsedArguments = parseJsonOrNull(part.arguments),
+                // The status may only advance. A chunked call whose TOOL_CALL_RESULT arrived
+                // before the run ended is already COMPLETE, and the implicit end the run boundary
+                // performs must not walk it back to AWAITING_RESULT.
+                status = if (part.status == ToolCallStatus.STREAMING_ARGUMENTS) {
+                    ToolCallStatus.AWAITING_RESULT
+                } else {
+                    part.status
+                },
+                // The arguments are whole either way, and this is the only place they are parsed --
+                // the result branch copies `result` and `status` and nothing else -- so returning
+                // early here would leave a fully delivered call with `parsedArguments` null.
+                parsedArguments = part.parsedArguments ?: parseJsonOrNull(part.arguments),
             ),
         )
     }
