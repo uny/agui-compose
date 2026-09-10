@@ -1,0 +1,17 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-material3>
+final object dev.ynagai.agui.material3/Material3AguiTextRenderer : dev.ynagai.agui.compose/AguiTextRenderer { // dev.ynagai.agui.material3/Material3AguiTextRenderer|null[0]
+    final fun Render(kotlin/String, kotlin/Boolean, androidx.compose.ui/Modifier, androidx.compose.runtime/Composer?, kotlin/Int) // dev.ynagai.agui.material3/Material3AguiTextRenderer.Render|Render(kotlin.String;kotlin.Boolean;androidx.compose.ui.Modifier;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+}
+
+final val dev.ynagai.agui.material3/dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop // dev.ynagai.agui.material3/dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop|#static{}dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop[0]
+
+final fun dev.ynagai.agui.material3/Material3AguiComponents(): dev.ynagai.agui.compose/AguiComponents // dev.ynagai.agui.material3/Material3AguiComponents|Material3AguiComponents(){}[0]
+final fun dev.ynagai.agui.material3/ProvideMaterial3Agui(dev.ynagai.agui.compose/AguiTextRenderer?, dev.ynagai.agui.compose/AguiComponents?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // dev.ynagai.agui.material3/ProvideMaterial3Agui|ProvideMaterial3Agui(dev.ynagai.agui.compose.AguiTextRenderer?;dev.ynagai.agui.compose.AguiComponents?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun dev.ynagai.agui.material3/dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop_getter(): kotlin/Int // dev.ynagai.agui.material3/dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop_getter|dev_ynagai_agui_material3_Material3AguiTextRenderer$stableprop_getter(){}[0]
