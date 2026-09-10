@@ -10,7 +10,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import com.mikepenz.markdown.model.DefaultMarkdownColors
@@ -82,16 +81,20 @@ public fun markdownAguiTypography(
 ): MarkdownTypography {
     val size = base.fontSize.takeOrElse { DefaultFontSize }
 
-    // Scaled with the font size rather than inherited from [base]. A `TextStyle` that carries a
-    // line height carries one measured for its own size, and Material 3's do: the `bodySmall` that
-    // `agui-material3` provides around the prose slot is 12sp of text in a 16sp line. Copying that
-    // 16sp onto a 24sp `h1` puts the glyphs in a box smaller than they are, and the heading
-    // collides with the lines around it. An unspecified line height stays unspecified, which is
-    // what the default `TextStyle.Default` wants -- Compose then derives one from the font.
+    // An absolute line height is scaled with the font size rather than inherited. A `TextStyle`
+    // carrying one in `sp` carries a number measured for its own size, and Material 3's do: the
+    // `bodySmall` that `agui-material3` provides around the prose slot is 12sp of text in a 16sp
+    // line. Copying that 16sp onto a 24sp `h1` puts the glyphs in a box smaller than they are, and
+    // the heading collides with the lines around it.
+    //
+    // Only `sp`, though. An `em` line height is a multiple of the font size being scaled here, so
+    // it follows the heading on its own -- scaling it too would apply the same factor twice and
+    // give `h1` roughly double the leading it asked for. Unspecified likewise stays unspecified,
+    // which is what `TextStyle.Default` wants: Compose then derives a line height from the font.
     val lineHeight = base.lineHeight
     fun heading(scale: Float) = base.copy(
         fontSize = size * scale,
-        lineHeight = if (lineHeight.isSpecified) lineHeight * scale else lineHeight,
+        lineHeight = if (lineHeight.isSp) lineHeight * scale else lineHeight,
         fontWeight = FontWeight.Bold,
     )
     val code = base.copy(fontFamily = FontFamily.Monospace)

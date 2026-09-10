@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.mikepenz.markdown.model.markdownAlertColors
 import kotlin.test.Test
@@ -58,6 +59,24 @@ class MarkdownAguiStyleTest {
         assertEquals(24.sp, typography.h1.fontSize)
         assertEquals(32.sp, typography.h1.lineHeight)
         assertTrue(typography.h1.lineHeight.value >= typography.h1.fontSize.value)
+    }
+
+    /**
+     * A relative line height is left alone, because it scales itself.
+     *
+     * `em` is a multiple of the font size, and the font size is what `heading` is scaling -- so
+     * `1.5.em` on a doubled `h1` already resolves to a doubled line box. Scaling the number too
+     * applies the factor twice and gives the heading roughly double the leading it asked for, which
+     * is the opposite of the `sp` bug above and just as visible.
+     */
+    @Test
+    fun aRelativeLineHeightIsNotScaledTwice() {
+        val typography = markdownAguiTypography(
+            base = TextStyle(fontSize = 16.sp, lineHeight = 1.5.em),
+        )
+
+        assertEquals(1.5.em, typography.h1.lineHeight)
+        assertEquals(32.sp, typography.h1.fontSize)
     }
 
     /** An unspecified line height stays unspecified, so Compose derives one from the font. */

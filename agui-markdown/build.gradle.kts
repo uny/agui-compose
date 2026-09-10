@@ -29,11 +29,13 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
-        // Wired, and running nothing -- the third module in this repository with that hole, for the
-        // same reason as the other two: everything here draws, so every test lives in
-        // `composeUiTest`, which Android does not depend on. Closing it needs Robolectric or an
-        // instrumentation harness for the repository as a whole; `docs/decisions/0003` records the
-        // argument once so it is not had again per build file.
+        // Running the style tests and none of the drawing ones. `commonTest` reaches here, so the
+        // pure factories in `MarkdownAguiStyle.kt` are covered on Android; everything that needs a
+        // composition lives in `composeUiTest`, which Android does not depend on, so the renderer
+        // itself is not. That is a narrower hole than the other two modules have rather than no
+        // hole -- closing it needs Robolectric or an instrumentation harness for the repository as
+        // a whole, and `docs/decisions/0003` records that argument once so it is not had again per
+        // build file.
         withHostTest {}
     }
 
@@ -50,9 +52,11 @@ kotlin {
         /**
          * Tests that need a composition on screen.
          *
-         * As in `agui-material3`: the one thing this module publishes draws, so everything lives
-         * here and `commonTest` stays empty. Of the three targets compiled, two run -- `iosArm64`
-         * is a device target, so Kotlin links the test binary without creating a task that runs it.
+         * As in `agui-material3`: the renderer draws, so its tests live here. `commonTest` is not
+         * empty, though -- the two style factories are pure, and testing them there rather than
+         * here is what gets them onto Android. Of the three targets compiled, two run --
+         * `iosArm64` is a device target, so Kotlin links the test binary without creating a task
+         * that runs it.
          */
         val composeUiTest = create("composeUiTest") {
             dependsOn(commonTest.get())

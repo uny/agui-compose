@@ -113,10 +113,13 @@ only the parser leaves `Markdown` holding the previous snapshot's syntax tree wh
 of the new parser, and indexing an old document's node ranges into an empty string crashes. That was
 found by a test rather than by reading, and the test is kept.
 
-This is the third module whose Android target compiles and runs no tests: everything here draws, so
-everything lives in `composeUiTest`, which Android does not depend on. Decision 3 recorded the hole
-and the two ways out of it; nothing here changes that argument, and it is not re-litigated per
-module.
+This module's Android target runs the style tests and none of the drawing ones. That makes it the
+first of the three to run anything on Android, and for a reason worth naming rather than
+celebrating: the two style factories are pure, so their tests need no composition and live in
+`commonTest`, which `androidHostTest` does take. Everything that draws still lives in
+`composeUiTest`, which it does not — so the renderer itself, the part with the streaming logic in
+it, is still untested on Android. Decision 3 recorded that hole and the two ways out of it; this
+narrows it without closing it, and the argument is not re-litigated here.
 
 The published surface is one class and two functions. Swapping the parser later is a change to this
 module's internals plus whichever of `MarkdownColors` and `MarkdownTypography` a caller named --
