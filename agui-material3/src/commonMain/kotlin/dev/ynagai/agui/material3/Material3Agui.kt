@@ -58,8 +58,10 @@ private val Material3Components = AguiComponents(
  *
  * ```
  * MaterialTheme {
- *     ProvideMaterial3Agui {
- *         AguiTranscript(transcript)
+ *     Surface {
+ *         ProvideMaterial3Agui {
+ *             AguiTranscript(transcript)
+ *         }
  *     }
  * }
  * ```
@@ -68,6 +70,14 @@ private val Material3Components = AguiComponents(
  * would mean a nested theme inside every application that already has its own -- and quietly
  * discarding that application's colour scheme, which is the one thing a design-system layer must
  * not do.
+ *
+ * The `Surface` is the caller's job for a weaker reason but a sharper one. `MaterialTheme` does not
+ * provide `LocalContentColor`; it is left at Material 3's default of black until a `Surface`
+ * derives it from the background it paints. So a dark theme with no `Surface` above this call draws
+ * black prose on a dark ground -- which is the failure [Material3AguiTextRenderer] exists to
+ * prevent, arriving from the one direction this module cannot reach. Most applications already have
+ * a `Scaffold` or a `Surface` and never see it; the snippet above carries one so that the shortest
+ * path through this API is not the broken one.
  *
  * @param textRenderer the seam a Markdown implementation is fitted through. Pass one and the slots
  *   in this module keep working: prose draws through whatever is provided here, framed by Material

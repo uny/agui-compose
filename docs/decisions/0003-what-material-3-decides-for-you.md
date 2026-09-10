@@ -76,8 +76,16 @@ once rather than argued again in a third build file.
 
 ## Consequences
 
-A consumer gets a styled transcript from two composables and a `MaterialTheme`. The seam Decision 2
-built survives the styling: Markdown arrives by providing a renderer, not by replacing slots.
+A consumer gets a styled transcript from two composables, a `MaterialTheme` and a `Surface`. The
+seam Decision 2 built survives the styling: Markdown arrives by providing a renderer, not by
+replacing slots.
+
+The `Surface` is load-bearing and is easy to leave out. `MaterialTheme` does not provide
+`LocalContentColor` -- Material 3 leaves it at black until a `Surface` derives it from the
+background it paints -- so `MaterialTheme { ProvideMaterial3Agui { … } }`, which is otherwise the
+shortest correct-looking path through this API, draws black prose on a dark ground. Nothing this
+module can do reaches that: it is exactly the failure `Material3AguiTextRenderer` exists to prevent,
+arriving from above the layer that renderer sits in. So the documented snippets carry a `Surface`.
 
 `Material3AguiComponents()` returns a singleton, so the usual hazard of building a table inside a
 `provides` -- both slot locals are `staticCompositionLocalOf`, and an unequal value recomposes the

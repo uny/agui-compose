@@ -142,8 +142,10 @@ requirement. The `streaming` flag is there so a parser can hold back half-typed 
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 
 MaterialTheme {
-    ProvideMaterial3Agui {
-        AguiTranscript(transcript)
+    Surface {
+        ProvideMaterial3Agui {
+            AguiTranscript(transcript)
+        }
     }
 }
 ```
@@ -152,6 +154,12 @@ User messages become end-aligned tonal bubbles, assistant answers stay full widt
 collapses into a disclosure when its stream ends, and tool calls and attachments get surfaces of
 their own. `MaterialTheme` stays yours — this provides no theme of its own, so your colour scheme
 and type scale are what it draws with.
+
+The `Surface` is not decoration. `MaterialTheme` sets a colour scheme but does not provide
+`LocalContentColor`, which is left at Material 3's own default of black; a `Surface` is what
+derives it from the background it paints. Without one, a dark theme draws this transcript's prose
+black on a dark ground. Any `Scaffold` or `Surface` you already have counts — but the two-composable
+version of this snippet is a trap in dark mode, so it is written with three.
 
 It provides **two** composition locals, and that is why the function exists: the slot table, and a
 text renderer that draws through Material 3's `Text` instead of `BasicText`. Providing only the
