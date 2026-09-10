@@ -1,6 +1,6 @@
 public final class dev/ynagai/agui/markdown/MarkdownAguiStyleKt {
-	public static final fun markdownAguiColors-t635Npw (JJJJJ)Lcom/mikepenz/markdown/model/MarkdownColors;
-	public static synthetic fun markdownAguiColors-t635Npw$default (JJJJJILjava/lang/Object;)Lcom/mikepenz/markdown/model/MarkdownColors;
+	public static final fun markdownAguiColors-EXAOFh0 (JJJJJLcom/mikepenz/markdown/model/MarkdownAlertColors;)Lcom/mikepenz/markdown/model/MarkdownColors;
+	public static synthetic fun markdownAguiColors-EXAOFh0$default (JJJJJLcom/mikepenz/markdown/model/MarkdownAlertColors;ILjava/lang/Object;)Lcom/mikepenz/markdown/model/MarkdownColors;
 	public static final fun markdownAguiTypography (Landroidx/compose/ui/text/TextStyle;)Lcom/mikepenz/markdown/model/MarkdownTypography;
 	public static synthetic fun markdownAguiTypography$default (Landroidx/compose/ui/text/TextStyle;ILjava/lang/Object;)Lcom/mikepenz/markdown/model/MarkdownTypography;
 }
