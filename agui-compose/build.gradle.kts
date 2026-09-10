@@ -67,9 +67,14 @@ kotlin {
         /**
          * Tests that need a composition on screen.
          *
-         * The JVM and the two iOS targets, and not Android: its host test task has no composition
-         * to draw into without an instrumentation or Robolectric harness, and this module carries
-         * neither. The default renderers therefore ship in the `.aar` with nothing drawing them on
+         * Compiled for the JVM and both iOS targets, and not Android: its host test task has no
+         * composition to draw into without an instrumentation or Robolectric harness, and this
+         * module carries neither.
+         *
+         * Two of those three actually *run*. `iosArm64` is a device target, so Kotlin builds and
+         * links the test binary but creates no task that executes it; what the edge buys there is
+         * a compile against the device klib, which catches an API that exists in the simulator's
+         * and not in it. Assertions execute on `jvm` and `iosSimulatorArm64`. The default renderers therefore ship in the `.aar` with nothing drawing them on
          * that target. That is a real gap rather than a justified exclusion, and it is written down
          * here so it is not mistaken for one.
          *

@@ -47,6 +47,12 @@ public fun interface AguiTextRenderer {
  * transcript, so there is nothing to gain from tracking reads of it, and a static local keeps a
  * long transcript from invalidating one composition per part when it does change.
  *
+ * Which makes *what counts as a swap* the caller's problem, so: `remember` the renderer. An
+ * [AguiTextRenderer] built inside the `provides` is a new instance on every recomposition as soon
+ * as its lambda captures anything, and this interface has no `equals` beyond identity -- so the
+ * whole transcript re-renders, and a Markdown implementation re-parses every visible run, on every
+ * frame of a streaming response.
+ *
  * The default is [PlainAguiTextRenderer] -- literal text, no parsing. A transcript therefore draws
  * correctly out of the box and shows Markdown syntax as the characters it is, which is honest about
  * what this module does rather than silently degrading.

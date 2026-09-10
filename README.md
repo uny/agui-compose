@@ -95,12 +95,22 @@ AguiTranscript(transcript)
 shape. Each kind of part goes through a slot in `AguiComponents`, replaced one at a time by `copy`:
 
 ```kotlin
-CompositionLocalProvider(
-    LocalAguiComponents provides AguiComponents().copy(
+val components = remember {
+    AguiComponents().copy(
         toolCall = { part, modifier -> MyToolCallCard(part, modifier) },
-    ),
-) { AguiTranscript(transcript) }
+    )
+}
+
+CompositionLocalProvider(LocalAguiComponents provides components) { AguiTranscript(transcript) }
 ```
+
+**`remember` the table, rather than building it in the `provides`.** Both locals here are
+`staticCompositionLocalOf`, which does not track reads: a value it does not consider equal to the
+last one recomposes the whole subtree under it, skipping disabled. A slot lambda that captures
+anything — a click handler, a theme value, view-model state — makes a fresh unequal table on every
+recomposition of the composable holding the provider, so every visible part redraws on every frame
+of a streaming response. Measured on a three-message transcript: a capturing override re-runs all
+three part slots per recomposition, a `remember`ed one re-runs none.
 
 **Markdown is not a dependency of this library.** `TEXT_MESSAGE_CONTENT` carries a string and the
 protocol says nothing about its syntax, so which flavour to parse — and whether to parse at all —
@@ -108,11 +118,13 @@ is the application's call. The default renderer draws the text literally; a rich
 through `LocalAguiTextRenderer`, and serves both prose parts at once:
 
 ```kotlin
-CompositionLocalProvider(
-    LocalAguiTextRenderer provides AguiTextRenderer { text, streaming, modifier ->
+val renderer = remember {
+    AguiTextRenderer { text, streaming, modifier ->
         Markdown(text, modifier)   // any renderer you like
-    },
-) { AguiTranscript(transcript) }
+    }
+}
+
+CompositionLocalProvider(LocalAguiTextRenderer provides renderer) { AguiTranscript(transcript) }
 ```
 
 The renderer is handed the whole run as it currently stands rather than the latest delta, so

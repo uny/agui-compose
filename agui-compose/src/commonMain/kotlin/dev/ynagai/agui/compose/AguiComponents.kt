@@ -28,10 +28,16 @@ import dev.ynagai.agui.model.UiPart
  * rest:
  *
  * ```
- * CompositionLocalProvider(
- *     LocalAguiComponents provides AguiComponents().copy(toolCall = { part, modifier -> ... }),
- * ) { AguiTranscript(transcript) }
+ * val components = remember { AguiComponents().copy(toolCall = { part, modifier -> ... }) }
+ *
+ * CompositionLocalProvider(LocalAguiComponents provides components) { AguiTranscript(transcript) }
  * ```
+ *
+ * The `remember` is not decoration. [LocalAguiComponents] is static, so a table this composition
+ * does not consider equal to the last one recomposes everything under it with skipping disabled --
+ * and a slot lambda that captures anything makes exactly that on every recomposition of whatever
+ * holds the provider. Built in the `provides`, a capturing override redraws every visible part on
+ * every frame of a streaming response; hoisted into a `remember`, none of them redraw.
  *
  * The defaults draw structure and nothing else -- no colour, no spacing, no shape. That is not an
  * unfinished state: this module sits below any design system, and a default that guessed at
@@ -121,6 +127,11 @@ public data class AguiComponents(
  * `static` for the same reason [LocalAguiTextRenderer] is: replacing the table restyles the whole
  * transcript at once, so tracking per-part reads would buy nothing and would cost one invalidation
  * per part on the change it is meant to make cheap.
+ *
+ * The cost of that choice lands on the caller, so it is stated rather than left to be discovered:
+ * every value this local has not seen before is a full restyle, and an [AguiComponents] built
+ * inside the `provides` is a value it has not seen before whenever one of its slots captures.
+ * `remember` the table.
  */
 public val LocalAguiComponents: ProvidableCompositionLocal<AguiComponents> =
     staticCompositionLocalOf { AguiComponents() }
