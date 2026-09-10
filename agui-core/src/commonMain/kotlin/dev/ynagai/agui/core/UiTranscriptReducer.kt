@@ -81,6 +81,9 @@ public class UiTranscriptReducer(
 ) {
     private val messages = mutableListOf<MessageBuilder>()
 
+    /** Every [UiMessage.id] currently in [messages], so a reused one is caught as it is minted. */
+    private val messageIds = mutableSetOf<String>()
+
     /**
      * The assistant turn currently being built, if any.
      *
@@ -345,9 +348,41 @@ public class UiTranscriptReducer(
 
     // ---- Turn management ---------------------------------------------------------------------
 
+    /**
+     * A [MessageBuilder] whose id no other message in the transcript is using.
+     *
+     * `UiMessage.id` is what a renderer keys on, and Compose's `LazyColumn` throws outright on a
+     * duplicate key rather than degrading -- so a collision is a crash in the consumer, not a
+     * cosmetic fault. The wire promises no uniqueness, and two paths reach a collision with a
+     * producer doing nothing wrong:
+     *
+     * - a producer that numbers message ids from one on every run. [startNewRun] already
+     *   anticipates exactly that, and deliberately answers it with a *second* message rather than
+     *   by appending to the settled first -- which is right, and which is what mints the duplicate.
+     * - an `ACTIVITY_SNAPSHOT` naming a `messageId` that a user, system or developer text message
+     *   already took: [applyActivitySnapshot] consults only its own map, so it cannot see the
+     *   clash.
+     *
+     * Both are this reducer's own doing, so the disambiguation belongs here. The alternative --
+     * a renderer that distrusts every id it is handed -- pushes the cost onto every consumer and
+     * still leaves the model self-inconsistent for anyone matching messages by id.
+     *
+     * The suffix is only ever appended to the *later* message, so an id that never collides is
+     * passed through untouched and the common case stays byte-identical to the wire's.
+     */
+    private fun mintMessage(id: String, role: UiRole, name: String? = null): MessageBuilder {
+        var unique = id
+        var n = 1
+        while (!messageIds.add(unique)) {
+            n++
+            unique = "$id#$n"
+        }
+        return MessageBuilder(id = unique, role = role, name = name)
+    }
+
     /** The assistant turn to append to, opening one keyed by [fallbackId] if none is open. */
     private fun assistantTurn(fallbackId: String): MessageBuilder =
-        openAssistant ?: MessageBuilder(id = fallbackId, role = UiRole.ASSISTANT)
+        openAssistant ?: mintMessage(id = fallbackId, role = UiRole.ASSISTANT)
             .also {
                 openAssistant = it
                 messages += it
@@ -477,7 +512,7 @@ public class UiTranscriptReducer(
             // arrived.
             else -> {
                 detachTurn()
-                MessageBuilder(id = messageId, role = uiRole).also { messages += it }
+                mintMessage(id = messageId, role = uiRole).also { messages += it }
             }
         }
         textParts[messageId] = PartRef(owner, owner.append(part))
@@ -681,7 +716,7 @@ public class UiTranscriptReducer(
             // Created at the point of arrival, so it keeps its place in the sequence. Detached
             // rather than finalised: text streaming underneath keeps streaming.
             detachTurn()
-            val message = MessageBuilder(id = event.messageId, role = UiRole.ACTIVITY)
+            val message = mintMessage(id = event.messageId, role = UiRole.ACTIVITY)
             message.append(
                 ActivityPart(
                     id = "activity:${event.messageId}",
@@ -735,6 +770,7 @@ public class UiTranscriptReducer(
      */
     private fun replaceMessages(snapshot: List<Message>) {
         messages.clear()
+        messageIds.clear()
         textParts.clear()
         textOwners.clear()
         reasoningParts.clear()
@@ -763,7 +799,7 @@ public class UiTranscriptReducer(
                 }
 
                 is ActivityMessage -> {
-                    val builder = MessageBuilder(id = message.id, role = UiRole.ACTIVITY)
+                    val builder = mintMessage(id = message.id, role = UiRole.ACTIVITY)
                     builder.append(
                         ActivityPart(
                             id = "activity:${message.id}",
@@ -777,7 +813,7 @@ public class UiTranscriptReducer(
                 }
 
                 is AssistantMessage -> {
-                    val builder = MessageBuilder(message.id, UiRole.ASSISTANT, message.name)
+                    val builder = mintMessage(message.id, UiRole.ASSISTANT, message.name)
                     // Registered unconditionally: `TOOL_CALL_START.parentMessageId` names the
                     // message, not its text, and an assistant message restored with tool calls and
                     // no prose is exactly the shape a later call points back at.
@@ -806,7 +842,7 @@ public class UiTranscriptReducer(
                 }
 
                 is UserMessage -> {
-                    val builder = MessageBuilder(message.id, UiRole.USER, message.name)
+                    val builder = mintMessage(message.id, UiRole.USER, message.name)
                     val contentParts = message.contentParts
                     if (contentParts != null) {
                         contentParts.forEachIndexed { index, content ->
@@ -845,7 +881,7 @@ public class UiTranscriptReducer(
 
                 is SystemMessage, is DeveloperMessage -> {
                     val role = if (message is SystemMessage) UiRole.SYSTEM else UiRole.DEVELOPER
-                    val builder = MessageBuilder(message.id, role, message.name)
+                    val builder = mintMessage(message.id, role, message.name)
                     message.content?.let {
                         builder.append(
                             TextPart(id = "text:${message.id}", text = it, messageId = message.id),
