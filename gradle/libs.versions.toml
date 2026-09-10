@@ -12,8 +12,9 @@ dokka = "2.2.0"
 # in `agui-compose/build.gradle.kts`.
 composeMultiplatform = "1.12.0"
 
-# material3 ships on its own version line, independent of the Compose Multiplatform release. Here
-# for `agui-material3`; no module consumes it yet.
+# material3 ships on its own version line, independent of the Compose Multiplatform release, and
+# resolves its own `foundation`/`ui` requirements to `composeMultiplatform` above rather than to the
+# 1.9.1 it asks for. Consumed by `agui-material3`, and by nothing below it.
 composeMaterial3 = "1.9.0"
 
 # The upstream AG-UI Kotlin SDK. The Maven group is `com.ag-ui.community`; `com.agui` is only the
