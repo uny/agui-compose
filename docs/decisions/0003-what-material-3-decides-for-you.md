@@ -87,8 +87,15 @@ whole transcript with skipping disabled -- does not apply to the call itself. It
 This module owns exactly one piece of mutable state: the reasoning disclosure. It follows the
 stream while reasoning arrives and collapses when it ends, until the reader touches it, after which
 their choice stands. The state is `remember` rather than `rememberSaveable`, so an expansion is
-forgotten if the part scrolls out of the `LazyColumn`'s composition -- `rememberSaveable` would add
-`compose-runtime-saveable` to a module whose whole argument is that it adds only Material 3.
+forgotten if the part scrolls out of the `LazyColumn`'s composition.
+
+That limitation is not paid for by a dependency this module declined to take. `runtime-saveable`
+is already on this module's compile classpath -- `agui-compose` exposes `foundation` as `api`,
+`foundation` depends on `ui-text`, and `ui-text` depends on `runtime-saveable` -- so
+`rememberSaveable` compiles here on every target with no artifact added to any consumer's graph.
+The open question is behavioural rather than about size: whether a disclosure the reader opened
+should survive the scroll, and process death with it. Nobody has answered it, so the module ships
+the smaller behaviour.
 
 Every user-visible word is English and not localised, collected in one internal `AguiStrings` so
 the cost is visible rather than spread across five files. There is no multiplatform resource

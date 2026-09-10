@@ -39,12 +39,14 @@ import dev.ynagai.agui.model.ReasoningPart
  * an answer that no longer changes on its own.
  *
  * The state is `remember`, not `rememberSaveable`, so a long transcript scrolled far enough for
- * this part to leave the `LazyColumn`'s composition forgets an expansion the reader chose. That is
- * a real limitation rather than an oversight: `rememberSaveable` would add
- * `compose-runtime-saveable` to a module whose whole argument is that it adds only Material 3, to
- * buy back a case -- reader expands finished reasoning, scrolls past it, scrolls back -- that
- * `agui-compose` does not have a way to be asked about. An application that needs it hoists the
- * state and replaces this slot.
+ * this part to leave the `LazyColumn`'s composition forgets an expansion the reader chose. That
+ * limitation is real, and it is **not** bought by keeping a dependency out: `runtime-saveable`
+ * already resolves here through `foundation`, which `agui-compose` exposes as `api`, so
+ * `rememberSaveable` compiles in this module today and adds no artifact to anybody's graph. What
+ * is left is a behavioural question nobody has answered -- whether a disclosure the reader opened
+ * should outlive the scroll, and process death with it -- and until it is answered this is the
+ * smaller of the two behaviours. An application that needs the other one hoists the state and
+ * replaces this slot.
  */
 @Composable
 internal fun Material3Reasoning(part: ReasoningPart, modifier: Modifier) {
