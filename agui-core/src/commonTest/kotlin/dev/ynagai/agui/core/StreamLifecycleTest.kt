@@ -190,7 +190,7 @@ class StreamLifecycleTest {
     }
 
     @Test
-    fun a_second_thinking_block_in_one_run_streams_again() {
+    fun a_second_thinking_block_in_one_run_is_its_own_part_and_streams() {
         val reducer = UiTranscriptReducer()
         reducer.accept(RunStartedEvent(threadId = "t", runId = "r"))
         reducer.accept(ThinkingStartEvent(title = "First"))
@@ -201,10 +201,11 @@ class StreamLifecycleTest {
         reducer.accept(ThinkingTextMessageStartEvent())
         reducer.accept(ThinkingTextMessageContentEvent(delta = "bbb"))
 
-        val part = reducer.transcript.messages.flatMap { it.parts }.filterIsInstance<ReasoningPart>().single()
-        assertEquals("aaabbb", part.text)
-        assertEquals("Second", part.title)
-        assertTrue(part.streaming, "the agent was still deliberating into a part declared finished")
+        val parts = reducer.transcript.messages.flatMap { it.parts }.filterIsInstance<ReasoningPart>()
+        assertEquals(listOf("aaa", "bbb"), parts.map { it.text }, "two blocks folded into one part")
+        assertEquals(listOf("First", "Second"), parts.map { it.title })
+        assertFalse(parts[0].streaming)
+        assertTrue(parts[1].streaming, "the agent was still deliberating into a part declared finished")
     }
 
     // ---- REASONING_ENCRYPTED_VALUE is addressed, not guessed ---------------------------------
