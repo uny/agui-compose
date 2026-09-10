@@ -79,6 +79,12 @@ between the run so far and what it has already seen; when it flips to `false`, t
 parsed complete, synchronously, so the finished answer does not blink out for a frame while an
 asynchronous parse lands.
 
+**The unsettled tail is drawn while it streams,** rather than held back until the syntax that could
+still change its meaning has arrived. Holding it back was the shape originally imagined for this
+flag -- do not show a half-typed fence -- and it is the wrong one: the tail of a response being
+typed is usually a sentence, not a fence, so suppressing it would leave every paragraph invisible
+until the blank line that ends it. What the flag buys is the incremental parse, not suppression.
+
 ## Consequences
 
 The two-lambda requirement is a real edge. A renderer constructed with defaults and provided inside

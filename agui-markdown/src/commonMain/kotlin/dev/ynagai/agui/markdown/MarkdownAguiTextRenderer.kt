@@ -104,10 +104,10 @@ public class MarkdownAguiTextRenderer(
      * document and re-parses only the tail, which turns a quadratic cost over the length of a
      * response into a linear one.
      *
-     * It also stops the document from twitching. A re-parse of a partial response re-derives the
-     * whole tree, so a fence that is not closed yet is a paragraph on one frame and a code block on
-     * the next; the streaming parser holds the unsettled tail separately and only promotes it once
-     * the syntax that would change its meaning cannot still arrive.
+     * The unsettled tail is drawn, not held back -- that is the parser's own behaviour and it is
+     * the behaviour worth having. Syntax that is not finished is on screen as whatever it currently
+     * parses to, which for prose is the sentence being typed; holding the tail back instead would
+     * leave every paragraph invisible until the blank line that ends it.
      */
     @Composable
     private fun Streaming(
@@ -135,11 +135,14 @@ public class MarkdownAguiTextRenderer(
             // schedule the next one -- which is a recomposition loop that pins the frame thread,
             // not a slow renderer.
             LaunchedEffect(state, text) {
-                val fed = state.content.toString()
+                // `content` is the parser's own buffer, compared rather than copied: a `toString`
+                // here would allocate the run again per token, which is the cost this path exists
+                // to avoid.
+                val fed = state.content
                 when {
-                    text == fed -> Unit
-                    text.startsWith(fed) -> state.append(text.substring(fed.length))
-                    else -> generation++
+                    !text.startsWith(fed) -> generation++
+                    text.length > fed.length -> state.append(text.substring(fed.length))
+                    else -> Unit
                 }
             }
 
