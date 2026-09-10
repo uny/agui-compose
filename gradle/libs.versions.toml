@@ -17,6 +17,12 @@ composeMultiplatform = "1.12.0"
 # 1.9.1 it asks for. Consumed by `agui-material3`, and by nothing below it.
 composeMaterial3 = "1.9.0"
 
+# The Markdown parser and renderer behind `agui-markdown`. 0.45.0 is the newest release, and it
+# publishes exactly this repository's UI target set -- `android`, `jvm`, `ios_arm64`,
+# `ios_simulator_arm64` -- alongside targets this repository does not take. Its streaming parser
+# (`StreamingMarkdownState`) landed in 0.42.0.
+markdownRenderer = "0.45.0"
+
 # The upstream AG-UI Kotlin SDK. The Maven group is `com.ag-ui.community`; `com.agui` is only the
 # package prefix, which is easy to mistake for the coordinate.
 #
@@ -54,6 +60,14 @@ compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", v
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "composeMultiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" }
+
+# The plain artifact, not `-m3`. `-m3` is a thin layer whose whole content is `markdownColor()` and
+# `markdownTypography()` reading `MaterialTheme`, and taking it would put a design system under
+# every consumer of `agui-markdown` -- the same reason this parser is not folded into
+# `agui-material3`. Note that it would not arrive transitively: this library declares every Compose
+# dependency `compileOnly`, so neither artifact carries `material3` in its metadata and a module
+# using `-m3` has to declare `material3` itself. See `docs/decisions/0004`.
+markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "markdownRenderer" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

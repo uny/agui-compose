@@ -1,0 +1,15 @@
+public final class dev/ynagai/agui/markdown/MarkdownAguiStyleKt {
+	public static final fun markdownAguiColors-t635Npw (JJJJJ)Lcom/mikepenz/markdown/model/MarkdownColors;
+	public static synthetic fun markdownAguiColors-t635Npw$default (JJJJJILjava/lang/Object;)Lcom/mikepenz/markdown/model/MarkdownColors;
+	public static final fun markdownAguiTypography (Landroidx/compose/ui/text/TextStyle;)Lcom/mikepenz/markdown/model/MarkdownTypography;
+	public static synthetic fun markdownAguiTypography$default (Landroidx/compose/ui/text/TextStyle;ILjava/lang/Object;)Lcom/mikepenz/markdown/model/MarkdownTypography;
+}
+
+public final class dev/ynagai/agui/markdown/MarkdownAguiTextRenderer : dev/ynagai/agui/compose/AguiTextRenderer {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lorg/intellij/markdown/flavours/MarkdownFlavourDescriptor;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lorg/intellij/markdown/flavours/MarkdownFlavourDescriptor;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun Render (Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+}
+

@@ -12,7 +12,9 @@ and why, is in
 three — no design system, no Markdown parser, one fewer target — are in
 [docs/decisions/0002](docs/decisions/0002-what-the-ui-layer-does-not-depend-on.md), and what the
 Material 3 layer decides on your behalf is in
-[docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md).
+[docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md). Fitting a Markdown
+parser under all of it, without a design system to style it from, is
+[docs/decisions/0004](docs/decisions/0004-parsing-markdown-without-a-design-system.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -28,9 +30,10 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | not yet |
 | `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | not yet |
 | `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
+| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
 
-`agui-markdown`, `agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an
-optional dependency) and the `agui-provider-*` adapters come next.
+`agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an optional dependency) and
+the `agui-provider-*` adapters come next.
 
 ## Targets
 
@@ -132,7 +135,33 @@ CompositionLocalProvider(LocalAguiTextRenderer provides renderer) { AguiTranscri
 
 The renderer is handed the whole run as it currently stands rather than the latest delta, so
 re-parsing on every recomposition is correct; an incremental parser is an optimisation, not a
-requirement. The `streaming` flag is there so a parser can hold back half-typed syntax.
+requirement. The `streaming` flag is there so a parser can tell a run still arriving from a finished
+one.
+
+`agui-markdown` is that renderer, written once:
+
+```kotlin
+val renderer = remember { MarkdownAguiTextRenderer() }
+```
+
+It parses incrementally while `streaming` is true — the settled part of the document stays parsed
+and only the tail is re-read — and parses the finished text complete when the run ends. **Its
+defaults draw black text at Compose's default size,** because the module sits below any design
+system and has nothing ambient to read; under Material 3, hand it the ambient values:
+
+```kotlin
+val renderer = remember {
+    MarkdownAguiTextRenderer(
+        colors = { markdownAguiColors(text = LocalContentColor.current) },
+        typography = { markdownAguiTypography(base = LocalTextStyle.current) },
+    )
+}
+```
+
+Those are `@Composable` lambdas rather than values so that one `remember` with no keys still follows
+a theme change — reconstructing the renderer to pick one up would re-parse every visible run on
+every frame. The reasoning, and why this is a separate module from `agui-material3`, is in
+[docs/decisions/0004](docs/decisions/0004-parsing-markdown-without-a-design-system.md).
 
 ### Making it look like something
 
@@ -171,7 +200,12 @@ themselves, so a renderer you fit keeps every Material 3 frame around it:
 
 ```kotlin
 ProvideMaterial3Agui(
-    textRenderer = remember { AguiTextRenderer { text, _, modifier -> Markdown(text, modifier) } },
+    textRenderer = remember {
+        MarkdownAguiTextRenderer(
+            colors = { markdownAguiColors(text = LocalContentColor.current) },
+            typography = { markdownAguiTypography(base = LocalTextStyle.current) },
+        )
+    },
     components = remember { Material3AguiComponents().copy(file = ::MyAttachmentTile) },
 ) {
     AguiTranscript(transcript)

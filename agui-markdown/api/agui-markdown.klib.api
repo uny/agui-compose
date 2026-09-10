@@ -1,0 +1,19 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-markdown>
+final class dev.ynagai.agui.markdown/MarkdownAguiTextRenderer : dev.ynagai.agui.compose/AguiTextRenderer { // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer|null[0]
+    constructor <init>(kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, com.mikepenz.markdown.model/MarkdownColors> = ..., kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, com.mikepenz.markdown.model/MarkdownTypography> = ..., org.intellij.markdown.flavours/MarkdownFlavourDescriptor = ...) // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer.<init>|<init>(kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,com.mikepenz.markdown.model.MarkdownColors>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,com.mikepenz.markdown.model.MarkdownTypography>;org.intellij.markdown.flavours.MarkdownFlavourDescriptor){}[0]
+
+    final fun Render(kotlin/String, kotlin/Boolean, androidx.compose.ui/Modifier, androidx.compose.runtime/Composer?, kotlin/Int) // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer.Render|Render(kotlin.String;kotlin.Boolean;androidx.compose.ui.Modifier;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+}
+
+final val dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop|#static{}dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop[0]
+
+final fun dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter(): kotlin/Int // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter|dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter(){}[0]
+final fun dev.ynagai.agui.markdown/markdownAguiColors(androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ...): com.mikepenz.markdown.model/MarkdownColors // dev.ynagai.agui.markdown/markdownAguiColors|markdownAguiColors(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color){}[0]
+final fun dev.ynagai.agui.markdown/markdownAguiTypography(androidx.compose.ui.text/TextStyle = ...): com.mikepenz.markdown.model/MarkdownTypography // dev.ynagai.agui.markdown/markdownAguiTypography|markdownAguiTypography(androidx.compose.ui.text.TextStyle){}[0]
