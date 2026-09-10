@@ -12,6 +12,12 @@ plugins {
 kotlin {
     explicitApi()
 
+    // The published JVM floor, pinned rather than inherited. Upstream's
+    // `kotlin-core-jvm` is class-file 65, so 21 is the lowest this can be; without a
+    // toolchain the class-file version is whichever JDK ran Gradle, which makes the
+    // floor promised in the README an accident of the publisher's machine.
+    jvmToolchain(21)
+
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation()
 

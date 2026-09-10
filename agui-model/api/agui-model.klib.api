@@ -220,10 +220,12 @@ final class dev.ynagai.agui.model/TextPart : dev.ynagai.agui.model/UiPart { // d
 }
 
 final class dev.ynagai.agui.model/ToolCallPart : dev.ynagai.agui.model/UiPart { // dev.ynagai.agui.model/ToolCallPart|null[0]
-    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // dev.ynagai.agui.model/ToolCallPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // dev.ynagai.agui.model/ToolCallPart.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
 
     final val arguments // dev.ynagai.agui.model/ToolCallPart.arguments|{}arguments[0]
         final fun <get-arguments>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.arguments.<get-arguments>|<get-arguments>(){}[0]
+    final val encryptedValue // dev.ynagai.agui.model/ToolCallPart.encryptedValue|{}encryptedValue[0]
+        final fun <get-encryptedValue>(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.encryptedValue.<get-encryptedValue>|<get-encryptedValue>(){}[0]
     final val error // dev.ynagai.agui.model/ToolCallPart.error|{}error[0]
         final fun <get-error>(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.error.<get-error>|<get-error>(){}[0]
     final val id // dev.ynagai.agui.model/ToolCallPart.id|{}id[0]
@@ -242,6 +244,7 @@ final class dev.ynagai.agui.model/ToolCallPart : dev.ynagai.agui.model/UiPart { 
         final fun <get-toolCallId>(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.toolCallId.<get-toolCallId>|<get-toolCallId>(){}[0]
 
     final fun component1(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component1|component1(){}[0]
+    final fun component10(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component10|component10(){}[0]
     final fun component2(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component2|component2(){}[0]
     final fun component3(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component3|component3(){}[0]
     final fun component4(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.component4|component4(){}[0]
@@ -250,7 +253,7 @@ final class dev.ynagai.agui.model/ToolCallPart : dev.ynagai.agui.model/UiPart { 
     final fun component7(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component7|component7(){}[0]
     final fun component8(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component8|component8(){}[0]
     final fun component9(): kotlin/String? // dev.ynagai.agui.model/ToolCallPart.component9|component9(){}[0]
-    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): dev.ynagai.agui.model/ToolCallPart // dev.ynagai.agui.model/ToolCallPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., dev.ynagai.agui.model/ToolCallStatus = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): dev.ynagai.agui.model/ToolCallPart // dev.ynagai.agui.model/ToolCallPart.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;dev.ynagai.agui.model.ToolCallStatus;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/ToolCallPart.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/ToolCallPart.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.toString|toString(){}[0]

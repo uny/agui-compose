@@ -46,8 +46,13 @@ class FlowsTest {
     fun replays_from_empty_on_every_collection() = runTest {
         val transcripts = run.foldToTranscript()
 
-        assertEquals(1, transcripts.toList().last().messages.size)
+        val first = transcripts.toList().last().messages.single()
         // The second collection sees the same conversation, not that one appended to itself.
-        assertEquals(1, transcripts.toList().last().messages.size)
+        // Asserted on the text: a shared reducer keeps the message count at one either way,
+        // because `openText` treats the replayed id as a stream it already has open -- it is the
+        // text that doubles.
+        val second = transcripts.toList().last().messages.single()
+        assertEquals(first.text, second.text)
+        assertEquals("Hello", second.text)
     }
 }

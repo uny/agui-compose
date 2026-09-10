@@ -49,7 +49,9 @@ public data class TextPart(
  * often collapsed by default, and a renderer that treated reasoning as text would put an agent's
  * private deliberation in the same visual place as its answer.
  *
- * @property title the value `REASONING_START` carried, when it carried one.
+ * @property title the value the deprecated `THINKING_START` carried, when it carried one.
+ *   `REASONING_START` -- the spelling that replaced it -- has no title field at all, so a part
+ *   built from the current events is always untitled.
  * @property encryptedValues opaque blobs from `REASONING_ENCRYPTED_VALUE`. They are not renderable
  *   and are kept only so that a client which must echo them back to the agent still can.
  */
@@ -78,6 +80,9 @@ public data class EncryptedReasoningValue(
  *   fragment. [ToolCallPart.parsedArguments] is the parsed form, and is null until it parses.
  * @property result the tool's output, once a `TOOL_CALL_RESULT` names this call. Its shape is the
  *   tool's own business, so it is left as the string the protocol carries.
+ * @property encryptedValue the opaque blob a `REASONING_ENCRYPTED_VALUE` with `subtype` `tool-call`
+ *   addressed to this call by `entityId`. Not renderable, and kept for the same reason
+ *   [ReasoningPart.encryptedValues] is: a client that must echo it back to the agent still can.
  */
 public data class ToolCallPart(
     override val id: String,
@@ -89,6 +94,7 @@ public data class ToolCallPart(
     public val result: String? = null,
     public val error: String? = null,
     public val parentMessageId: String? = null,
+    public val encryptedValue: String? = null,
 ) : UiPart
 
 /**
@@ -143,4 +149,10 @@ public data class FilePart(
     public val url: String? = null,
     public val data: String? = null,
     public val filename: String? = null,
-) : UiPart
+) : UiPart {
+    init {
+        require(remoteId != null || url != null || data != null) {
+            "A file part needs one of remoteId, url or data; none was given."
+        }
+    }
+}

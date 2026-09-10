@@ -91,7 +91,18 @@ public class UiTranscriptReducer(
      */
     private var openAssistant: MessageBuilder? = null
 
+    /** Text streams open *in this run*: "is there a stream with this id still taking content?" */
     private val textParts = mutableMapOf<String, PartRef>()
+
+    /**
+     * Which message each text id ever landed in -- a different question, and a durable one.
+     *
+     * `TOOL_CALL_START.parentMessageId` names a message that may belong to an earlier run, so this
+     * outlives [textParts], which a new run clears. Keeping one map for both meant a run boundary
+     * had to choose between losing that resolution and letting a reused id stream into a message
+     * already settled.
+     */
+    private val textOwners = mutableMapOf<String, MessageBuilder>()
     private val reasoningParts = mutableMapOf<String, PartRef>()
     private val toolParts = mutableMapOf<String, PartRef>()
     private val activityMessages = mutableMapOf<String, MessageBuilder>()
@@ -99,6 +110,24 @@ public class UiTranscriptReducer(
     private var lastTextMessageId: String? = null
     private var lastToolCallId: String? = null
     private var lastReasoningMessageId: String? = null
+
+    // A chunk event is start, content and -- implicitly -- end in one. Nothing on the wire closes
+    // it: the stream ends when a chunk for a different id arrives, or when the run does. These
+    // hold the id still open so that transition can be detected, exactly as the upstream SDK's
+    // own chunk transform does before handing events to its state layer.
+    private var pendingTextChunkId: String? = null
+    private var pendingToolChunkId: String? = null
+
+    /**
+     * The `REASONING_START` stream currently open, if any.
+     *
+     * A stream is not a part. `REASONING_START` names the *stream*, `REASONING_MESSAGE_START` names
+     * a message inside it, and the two id spaces are separate fields on separate events -- so
+     * opening a part for the stream id eagerly leaves an empty one behind whenever the content
+     * arrives under message ids instead. The part is opened on first content, and `REASONING_END`
+     * settles every reasoning part the stream left running.
+     */
+    private var openReasoningStreamId: String? = null
 
     private var run: RunState = RunState.Idle
     private var sharedState: JsonElement = JsonObject(emptyMap())
@@ -130,6 +159,7 @@ public class UiTranscriptReducer(
 
             is RunStartedEvent -> {
                 finalizeTurn()
+                startNewRun()
                 run = RunState.Running(threadId = event.threadId, runId = event.runId)
             }
 
@@ -160,10 +190,14 @@ public class UiTranscriptReducer(
             // A chunk is start, content and -- implicitly -- end in one event. Its id may be
             // absent, which the protocol reads as "the stream already running".
             is TextMessageChunkEvent -> {
-                val messageId = event.messageId ?: lastTextMessageId
+                val messageId = event.messageId ?: pendingTextChunkId
                 if (messageId == null) {
                     onWarning("TEXT_MESSAGE_CHUNK with no messageId and no open text stream; skipped.")
                 } else {
+                    if (messageId != pendingTextChunkId) {
+                        pendingTextChunkId?.let { endText(it) }
+                        pendingTextChunkId = messageId
+                    }
                     if (messageId !in textParts) openText(messageId, event.role ?: Role.ASSISTANT)
                     event.delta?.let { appendText(messageId, it) }
                 }
@@ -194,10 +228,14 @@ public class UiTranscriptReducer(
             }
 
             is ToolCallChunkEvent -> {
-                val toolCallId = event.toolCallId ?: lastToolCallId
+                val toolCallId = event.toolCallId ?: pendingToolChunkId
                 if (toolCallId == null) {
                     onWarning("TOOL_CALL_CHUNK with no toolCallId and no open tool call; skipped.")
                 } else {
+                    if (toolCallId != pendingToolChunkId) {
+                        pendingToolChunkId?.let { endToolCall(it) }
+                        pendingToolChunkId = toolCallId
+                    }
                     if (toolCallId !in toolParts) {
                         openToolCall(
                             toolCallId = toolCallId,
@@ -211,7 +249,10 @@ public class UiTranscriptReducer(
 
             // ---- Reasoning -----------------------------------------------------------------
 
-            is ReasoningStartEvent -> openReasoning(event.messageId, title = null)
+            // No part yet: `REASONING_START` carries no title (only the deprecated `THINKING_START`
+            // does) and no text, and its id may never carry content at all.
+            is ReasoningStartEvent -> openReasoningStreamId = event.messageId
+
             is ReasoningMessageStartEvent -> openReasoning(event.messageId, title = null)
             is ReasoningMessageContentEvent -> appendReasoning(event.messageId, event.delta)
 
@@ -220,7 +261,7 @@ public class UiTranscriptReducer(
             is ReasoningMessageEndEvent -> Unit
 
             is ReasoningMessageChunkEvent -> {
-                val messageId = event.messageId ?: lastReasoningMessageId
+                val messageId = event.messageId ?: lastReasoningMessageId ?: openReasoningStreamId
                 if (messageId == null) {
                     onWarning("REASONING_MESSAGE_CHUNK with no messageId and no open stream; skipped.")
                 } else {
@@ -229,27 +270,9 @@ public class UiTranscriptReducer(
                 }
             }
 
-            is ReasoningEndEvent -> endReasoning(event.messageId)
+            is ReasoningEndEvent -> endReasoningStream(event.messageId)
 
-            is ReasoningEncryptedValueEvent -> {
-                val messageId = lastReasoningMessageId
-                val ref = messageId?.let { reasoningParts[it] }
-                if (ref == null) {
-                    onWarning("REASONING_ENCRYPTED_VALUE with no reasoning stream to attach to; skipped.")
-                } else {
-                    val part = ref.part<ReasoningPart>()
-                    ref.message.replace(
-                        ref.index,
-                        part.copy(
-                            encryptedValues = part.encryptedValues + EncryptedReasoningValue(
-                                subtype = event.subtype,
-                                entityId = event.entityId,
-                                value = event.encryptedValue,
-                            ),
-                        ),
-                    )
-                }
-            }
+            is ReasoningEncryptedValueEvent -> applyEncryptedReasoningValue(event)
 
             // ---- Thinking: the deprecated spelling of reasoning ----------------------------
             //
@@ -259,6 +282,7 @@ public class UiTranscriptReducer(
             // its server happens to emit.
 
             is ThinkingStartEvent -> openReasoning(THINKING_MESSAGE_ID, title = event.title)
+
             is ThinkingTextMessageStartEvent -> openReasoning(THINKING_MESSAGE_ID, title = null)
             is ThinkingTextMessageContentEvent -> appendReasoning(THINKING_MESSAGE_ID, event.delta)
             is ThinkingTextMessageEndEvent -> Unit
@@ -332,22 +356,63 @@ public class UiTranscriptReducer(
         reasoningParts.remove(THINKING_MESSAGE_ID)
         if (lastReasoningMessageId == THINKING_MESSAGE_ID) lastReasoningMessageId = null
 
-        val turn = openAssistant
-        if (turn == null) {
-            return
-        }
-        turn.parts.forEachIndexed { index, part ->
-            when (part) {
-                is TextPart -> if (part.streaming) turn.replace(index, part.copy(streaming = false))
-                is ReasoningPart -> if (part.streaming) turn.replace(index, part.copy(streaming = false))
-                is ToolCallPart -> if (part.status == ToolCallStatus.STREAMING_ARGUMENTS) {
-                    turn.replace(index, part.copy(status = ToolCallStatus.FAILED, error = reason))
-                }
+        // A chunk stream ends implicitly, and the run ending is one of the two ways it can. Closed
+        // before the sweep below so a tool call delivered entirely by TOOL_CALL_CHUNK parses its
+        // arguments and reaches AWAITING_RESULT, rather than being swept up as a failure.
+        pendingTextChunkId?.let { endText(it) }
+        pendingToolChunkId?.let { endToolCall(it) }
+        pendingTextChunkId = null
+        pendingToolChunkId = null
+        openReasoningStreamId = null
 
-                else -> Unit
+        // Every message, not just the open turn. `detachTurn` releases a turn that still holds
+        // streaming parts -- an activity or a user message arriving mid-stream does exactly that --
+        // and a part orphaned that way has nothing else that would ever settle it. The sweep is
+        // idempotent: a part already settled matches neither guard.
+        for (message in messages) {
+            message.parts.forEachIndexed { index, part ->
+                when (part) {
+                    is TextPart ->
+                        if (part.streaming) message.replace(index, part.copy(streaming = false))
+
+                    is ReasoningPart ->
+                        if (part.streaming) message.replace(index, part.copy(streaming = false))
+
+                    is ToolCallPart -> if (part.status == ToolCallStatus.STREAMING_ARGUMENTS) {
+                        message.replace(index, part.copy(status = ToolCallStatus.FAILED, error = reason))
+                    }
+
+                    else -> Unit
+                }
             }
         }
         detachTurn()
+    }
+
+    /**
+     * Drops the id bookkeeping the finished run owned, so the next run starts from a clean map.
+     *
+     * Text and reasoning message ids are scoped to their run. A producer that numbers them from
+     * one on every run would otherwise have its second run's text appended to the first run's
+     * message -- already settled, so the caret never returns -- because [openText] treats a known
+     * id as a stream already open.
+     *
+     * `toolParts` deliberately survives. A run that stops to let the client execute a tool
+     * (`RUN_FINISHED` with an interrupt outcome) is answered by the *next* run, whose
+     * `TOOL_CALL_RESULT` names a call id from the run before it; clearing the map here would leave
+     * that result with nothing to land on. `activityMessages` survives for the same reason: an
+     * activity outlives the run that opened it.
+     */
+    private fun startNewRun() {
+        steps.clear()
+        textParts.clear()
+        reasoningParts.clear()
+        lastTextMessageId = null
+        lastToolCallId = null
+        lastReasoningMessageId = null
+        pendingTextChunkId = null
+        pendingToolChunkId = null
+        openReasoningStreamId = null
     }
 
     // ---- Text --------------------------------------------------------------------------------
@@ -362,16 +427,27 @@ public class UiTranscriptReducer(
             messageId = messageId,
             streaming = true,
         )
-        val owner = when (role) {
-            Role.ASSISTANT -> assistantTurn(fallbackId = messageId)
-            // A user, system or developer message is its own message and ends the assistant's
-            // turn: whatever the agent was saying, it was saying it before this arrived.
+        val uiRole = role.toUiRole()
+        if (uiRole == null) {
+            // `Role.TOOL` is the one value this model has no home for, on purpose: a tool's output
+            // belongs to the call that asked for it, and arrives as TOOL_CALL_RESULT. Folding it
+            // into the assistant's turn would render the tool's words as the agent's own.
+            onWarning("TEXT_MESSAGE_START with role $role has no place in the model; skipped.")
+            lastTextMessageId = null
+            return
+        }
+        val owner = when (uiRole) {
+            UiRole.ASSISTANT -> assistantTurn(fallbackId = messageId)
+            // A user, system, developer or activity message is its own message and ends the
+            // assistant's turn: whatever the agent was saying, it was saying it before this
+            // arrived.
             else -> {
                 detachTurn()
-                MessageBuilder(id = messageId, role = role.toUiRole()).also { messages += it }
+                MessageBuilder(id = messageId, role = uiRole).also { messages += it }
             }
         }
         textParts[messageId] = PartRef(owner, owner.append(part))
+        textOwners[messageId] = owner
     }
 
     private fun appendText(messageId: String, delta: String) {
@@ -386,6 +462,8 @@ public class UiTranscriptReducer(
     }
 
     private fun endText(messageId: String) {
+        if (lastTextMessageId == messageId) lastTextMessageId = null
+        if (pendingTextChunkId == messageId) pendingTextChunkId = null
         val ref = textParts[messageId] ?: return
         val part = ref.part<TextPart>()
         ref.message.replace(ref.index, part.copy(streaming = false))
@@ -401,7 +479,7 @@ public class UiTranscriptReducer(
         // names a text run this reducer has seen, because a call can arrive after the turn it
         // belongs to was closed; otherwise the open turn is the right home.
         val owner = parentMessageId
-            ?.let { textParts[it]?.message }
+            ?.let { textOwners[it] }
             ?: assistantTurn(fallbackId = toolCallId)
 
         val part = ToolCallPart(
@@ -425,6 +503,8 @@ public class UiTranscriptReducer(
     }
 
     private fun endToolCall(toolCallId: String) {
+        if (lastToolCallId == toolCallId) lastToolCallId = null
+        if (pendingToolChunkId == toolCallId) pendingToolChunkId = null
         val ref = toolParts[toolCallId] ?: return
         val part = ref.part<ToolCallPart>()
         ref.message.replace(
@@ -442,10 +522,14 @@ public class UiTranscriptReducer(
         lastReasoningMessageId = messageId
         val existing = reasoningParts[messageId]
         if (existing != null) {
-            if (title != null) {
-                val part = existing.part<ReasoningPart>()
-                existing.message.replace(existing.index, part.copy(title = title))
-            }
+            // A start on a part that already ended reopens it: two THINKING blocks in one run are
+            // legal, and folding onto one part must not leave that part declared finished while
+            // the agent is still deliberating into it.
+            val part = existing.part<ReasoningPart>()
+            existing.message.replace(
+                existing.index,
+                part.copy(title = title ?: part.title, streaming = true),
+            )
             return
         }
         val owner = assistantTurn(fallbackId = messageId)
@@ -460,6 +544,11 @@ public class UiTranscriptReducer(
     }
 
     private fun appendReasoning(messageId: String, delta: String) {
+        // `REASONING_START` records the stream without opening a part; content arriving under the
+        // stream's own id is what proves the part is wanted.
+        if (messageId !in reasoningParts && messageId == openReasoningStreamId) {
+            openReasoning(messageId, title = null)
+        }
         val ref = reasoningParts[messageId]
         if (ref == null) {
             onWarning("Reasoning content for unknown messageId $messageId; skipped.")
@@ -468,6 +557,61 @@ public class UiTranscriptReducer(
         lastReasoningMessageId = messageId
         val part = ref.part<ReasoningPart>()
         ref.message.replace(ref.index, part.copy(text = part.text + delta))
+    }
+
+    /**
+     * `REASONING_END` closes the stream, and with it every reasoning part still running.
+     *
+     * The event names the stream id, but the text arrived under `REASONING_MESSAGE_START` ids that
+     * the event has no field for. Ending only the named part leaves each of those declared live
+     * for the rest of the run -- so a renderer keeps a caret under deliberation that finished.
+     */
+    private fun endReasoningStream(streamId: String) {
+        endReasoning(streamId)
+        for (id in reasoningParts.keys.toList()) {
+            val ref = reasoningParts[id] ?: continue
+            if (ref.part<ReasoningPart>().streaming) endReasoning(id)
+        }
+        if (openReasoningStreamId == streamId) openReasoningStreamId = null
+    }
+
+    /**
+     * Attaches a `REASONING_ENCRYPTED_VALUE` to the entity its `entityId` names.
+     *
+     * Routed by `entityId` and `subtype`, which is what the protocol defines and what the reference
+     * implementation does. The event carries no message id, and resolving it against "whichever
+     * reasoning stream was last open" loses the blob whenever it arrives after `REASONING_END` --
+     * its ordinary position -- and misfiles it whenever two streams interleave.
+     */
+    private fun applyEncryptedReasoningValue(event: ReasoningEncryptedValueEvent) {
+        if (event.subtype == ENCRYPTED_SUBTYPE_TOOL_CALL) {
+            val ref = toolParts[event.entityId]
+            if (ref == null) {
+                onWarning(
+                    "REASONING_ENCRYPTED_VALUE names unknown tool call ${event.entityId}; skipped.",
+                )
+                return
+            }
+            ref.message.replace(ref.index, ref.part<ToolCallPart>().copy(encryptedValue = event.encryptedValue))
+            return
+        }
+
+        val ref = reasoningParts[event.entityId]
+        if (ref == null) {
+            onWarning("REASONING_ENCRYPTED_VALUE names unknown message ${event.entityId}; skipped.")
+            return
+        }
+        val part = ref.part<ReasoningPart>()
+        ref.message.replace(
+            ref.index,
+            part.copy(
+                encryptedValues = part.encryptedValues + EncryptedReasoningValue(
+                    subtype = event.subtype,
+                    entityId = event.entityId,
+                    value = event.encryptedValue,
+                ),
+            ),
+        )
     }
 
     private fun endReasoning(messageId: String) {
@@ -548,6 +692,7 @@ public class UiTranscriptReducer(
     private fun replaceMessages(snapshot: List<Message>) {
         messages.clear()
         textParts.clear()
+        textOwners.clear()
         reasoningParts.clear()
         toolParts.clear()
         activityMessages.clear()
@@ -588,6 +733,7 @@ public class UiTranscriptReducer(
                             TextPart(id = "text:${message.id}", text = it, messageId = message.id),
                         )
                         textParts[message.id] = PartRef(builder, index)
+                        textOwners[message.id] = builder
                     }
                     message.toolCalls?.forEach { call ->
                         val index = builder.append(
@@ -694,17 +840,22 @@ public class UiTranscriptReducer(
          * collide with a real message id.
          */
         const val THINKING_MESSAGE_ID = "agui-compose:thinking"
+
+        /** The `REASONING_ENCRYPTED_VALUE` subtype whose `entityId` names a tool call. */
+        const val ENCRYPTED_SUBTYPE_TOOL_CALL = "tool-call"
     }
 }
 
 private inline fun <reified T> PartRef.part(): T = message.parts[index] as T
 
-private fun Role.toUiRole(): UiRole = when (this) {
+/** `null` for a role this model deliberately has no bubble for -- `Role.TOOL`. */
+private fun Role.toUiRole(): UiRole? = when (this) {
     Role.USER -> UiRole.USER
     Role.ASSISTANT -> UiRole.ASSISTANT
     Role.SYSTEM -> UiRole.SYSTEM
     Role.DEVELOPER -> UiRole.DEVELOPER
-    else -> UiRole.ASSISTANT
+    Role.ACTIVITY -> UiRole.ACTIVITY
+    else -> null
 }
 
 private fun parseJsonOrNull(text: String): JsonElement? =

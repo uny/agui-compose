@@ -23,7 +23,7 @@ public data class UiTranscript(
 
 /** Where the current run has got to. */
 public sealed interface RunState {
-    /** No run has started, or the last one finished. */
+    /** No run has started yet. A run that ends stays [Finished] or [Failed]; it never returns here. */
     public data object Idle : RunState
 
     /** A run is in flight. */
