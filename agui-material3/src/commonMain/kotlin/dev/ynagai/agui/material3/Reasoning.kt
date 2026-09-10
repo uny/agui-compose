@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import dev.ynagai.agui.compose.LocalAguiTextRenderer
 import dev.ynagai.agui.model.ReasoningPart
 
@@ -71,6 +72,14 @@ internal fun Material3Reasoning(part: ReasoningPart, modifier: Modifier) {
                 text = part.title ?: AguiStrings.REASONING,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                // Capped for the same reason a tool call's name is: the agent chose this string
+                // and its length, and a `Row` measures its unweighted children in order against
+                // whatever width is left. Uncapped, a long title takes the whole row and the label
+                // beside it measures at zero -- leaving exactly the handle-less disclosure this
+                // treatment exists to avoid.
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
             Text(
                 text = if (expanded) AguiStrings.HIDE else AguiStrings.SHOW,
