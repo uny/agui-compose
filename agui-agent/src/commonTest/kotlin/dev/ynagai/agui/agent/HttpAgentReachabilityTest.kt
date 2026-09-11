@@ -11,8 +11,11 @@ import kotlin.test.Test
  * constructor names `io.ktor.client.HttpClient` in its signature. Whether a consumer holding
  * `agui-agent` alone can construct the upstream transport the README shows is therefore a question
  * about the compile classpath, and this file is where the answer is measured rather than assumed.
- * `jvmTest` also runs as the Android host test, so both platforms with the runtime-only shape are
- * covered.
+ * It lives in `commonTest` because that is the only source set the Android host test compiles:
+ * `withHostTest {}` takes `commonTest` and nothing from `jvmTest`, so a `jvmTest` here would
+ * measure the JVM and leave Android -- the other platform with the runtime-only shape -- to
+ * inference. On iOS the same code compiles for a different reason (upstream exposes Ktor as `api`
+ * there), which is fine; the measurement is the two platforms where it could fail.
  *
  * Measured answer: it compiles, with no Ktor artifact on either compile classpath (checked with
  * `:agui-agent:dependencies --configuration jvmCompileClasspath`). The constructor's `HttpClient?`

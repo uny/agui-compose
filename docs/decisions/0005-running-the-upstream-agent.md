@@ -42,9 +42,10 @@ So on the JVM and Android, a module whose public signatures name any `io.ktor` t
 arrives as `api` everywhere.
 
 Whether that bites a consumer constructing `HttpAgent` -- whose only constructor takes an
-`HttpClient?` -- was measured rather than inferred: a `jvmTest` in this module, which also runs as
-the Android host test, constructs one with the parameter defaulted, and compiles with no Ktor
-artifact on the compile classpath. Passing a client is a different matter, and a consumer doing so
+`HttpClient?` -- was measured rather than inferred: a test in this module's `commonTest` (the one
+source set the Android host test compiles; a `jvmTest` would measure the JVM alone) constructs one
+with the parameter defaulted, and compiles on both with no Ktor artifact on the compile classpath.
+Passing a client is a different matter, and a consumer doing so
 is naming the type and declares `ktor-client-core` as it would anywhere.
 
 One oddity, recorded rather than acted on: the common metadata variant lists `ktor-client-darwin`,
@@ -91,7 +92,12 @@ assembled answer arrives in the second run's input.
 - **Events come from `runAgentObservable`**, and a run that throws is folded into the transcript as
   a `RUN_ERROR` with code `CLIENT_ERROR` and not rethrown. The transcript is the report; a UI that
   launched the run from a button does not want an unhandled exception for a run that failed in an
-  ordinary way. Cancellation is recorded the same way, under `CANCELLED`, and then propagates.
+  ordinary way. Cancellation is recorded the same way, under `CANCELLED`, and then propagates. So
+  is a stream that ends without `RUN_FINISHED` or `RUN_ERROR`: upstream's verifier checks each
+  event against the last and has no opinion about the end of the stream, so a connection the
+  server closed cleanly mid-run would otherwise leave the transcript running forever. None of
+  this overwrites a verdict the agent already gave -- once `RUN_FINISHED` or `RUN_ERROR` has been
+  seen, a later throw or cancellation leaves the agent's own message and code in place.
 - **Runs on one session take turns.** A mutex is held for the length of a run, because the reducer
   is not thread-safe and two interleaved runs in one transcript is not a state anyone asked for.
 - **The session does not dispose the agent.** `dispose()` cancels the agent's scope and closes a

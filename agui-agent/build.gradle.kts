@@ -44,7 +44,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // `api`: the entry point takes upstream's `AbstractAgent` and hands back
-            // `agui-core`'s `UiTranscript`, so a consumer holds both to call it at all.
+            // `agui-model`'s `UiTranscript` -- reached through `agui-core`, which exposes it as
+            // `api` -- so a consumer holds both to call it at all.
             api(projects.aguiCore)
             api(libs.agui.client)
         }
