@@ -1,0 +1,15 @@
+public final class dev/ynagai/agui/agent/AgentSession {
+	public static final field CANCELLED_CODE Ljava/lang/String;
+	public static final field CLIENT_ERROR_CODE Ljava/lang/String;
+	public static final field Companion Ldev/ynagai/agui/agent/AgentSession$Companion;
+	public fun <init> (Lcom/agui/client/agent/AbstractAgent;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/agui/client/agent/AbstractAgent;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAgent ()Lcom/agui/client/agent/AbstractAgent;
+	public final fun getTranscript ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun run (Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun run$default (Ldev/ynagai/agui/agent/AgentSession;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class dev/ynagai/agui/agent/AgentSession$Companion {
+}
+

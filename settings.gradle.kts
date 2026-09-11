@@ -33,6 +33,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":agui-model")
 include(":agui-core")
+include(":agui-agent")
 include(":agui-compose")
 include(":agui-material3")
 include(":agui-markdown")
