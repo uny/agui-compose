@@ -14,7 +14,9 @@ three — no design system, no Markdown parser, one fewer target — are in
 Material 3 layer decides on your behalf is in
 [docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md). Fitting a Markdown
 parser under all of it, without a design system to style it from, is
-[docs/decisions/0004](docs/decisions/0004-parsing-markdown-without-a-design-system.md).
+[docs/decisions/0004](docs/decisions/0004-parsing-markdown-without-a-design-system.md). Where the
+upstream transport meets all of that — and what it decides about Ktor on your behalf — is
+[docs/decisions/0005](docs/decisions/0005-running-the-upstream-agent.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -31,13 +33,14 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | not yet |
 | `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
 | `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
+| `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | not yet |
 
 `agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an optional dependency) and
 the `agui-provider-*` adapters come next.
 
 ## Targets
 
-`agui-model` and `agui-core`: `androidTarget`, `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64` —
+`agui-model`, `agui-core` and `agui-agent`: `androidTarget`, `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64` —
 the five the upstream SDK publishes.
 
 `agui-compose`, and every module that draws: the same set **minus `iosX64`**. Compose Multiplatform
@@ -88,6 +91,28 @@ agent.run(input)                    // Flow<BaseEvent>, from the upstream SDK
 
 One transcript per event, so a renderer sees every frame. A renderer that wants fewer can
 `conflate()` — which it could not do if this had already dropped them.
+
+That is one run. A conversation is many, and `foldToTranscript` starts from empty on every
+collection — so for a thread, hold an `AgentSession` around the upstream agent instead:
+
+```kotlin
+import com.agui.client.agent.HttpAgent
+import com.agui.client.agent.HttpAgentConfig
+import dev.ynagai.agui.agent.AgentSession
+
+val session = AgentSession(HttpAgent(HttpAgentConfig(url = "https://…/agui")))
+
+session.transcript                  // StateFlow<UiTranscript>, grows with every run
+session.run()                       // suspends until the run ends; returns its RunState
+```
+
+The transcript is the report: a run that fails — `RUN_ERROR` from the agent, or a stream that
+broke the protocol and was rejected by upstream's verifier — ends in `RunState.Failed` rather than
+an exception thrown into whatever coroutine a button launched it from. Cancelling the coroutine is
+recorded the same way, then propagates. Runs on one session take turns. The session does not own
+the agent's lifetime — `dispose()` it yourself, once — and it does not choose the HTTP engine:
+upstream fixes that per platform (CIO on the JVM, `ktor-client-android` on Android, Darwin on iOS),
+and the only way to substitute one is the `HttpClient` parameter on `HttpAgent`.
 
 ### Drawing it
 

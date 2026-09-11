@@ -1,0 +1,25 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, iosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-agent>
+final class dev.ynagai.agui.agent/AgentSession { // dev.ynagai.agui.agent/AgentSession|null[0]
+    constructor <init>(com.agui.client.agent/AbstractAgent, kotlin/Function1<kotlin/String, kotlin/Unit> = ...) // dev.ynagai.agui.agent/AgentSession.<init>|<init>(com.agui.client.agent.AbstractAgent;kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+
+    final val agent // dev.ynagai.agui.agent/AgentSession.agent|{}agent[0]
+        final fun <get-agent>(): com.agui.client.agent/AbstractAgent // dev.ynagai.agui.agent/AgentSession.agent.<get-agent>|<get-agent>(){}[0]
+    final val transcript // dev.ynagai.agui.agent/AgentSession.transcript|{}transcript[0]
+        final fun <get-transcript>(): kotlinx.coroutines.flow/StateFlow<dev.ynagai.agui.model/UiTranscript> // dev.ynagai.agui.agent/AgentSession.transcript.<get-transcript>|<get-transcript>(){}[0]
+
+    final suspend fun run(com.agui.client.agent/RunAgentParameters? = ...): dev.ynagai.agui.model/RunState // dev.ynagai.agui.agent/AgentSession.run|run(com.agui.client.agent.RunAgentParameters?){}[0]
+
+    final object Companion { // dev.ynagai.agui.agent/AgentSession.Companion|null[0]
+        final const val CANCELLED_CODE // dev.ynagai.agui.agent/AgentSession.Companion.CANCELLED_CODE|{}CANCELLED_CODE[0]
+            final fun <get-CANCELLED_CODE>(): kotlin/String // dev.ynagai.agui.agent/AgentSession.Companion.CANCELLED_CODE.<get-CANCELLED_CODE>|<get-CANCELLED_CODE>(){}[0]
+        final const val CLIENT_ERROR_CODE // dev.ynagai.agui.agent/AgentSession.Companion.CLIENT_ERROR_CODE|{}CLIENT_ERROR_CODE[0]
+            final fun <get-CLIENT_ERROR_CODE>(): kotlin/String // dev.ynagai.agui.agent/AgentSession.Companion.CLIENT_ERROR_CODE.<get-CLIENT_ERROR_CODE>|<get-CLIENT_ERROR_CODE>(){}[0]
+    }
+}

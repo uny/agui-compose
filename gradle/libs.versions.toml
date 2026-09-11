@@ -51,6 +51,14 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 # into a render model, and it would put Ktor on the classpath of a module that opens no socket.
 agui-core = { module = "com.ag-ui.community:kotlin-core", version.ref = "agui" }
 
+# `kotlin-client`: `AbstractAgent`, `HttpAgent`, the SSE parser, the event verifier. It brings
+# `kotlin-tools` as `api`, and -- read off its module metadata rather than its build script -- a
+# Ktor engine chosen per platform by upstream: CIO on the JVM, `ktor-client-android` on Android,
+# Darwin on iOS. On the JVM and Android every Ktor artifact is runtime-only; only iOS exposes them
+# as `api`. A module whose public signatures name an `io.ktor` type therefore has to declare
+# `ktor-client-core` itself. `agui-agent` names none, so it declares none.
+agui-client = { module = "com.ag-ui.community:kotlin-client", version.ref = "agui" }
+
 json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
 
 # Compose Multiplatform artifacts are declared explicitly rather than through the `compose.runtime`
