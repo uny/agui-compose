@@ -4,6 +4,7 @@ import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.RunAgentParameters
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
+import com.agui.core.types.RunStartedEvent
 import dev.ynagai.agui.core.UiTranscriptReducer
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -86,11 +87,12 @@ public class AgentSession(
      * class name as its message, which is not something to draw.
      *
      * Once the agent has ended the run itself -- `RUN_FINISHED` or `RUN_ERROR` seen -- nothing
-     * that happens afterwards rewrites that verdict: a verifier throw on a trailing event, or a
-     * cancellation while upstream's transport waits for the server to close the connection, leaves
-     * the agent's own message and code in place. A cancellation that arrives while this call is
-     * still waiting for an earlier run to release the mutex records nothing, because nothing of
-     * this run had started.
+     * that happens afterwards rewrites that verdict: a verifier throw on a trailing event, a
+     * cancellation while upstream's transport waits for the server to close the connection, or the
+     * `RUN_ERROR` upstream's `HttpAgent` sends when that wait ends in a transport failure, all
+     * leave the agent's own message and code in place. A cancellation that arrives while this
+     * call is still waiting for an earlier run to release the mutex records nothing, because
+     * nothing of this run had started.
      *
      * Only the coroutine that called this can stop the run. [AbstractAgent.abortRun] cancels a job
      * that upstream's `runAgent` starts, and `runAgentObservable` starts none, so through this
@@ -101,10 +103,20 @@ public class AgentSession(
      *   with, plus what earlier runs through it produced.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
+        // Per run, not per call: upstream's verifier lets one stream carry RUN_STARTED again after
+        // RUN_FINISHED, and the reducer follows it, so the flag has to follow it too.
         var ended = false
         try {
             agent.runAgentObservable(parameters).collect { event ->
-                if (event is RunFinishedEvent || event is RunErrorEvent) ended = true
+                when (event) {
+                    is RunStartedEvent -> ended = false
+                    is RunFinishedEvent -> ended = true
+                    // The verifier permits RUN_ERROR after RUN_FINISHED, and upstream's `HttpAgent`
+                    // sends one when the connection fails *after* the server has said the run is
+                    // done. A run that finished did not then fail; the answer stands.
+                    is RunErrorEvent -> if (ended) return@collect else ended = true
+                    else -> Unit
+                }
                 mutableTranscript.value = reducer.accept(event)
             }
             if (!ended) fail(message = "Stream ended before RUN_FINISHED", code = CLIENT_ERROR_CODE)

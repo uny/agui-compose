@@ -374,6 +374,48 @@ class AgentSessionTest {
         assertEquals(listOf("r1"), agent.inputs.map { it.runId })
     }
 
+    /**
+     * `HttpAgent` turns a connection that fails *after* `RUN_FINISHED` into a `RUN_ERROR`, and the
+     * verifier lets it through. The answer arrived; the run did not then fail.
+     */
+    @Test
+    fun a_run_error_after_run_finished_does_not_undo_the_finish() = runTest {
+        val agent = ScriptedAgent({
+            flow {
+                answer("r1", "m1", "done").forEach { emit(it) }
+                emit(RunErrorEvent(message = "connection reset", code = "TRANSPORT_ERROR"))
+            }
+        })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        assertEquals(RunState.Finished("t", "r1"), ended)
+    }
+
+    /**
+     * The verifier allows a stream to start a second run after finishing the first, so "the run
+     * ended" is a fact about the current run, not the call. Otherwise the first run's finish would
+     * hide the second run's failure.
+     */
+    @Test
+    fun a_second_run_in_the_same_stream_is_settled_on_its_own() = runTest {
+        val agent = ScriptedAgent({
+            flow {
+                answer("r1", "m1", "first").forEach { emit(it) }
+                emit(RunStartedEvent(threadId = "t", runId = "r2"))
+                emit(TextMessageStartEvent(messageId = "m2"))
+                throw IllegalStateException("socket closed")
+            }
+        })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        assertEquals(RunState.Failed("socket closed", AgentSession.CLIENT_ERROR_CODE), ended)
+        assertEquals(false, (session.transcript.value.messages[1].parts.single() as TextPart).streaming)
+    }
+
     /** An `Error` is not a failed run; it is a broken process, and it propagates. */
     @Test
     fun an_error_is_not_folded_into_the_transcript() = runTest {

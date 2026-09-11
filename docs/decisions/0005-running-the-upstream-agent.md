@@ -97,7 +97,8 @@ assembled answer arrives in the second run's input.
   event against the last and has no opinion about the end of the stream, so a connection the
   server closed cleanly mid-run would otherwise leave the transcript running forever. None of
   this overwrites a verdict the agent already gave -- once `RUN_FINISHED` or `RUN_ERROR` has been
-  seen, a later throw or cancellation leaves the agent's own message and code in place.
+  seen, a later throw, cancellation, or the `RUN_ERROR` `HttpAgent` sends for a connection that
+  failed after the server was done, leaves the agent's own message and code in place.
 - **Runs on one session take turns.** A mutex is held for the length of a run, because the reducer
   is not thread-safe and two interleaved runs in one transcript is not a state anyone asked for.
 - **The session does not dispose the agent.** `dispose()` cancels the agent's scope and closes a
