@@ -386,11 +386,14 @@ class AgentSessionTest {
                 emit(RunErrorEvent(message = "connection reset", code = "TRANSPORT_ERROR"))
             }
         })
-        val session = AgentSession(agent)
+        val warnings = mutableListOf<String>()
+        val session = AgentSession(agent, onWarning = warnings::add)
 
         val ended = session.run()
 
         assertEquals(RunState.Finished("t", "r1"), ended)
+        assertEquals(1, warnings.size, warnings.toString())
+        assertTrue(warnings.single().contains("TRANSPORT_ERROR"), warnings.single())
     }
 
     /**

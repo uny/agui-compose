@@ -42,11 +42,12 @@ import kotlinx.coroutines.sync.withLock
  * owner that constructed it closes it.
  *
  * @param agent the upstream agent to run. Its `threadId` names the thread this transcript is of.
- * @param onWarning see [UiTranscriptReducer].
+ * @param onWarning see [UiTranscriptReducer]; this class adds one case of its own, a `RUN_ERROR`
+ *   that arrived after the run had already ended and was therefore not folded.
  */
 public class AgentSession(
     public val agent: AbstractAgent,
-    onWarning: (String) -> Unit = {},
+    private val onWarning: (String) -> Unit = {},
 ) {
     private val reducer = UiTranscriptReducer(onWarning)
     private val runs = Mutex()
@@ -113,8 +114,14 @@ public class AgentSession(
                     is RunFinishedEvent -> ended = true
                     // The verifier permits RUN_ERROR after RUN_FINISHED, and upstream's `HttpAgent`
                     // sends one when the connection fails *after* the server has said the run is
-                    // done. A run that finished did not then fail; the answer stands.
-                    is RunErrorEvent -> if (ended) return@collect else ended = true
+                    // done. A run that finished did not then fail; the answer stands, and the
+                    // dropped event goes where the reducer's own skips go rather than nowhere.
+                    is RunErrorEvent -> if (ended) {
+                        onWarning("RUN_ERROR after the run ended, not folded: ${event.code} ${event.message}")
+                        return@collect
+                    } else {
+                        ended = true
+                    }
                     else -> Unit
                 }
                 mutableTranscript.value = reducer.accept(event)
