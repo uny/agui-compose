@@ -3,6 +3,7 @@ package dev.ynagai.agui.agent
 import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.RunAgentParameters
 import com.agui.core.types.RunErrorEvent
+import com.agui.core.types.RunFinishedEvent
 import dev.ynagai.agui.core.UiTranscriptReducer
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -71,27 +72,47 @@ public class AgentSession(
      * rethrown: the transcript is the report, and a UI that launched this from a button does not
      * want an unhandled exception for a run that failed in an ordinary way. Cancellation is the
      * exception -- it is recorded the same way, with [CANCELLED_CODE], and then propagates, because
-     * the caller asked for it and a cancelled coroutine has to stay cancelled.
+     * the caller asked for it and a cancelled coroutine has to stay cancelled. A stream that ends
+     * without `RUN_FINISHED` or `RUN_ERROR` -- a connection the server closed cleanly mid-run --
+     * is a failure too, recorded under [CLIENT_ERROR_CODE]: upstream's verifier checks each event
+     * against the last but has no opinion about the end of the stream, so this is where that check
+     * lives.
      *
      * Recording a cancellation at all is deliberate. Without it the transcript keeps the caret
      * blinking under text that will never grow and a tool call waiting on arguments that will
      * never arrive, until the next run happens to settle them. The reducer has no state for
-     * "stopped on request", so the run is marked failed and the code says why.
+     * "stopped on request", so the run is marked failed and the code says why. The message is a
+     * fixed one rather than the exception's: a `Job.cancel()` with no cause carries the coroutine
+     * class name as its message, which is not something to draw.
+     *
+     * Once the agent has ended the run itself -- `RUN_FINISHED` or `RUN_ERROR` seen -- nothing
+     * that happens afterwards rewrites that verdict: a verifier throw on a trailing event, or a
+     * cancellation while upstream's transport waits for the server to close the connection, leaves
+     * the agent's own message and code in place. A cancellation that arrives while this call is
+     * still waiting for an earlier run to release the mutex records nothing, because nothing of
+     * this run had started.
+     *
+     * Only the coroutine that called this can stop the run. [AbstractAgent.abortRun] cancels a job
+     * that upstream's `runAgent` starts, and `runAgentObservable` starts none, so through this
+     * class it is inert.
      *
      * @param parameters the run's id, tools, context and forwarded properties, each defaulted by
      *   the agent when absent. The messages sent are the agent's own -- what it was constructed
      *   with, plus what earlier runs through it produced.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
+        var ended = false
         try {
             agent.runAgentObservable(parameters).collect { event ->
+                if (event is RunFinishedEvent || event is RunErrorEvent) ended = true
                 mutableTranscript.value = reducer.accept(event)
             }
+            if (!ended) fail(message = "Stream ended before RUN_FINISHED", code = CLIENT_ERROR_CODE)
         } catch (e: CancellationException) {
-            fail(message = e.message ?: "Run cancelled", code = CANCELLED_CODE)
+            if (!ended) fail(message = "Run cancelled", code = CANCELLED_CODE)
             throw e
-        } catch (e: Throwable) {
-            fail(message = e.message ?: e::class.simpleName ?: "Run failed", code = CLIENT_ERROR_CODE)
+        } catch (e: Exception) {
+            if (!ended) fail(message = e.message ?: e::class.simpleName ?: "Run failed", code = CLIENT_ERROR_CODE)
         }
         transcript.value.run
     }

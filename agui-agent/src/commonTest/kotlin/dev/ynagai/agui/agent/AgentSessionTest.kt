@@ -23,6 +23,7 @@ import dev.ynagai.agui.model.UiRole
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -215,8 +216,8 @@ class AgentSessionTest {
         job.join()
 
         assertTrue(job.isCancelled)
-        val failed = assertIs<RunState.Failed>(session.transcript.value.run)
-        assertEquals(AgentSession.CANCELLED_CODE, failed.code)
+        // A fixed message, not the exception's: a causeless `cancel()` names the coroutine class.
+        assertEquals(RunState.Failed("Run cancelled", AgentSession.CANCELLED_CODE), session.transcript.value.run)
         assertEquals(false, (session.transcript.value.messages.single().parts.single() as TextPart).streaming)
     }
 
@@ -263,6 +264,127 @@ class AgentSessionTest {
         val session = AgentSession(agent)
 
         assertFailsWith<CancellationException> { session.run() }
-        assertEquals(RunState.Failed("stopped", AgentSession.CANCELLED_CODE), session.transcript.value.run)
+        assertEquals(RunState.Failed("Run cancelled", AgentSession.CANCELLED_CODE), session.transcript.value.run)
+    }
+
+    /**
+     * Upstream's verifier checks each event against the last and has no opinion about the end of
+     * the stream, so a server that closes the connection cleanly mid-run reaches here as a flow
+     * that simply completes. Left alone, that is the caret-blinks-forever state.
+     */
+    @Test
+    fun a_stream_that_ends_without_a_terminal_event_is_a_client_error() = runTest {
+        val agent = ScriptedAgent({
+            flow {
+                emit(RunStartedEvent(threadId = "t", runId = "r1"))
+                emit(TextMessageStartEvent(messageId = "m1"))
+                emit(TextMessageContentEvent(messageId = "m1", delta = "partial"))
+            }
+        })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        val failed = assertIs<RunState.Failed>(ended)
+        assertEquals(AgentSession.CLIENT_ERROR_CODE, failed.code)
+        assertEquals(false, (session.transcript.value.messages.single().parts.single() as TextPart).streaming)
+    }
+
+    /** The empty case of the above: without this, `run` would report the *previous* run's state. */
+    @Test
+    fun an_empty_stream_after_a_finished_run_does_not_report_the_earlier_run() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.runId == "r1") flow { answer("r1", "m1", "hi").forEach { emit(it) } } else emptyFlow()
+        })
+        val session = AgentSession(agent)
+
+        session.run(RunAgentParameters(runId = "r1"))
+        val ended = session.run(RunAgentParameters(runId = "r2"))
+
+        assertIs<RunState.Failed>(ended)
+    }
+
+    /**
+     * Once the agent has ended the run, a client-side throw afterwards -- here the verifier
+     * rejecting an event sent after `RUN_ERROR` -- must not replace the agent's own verdict.
+     */
+    @Test
+    fun a_throw_after_run_error_keeps_upstreams_message_and_code() = runTest {
+        val agent = ScriptedAgent({
+            flow {
+                emit(RunStartedEvent(threadId = "t", runId = "r1"))
+                emit(RunErrorEvent(message = "upstream said no", code = "SERVER"))
+                emit(TextMessageStartEvent(messageId = "m1")) // the verifier throws here
+            }
+        })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        assertEquals(RunState.Failed("upstream said no", "SERVER"), ended)
+    }
+
+    /**
+     * `HttpAgent`'s flow stays open after `RUN_FINISHED` until the server closes the connection;
+     * a scope cancelled in that window must not turn a finished run into a cancelled one.
+     */
+    @Test
+    fun cancelling_after_run_finished_keeps_it_finished() = runTest {
+        val finished = CompletableDeferred<Unit>()
+        val agent = ScriptedAgent({
+            flow {
+                answer("r1", "m1", "done").forEach { emit(it) }
+                finished.complete(Unit)
+                CompletableDeferred<Unit>().await() // the connection is still open
+            }
+        })
+        val session = AgentSession(agent)
+
+        val job = launch { session.run() }
+        finished.await()
+        job.cancel()
+        job.join()
+
+        assertEquals(RunState.Finished("t", "r1"), session.transcript.value.run)
+    }
+
+    /** Nothing of the second run had started, so there is nothing to record. */
+    @Test
+    fun cancelling_a_run_still_waiting_for_the_mutex_records_nothing() = runTest {
+        val release = CompletableDeferred<Unit>()
+        val agent = ScriptedAgent({ input ->
+            flow {
+                emit(RunStartedEvent(threadId = "t", runId = input.runId))
+                release.await()
+                emit(RunFinishedEvent(threadId = "t", runId = input.runId))
+            }
+        })
+        val session = AgentSession(agent)
+
+        val first = launch { session.run(RunAgentParameters(runId = "r1")) }
+        val second = launch { session.run(RunAgentParameters(runId = "r2")) }
+        testScheduler.runCurrent()
+        second.cancel()
+        second.join()
+
+        assertEquals(RunState.Running("t", "r1"), session.transcript.value.run)
+        release.complete(Unit)
+        first.join()
+        assertEquals(RunState.Finished("t", "r1"), session.transcript.value.run)
+        assertEquals(listOf("r1"), agent.inputs.map { it.runId })
+    }
+
+    /** An `Error` is not a failed run; it is a broken process, and it propagates. */
+    @Test
+    fun an_error_is_not_folded_into_the_transcript() = runTest {
+        val agent = ScriptedAgent({
+            flow {
+                emit(RunStartedEvent(threadId = "t", runId = "r1"))
+                throw AssertionError("broken")
+            }
+        })
+        val session = AgentSession(agent)
+
+        assertFailsWith<AssertionError> { session.run() }
     }
 }
