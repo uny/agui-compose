@@ -128,6 +128,25 @@ class AgentSessionTest {
     }
 
     /**
+     * How every transport failure arrives. `HttpAgent` turns a refused connection, a non-SSE
+     * response or a timeout into a `RUN_ERROR` with nothing before it, and upstream's verifier
+     * exempts that one event from its "first event must be RUN_STARTED" rule. The message and
+     * code upstream chose have to survive to the transcript, not be replaced by a verifier
+     * complaint about ordering.
+     */
+    @Test
+    fun a_run_error_as_the_only_event_keeps_its_message_and_code() = runTest {
+        val agent = ScriptedAgent({
+            flow { emit(RunErrorEvent(message = "Server did not return an SSE stream.", code = "INVALID_RESPONSE")) }
+        })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        assertEquals(RunState.Failed("Server did not return an SSE stream.", "INVALID_RESPONSE"), ended)
+    }
+
+    /**
      * Upstream's verifier throws on a stream that breaks the protocol's state machine, and the
      * observable rethrows it. The run is reported failed rather than the exception escaping into
      * whatever coroutine a UI launched the run from.

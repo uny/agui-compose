@@ -41,6 +41,12 @@ So on the JVM and Android, a module whose public signatures name any `io.ktor` t
 `ktor-client-core` itself, or its consumers fail to compile against its own API. `kotlin-tools`
 arrives as `api` everywhere.
 
+Whether that bites a consumer constructing `HttpAgent` -- whose only constructor takes an
+`HttpClient?` -- was measured rather than inferred: a `jvmTest` in this module, which also runs as
+the Android host test, constructs one with the parameter defaulted, and compiles with no Ktor
+artifact on the compile classpath. Passing a client is a different matter, and a consumer doing so
+is naming the type and declares `ktor-client-core` as it would anywhere.
+
 One oddity, recorded rather than acted on: the common metadata variant lists `ktor-client-darwin`,
 which has no common variant to resolve to. Gradle tolerates it -- `compileCommonMainKotlinMetadata`
 for this module succeeds -- so it is a watch item, not a defect to work around.
