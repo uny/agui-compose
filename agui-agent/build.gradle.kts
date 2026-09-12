@@ -49,6 +49,12 @@ kotlin {
             api(projects.aguiCore)
             api(libs.agui.client)
 
+            // `api`: `AgentSession` takes a `ToolRegistry`, and a consumer that hands one over
+            // holds the type. `kotlin-client` already exposes this as `api`, so nothing on the
+            // classpath changes; what changes is that the dependency is declared where the
+            // signature is.
+            api(libs.agui.tools)
+
             // Not named by a line of this module, and required for anything built on it to run.
             //
             // `kotlin-client` and `kotlin-tools` 0.4.1 are compiled against kotlinx-datetime 0.6.2,

@@ -10,6 +10,10 @@ import com.agui.core.types.RunStartedEvent
 import com.agui.core.types.TextMessageContentEvent
 import com.agui.core.types.TextMessageEndEvent
 import com.agui.core.types.TextMessageStartEvent
+import com.agui.core.types.ToolCallArgsEvent
+import com.agui.core.types.ToolCallEndEvent
+import com.agui.core.types.ToolCallStartEvent
+import com.agui.core.types.ToolMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
@@ -30,6 +34,7 @@ import kotlinx.coroutines.isActive
 internal class ScriptedAgent(
     val url: String,
     private val failing: Boolean = false,
+    private val callsTool: Boolean = false,
 ) : AbstractAgent(AgentConfig(threadId = THREAD)) {
     val inputs: MutableList<RunAgentInput> = mutableListOf()
 
@@ -41,6 +46,15 @@ internal class ScriptedAgent(
             emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
             if (failing) {
                 emit(RunErrorEvent(message = "no", code = "NOPE"))
+                return@flow
+            }
+            // Upstream's `/agentic_chat` in one branch: a run whose last message is not yet a tool
+            // result asks for the background; the run that carries the result gets the answer.
+            if (callsTool && input.messages.lastOrNull() !is ToolMessage) {
+                emit(ToolCallStartEvent(toolCallId = "call-${input.runId}", toolCallName = "change_background"))
+                emit(ToolCallArgsEvent(toolCallId = "call-${input.runId}", delta = """{"background":"$BACKGROUND"}"""))
+                emit(ToolCallEndEvent(toolCallId = "call-${input.runId}"))
+                emit(RunFinishedEvent(threadId = THREAD, runId = input.runId))
                 return@flow
             }
             val messageId = "a-${input.runId}"
@@ -60,3 +74,6 @@ internal const val ANSWER: String = "**ok**"
 
 /** The same answer once a Markdown renderer has drawn it. */
 internal const val ANSWER_DRAWN: String = "ok"
+
+/** What the scripted tool call asks for: the gradient upstream's server sends, verbatim. */
+internal const val BACKGROUND: String = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"

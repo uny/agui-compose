@@ -3,6 +3,8 @@ package dev.ynagai.agui.sample
 import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.HttpAgent
 import com.agui.client.agent.HttpAgentConfig
+import com.agui.tools.ToolRegistry
+import com.agui.tools.toolRegistry
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -33,6 +35,23 @@ public class SampleChat(
     private val agents: (url: String) -> AbstractAgent = { HttpAgent(HttpAgentConfig(url = it)) },
 ) {
     private val mutableConnection = MutableStateFlow<Connection?>(null)
+    private val mutableBackground = MutableStateFlow<String?>(null)
+
+    /**
+     * The tools this client executes, handed to every session it opens: one, [ChangeBackground].
+     * Built once because the registry is the client's and not the thread's -- what changes per
+     * connection is who is asked, not what this window can do.
+     */
+    private val tools: ToolRegistry = toolRegistry(ChangeBackground { mutableBackground.value = it })
+
+    /**
+     * The background the agent last asked for, as it was asked for -- a CSS string -- or `null`
+     * while no agent has asked. The window decides what to paint; see `backgroundColors`.
+     *
+     * Reset by [connect]: the background is something a thread produced, and a new endpoint is a
+     * new thread.
+     */
+    public val background: StateFlow<String?> = mutableBackground.asStateFlow()
 
     /**
      * The current connection, or `null` before the first [connect] and after [close].
@@ -63,9 +82,10 @@ public class SampleChat(
         require(trimmed.isNotEmpty()) { "An endpoint URL is needed to connect" }
         val agent = agents(trimmed)
         mutableConnection.value.let { previous ->
-            mutableConnection.value = Connection(url = trimmed, agent = agent, session = AgentSession(agent))
+            mutableConnection.value = Connection(url = trimmed, agent = agent, session = AgentSession(agent, tools = tools))
             previous?.agent?.dispose()
         }
+        mutableBackground.value = null
     }
 
     /**

@@ -7,10 +7,12 @@
 
 // Library unique name: <dev.ynagai.agui:agui-agent>
 final class dev.ynagai.agui.agent/AgentSession { // dev.ynagai.agui.agent/AgentSession|null[0]
-    constructor <init>(com.agui.client.agent/AbstractAgent, kotlin/Function1<kotlin/String, kotlin/Unit> = ...) // dev.ynagai.agui.agent/AgentSession.<init>|<init>(com.agui.client.agent.AbstractAgent;kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+    constructor <init>(com.agui.client.agent/AbstractAgent, com.agui.tools/ToolRegistry? = ..., kotlin/Function1<kotlin/String, kotlin/Unit> = ...) // dev.ynagai.agui.agent/AgentSession.<init>|<init>(com.agui.client.agent.AbstractAgent;com.agui.tools.ToolRegistry?;kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
 
     final val agent // dev.ynagai.agui.agent/AgentSession.agent|{}agent[0]
         final fun <get-agent>(): com.agui.client.agent/AbstractAgent // dev.ynagai.agui.agent/AgentSession.agent.<get-agent>|<get-agent>(){}[0]
+    final val tools // dev.ynagai.agui.agent/AgentSession.tools|{}tools[0]
+        final fun <get-tools>(): com.agui.tools/ToolRegistry? // dev.ynagai.agui.agent/AgentSession.tools.<get-tools>|<get-tools>(){}[0]
     final val transcript // dev.ynagai.agui.agent/AgentSession.transcript|{}transcript[0]
         final fun <get-transcript>(): kotlinx.coroutines.flow/StateFlow<dev.ynagai.agui.model/UiTranscript> // dev.ynagai.agui.agent/AgentSession.transcript.<get-transcript>|<get-transcript>(){}[0]
 

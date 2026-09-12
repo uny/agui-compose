@@ -21,7 +21,9 @@ a second entry point, and why upstream's own API leaves no other way in, is
 [docs/decisions/0006](docs/decisions/0006-saying-something.md). And what a sample application found
 that no module's own tests could — a dependency neither of two modules names, on which they
 disagree — is
-[docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md).
+[docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md). How a
+tool the agent calls gets executed here and answered, and why upstream's own handler for that is
+not used, is [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -133,6 +135,45 @@ recorded the same way, then propagates. Runs on one session take turns. The sess
 the agent's lifetime — `dispose()` it yourself, once — and it does not choose the HTTP engine:
 upstream fixes that per platform (CIO on the JVM, `ktor-client-android` on Android, Darwin on iOS),
 and the only way to substitute one is the `HttpClient` parameter on `HttpAgent`.
+
+### Executing a tool here
+
+A frontend tool is one the agent calls and the client runs. Hand the session a `ToolRegistry` from
+upstream's `kotlin-tools` — it arrives with `agui-agent` — and the tools in it are declared on
+every run, executed when called, and answered:
+
+```kotlin
+import com.agui.tools.AbstractToolExecutor
+import com.agui.tools.ToolExecutionContext
+import com.agui.tools.ToolExecutionResult
+import com.agui.tools.toolRegistry
+
+class ChangeBackground : AbstractToolExecutor(Tool(name = "change_background", …)) {
+    override suspend fun executeInternal(context: ToolExecutionContext): ToolExecutionResult {
+        paint(context.toolCall.function.arguments)   // whatever the tool does
+        return ToolExecutionResult.success(buildJsonObject { put("changed", true) })
+    }
+}
+
+val session = AgentSession(agent, tools = toolRegistry(ChangeBackground()))
+session.send("tool")   // returns when the agent has been told the result and has answered it
+```
+
+The protocol has one channel for a tool's result: the next run's input. So a run that called a
+tool is answered by a run of its own — the same tools, context and forwarded properties, the
+thread's history with the result placed after its call — and `send` or `run` suspends until a run
+ends without calling one. The call is drawn `AWAITING_RESULT` while the tool executes and `COMPLETE` once it has
+a result, in the transcript, before the answering run starts. A tool the registry does not hold is
+left alone: a backend tool's events fold exactly as they do with no registry, and a run that stops
+for a human (`RunState.Finished.interrupted`) is answered only if it also called one of these
+tools, and then with that result alone; an approval no tool gives is yours to send.
+
+`RunState.Finished` is the run's verdict, not the turn's — a transcript reads it while a tool is
+still executing and again between a run and the run that answers it. Gate "the agent is done" on
+the suspend call returning. A result whose run failed, or was cancelled, is kept and sent ahead of
+the next turn rather than dropped; the reasoning, and why upstream's own `ClientToolResponseHandler`
+is not what sends it, is in
+[docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md).
 
 ### Drawing it
 
@@ -293,6 +334,20 @@ That listens on `http://localhost:8000/` (`PORT` moves it) and answers every tur
 `Hello world!`. The reply is canned; everything under it is not — a real HTTP request, a real SSE
 stream of AG-UI events, upstream's parser and verifier, and this library's reducer and renderers.
 It is what the sample was verified against.
+
+The sample also executes one frontend tool, `change_background`, and paints whatever gradient it
+is sent. To see that go round, upstream's all-features starter is the server, and it needs no key
+either — but it does need a full (not sparse) checkout, because its lockfile points at the Python
+SDK by path; a shallow clone is fine:
+
+```
+cd ag-ui/integrations/server-starter-all-features/python/examples
+uv run dev
+```
+
+Point the sample at `http://localhost:8000/agentic_chat` and type `tool`: the server calls the
+tool, the window changes colour, the result goes back in a second run, and the server answers
+`background changed ✓`. Type anything else for a plain reply.
 
 For an agent that actually thinks, any of the other
 [integrations](https://github.com/ag-ui-protocol/ag-ui/tree/main/integrations) serves the same

@@ -1,10 +1,18 @@
 package dev.ynagai.agui.sample
 
+import com.agui.core.types.FunctionCall
+import com.agui.core.types.ToolCall
+import com.agui.core.types.ToolMessage
+import com.agui.tools.ToolExecutionContext
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.ToolCallPart
+import dev.ynagai.agui.model.ToolCallStatus
 import dev.ynagai.agui.model.UiRole
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -50,6 +58,67 @@ class SampleChatTest {
             listOf("first", ANSWER, "second"),
             secondRun.messages.map { it.content },
         )
+    }
+
+    /**
+     * The frontend tool, end to end against a scripted agent: the call is executed here, the
+     * window is told what to paint, and the result goes back in a run of its own that the agent
+     * answers. The second input is the wire, and what it ends in is what a server would see.
+     */
+    @Test
+    fun a_change_background_call_paints_the_window_and_is_answered() = runTest {
+        val agents = mutableListOf<ScriptedAgent>()
+        val chat = SampleChat { url -> ScriptedAgent(url, callsTool = true).also { agents += it } }
+        chat.connect("http://localhost:8000/")
+
+        val state = chat.send("tool")
+
+        assertEquals(BACKGROUND, chat.background.value)
+        assertTrue(state is RunState.Finished, "expected a finished run, got $state")
+        val inputs = agents.single().inputs
+        assertEquals(2, inputs.size, "one run to call the tool, one to answer it")
+        assertEquals(listOf("change_background"), inputs.first().tools.map { it.name })
+        val result = assertIs<ToolMessage>(inputs.last().messages.last())
+        assertEquals("call-${inputs.first().runId}", result.toolCallId)
+        val messages = assertNotNull(chat.connection.value).transcript.value.messages
+        assertEquals(listOf(UiRole.USER, UiRole.ASSISTANT, UiRole.ASSISTANT), messages.map { it.role })
+        assertEquals(ToolCallStatus.COMPLETE, messages[1].parts.filterIsInstance<ToolCallPart>().single().status)
+    }
+
+    @Test
+    fun reconnecting_forgets_the_background() = runTest {
+        val chat = SampleChat { url -> ScriptedAgent(url, callsTool = true) }
+        chat.connect("http://localhost:8000/")
+        chat.send("tool")
+        assertEquals(BACKGROUND, chat.background.value)
+
+        chat.connect("http://localhost:8001/")
+
+        assertNull(chat.background.value)
+    }
+
+    /** What the agent is told when the call is not one the tool can act on; the window is left alone. */
+    @Test
+    fun a_call_without_a_background_fails_and_paints_nothing() = runTest {
+        var painted: String? = null
+        val tool = ChangeBackground { painted = it }
+        val call = { arguments: String ->
+            ToolExecutionContext(ToolCall(id = "c", function = FunctionCall(name = "change_background", arguments = arguments)))
+        }
+
+        assertFalse(tool.execute(call("{}")).success)
+        assertFalse(tool.execute(call("""{"background":null}""")).success)
+        assertFalse(tool.execute(call("not json")).success)
+        assertNull(painted)
+        assertTrue(tool.execute(call("""{"background":"#fff"}""")).success)
+        assertEquals("#fff", painted)
+    }
+
+    @Test
+    fun background_colours_are_read_off_the_css_and_nothing_else_is() {
+        assertEquals(listOf(0xFF667EEAL, 0xFF764BA2L), backgroundColors(BACKGROUND))
+        assertEquals(listOf(0xFFFFFFFFL), backgroundColors("#fff"))
+        assertEquals(emptyList(), backgroundColors("rebeccapurple"))
     }
 
     @Test
