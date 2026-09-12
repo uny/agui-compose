@@ -143,13 +143,16 @@ public class AgentSession(
      *
      * The input is built here rather than by `AbstractAgent.prepareRunAgentInput`, which is the one
      * thing this path cannot reuse -- it takes `RunAgentParameters`, which is what carries no
-     * messages. The fields are defaulted exactly as that method defaults them, but an agent that
-     * *overrides* it to add something of its own gets that on [run] and not here.
+     * messages. Field for field it is defaulted the way that method defaults them, but it is not
+     * that method: an agent that *overrides* it to add something of its own gets that on [run] and
+     * not here.
      *
      * @param message the turn to send. Supply the id when the client has one to supply; it is the
-     *   id the message is drawn under, and the one it goes on the wire with. A later
-     *   `MESSAGES_SNAPSHOT` does not reconcile against it -- a snapshot replaces the transcript
-     *   whole, the server's copy of this turn included.
+     *   id the message goes on the wire with, and the one it is drawn under unless the transcript
+     *   already holds that id, in which case the drawn one is suffixed and the wire's is not (see
+     *   [UiTranscriptReducer.appendUserMessage]). A later `MESSAGES_SNAPSHOT` does not reconcile
+     *   against it either -- a snapshot replaces the transcript whole, the server's copy of this
+     *   turn included.
      * @param parameters the run's id, tools, context and forwarded properties. Defaulted here the
      *   way `AbstractAgent` defaults them: a generated run id, no tools, no context, and empty
      *   forwarded properties.
