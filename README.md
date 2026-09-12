@@ -36,6 +36,7 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
 | `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
 | `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | not yet |
+| `agui-sample` | A desktop window that talks to a real AG-UI server: the whole stack above, assembled the way an application would. See [The sample](#the-sample). | never |
 
 `agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an optional dependency) and
 the `agui-provider-*` adapters come next.
@@ -263,6 +264,55 @@ What it deliberately does not do: parse Markdown (that is `agui-markdown`), load
 attachments, or render an `ACTIVITY_SNAPSHOT` payload (that is `agui-a2ui`). Each of those is a
 dependency with an opinion, and each is one `copy` away for an application that wants it. The
 reasoning is in [docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md).
+
+## The sample
+
+`agui-sample` is one desktop window: an endpoint to point at, a transcript, and a line to type
+into. It is the whole stack above assembled once — `AgentSession` over upstream's `HttpAgent`,
+drawn by `AguiTranscript` under `ProvideMaterial3Agui`, with `agui-markdown` fitted through the
+text-renderer slot — and nothing in it is stubbed.
+
+```
+./gradlew :agui-sample:run
+```
+
+**The endpoint field starts empty, and the sample ships with no server.** There is no hosted
+endpoint to point it at that would not tie this repository to somebody else's uptime, so what it
+talks to is a server you run. The smallest one is upstream's own, and it needs no API key:
+
+```
+git clone https://github.com/ag-ui-protocol/ag-ui
+cd ag-ui/integrations/server-starter/python/examples
+uv run dev
+```
+
+That listens on `http://localhost:8000/` (`PORT` moves it) and answers every turn with a fixed
+`Hello world!`. The reply is canned; everything under it is not — a real HTTP request, a real SSE
+stream of AG-UI events, upstream's parser and verifier, and this library's reducer and renderers.
+It is what the sample was verified against.
+
+For an agent that actually thinks, any of the other
+[integrations](https://github.com/ag-ui-protocol/ag-ui/tree/main/integrations) serves the same
+protocol on the same shape of endpoint; those are LLM-backed and want a provider key of their own.
+The sample does not care which — it is a URL.
+
+**One dependency clash an application has to resolve itself.** Upstream's `kotlin-core` and
+`kotlin-client` 0.4.1 are compiled against kotlinx-datetime 0.6.2; Compose Material 3 1.9.0 brings
+0.7.1, where `Clock` and `Instant` moved to `kotlin.time` and the old classes are gone. Gradle picks
+0.7.1, everything compiles, and the first event upstream timestamps dies with
+`NoClassDefFoundError: kotlinx/datetime/Clock$System`. Any application taking `agui-material3` and
+`agui-agent` together will meet this. The fix is one line, and it is what `agui-sample` does:
+
+```kotlin
+implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat")
+```
+
+That artifact is 0.8.0 with the 0.6.x binary surface kept, published for exactly this, so both
+sides find what they were compiled against.
+
+What the sample deliberately does not do yet: run frontend tools, render an `ACTIVITY_SNAPSHOT`,
+or build for Android or iOS. It is one target and one screen, and the module is laid out so that
+the second target is a source set rather than a rewrite.
 
 ## Building
 
