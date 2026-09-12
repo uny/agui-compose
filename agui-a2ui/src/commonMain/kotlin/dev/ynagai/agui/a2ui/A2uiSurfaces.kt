@@ -159,11 +159,17 @@ public class A2uiSurfaces private constructor(
     }
 
     /**
-     * This value with [batch] taken back: the renderer threw on it and, since `applyAll` leaves
-     * its state alone when it throws, holds none of the batch's surfaces. Call on [Step.next].
+     * This value with [batch] recorded as refused: the renderer threw on it and, since `applyAll`
+     * leaves its state alone when it throws, holds none of the batch's surfaces. Call on
+     * [Step.next].
+     *
+     * The batch stays in the books as applied. A payload the renderer refused once it refuses
+     * every time, and forgetting it would replay it -- and throw again -- on every event of the
+     * run. It is retried when the carrier's payload changes, which is the only thing that could
+     * change the outcome.
      */
     public fun rejected(batch: A2uiBatch): A2uiSurfaces = A2uiSurfaces(
-        applied = applied - batch.carrier,
+        applied = applied,
         live = live.filterValues { it != batch.carrier },
     )
 

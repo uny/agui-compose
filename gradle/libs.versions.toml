@@ -41,10 +41,11 @@ jsonPatch = "1.0.0"
 # `iosX64`, so no module that depends on it can keep the fifth target `agui-agent` ships.
 a2ui = "0.1.0"
 
-# Ktor, for the replay server only. Pinned to the version `kotlin-client` 0.4.1 was published
-# against -- read off its module metadata -- so the sample's client and the replay server it talks
-# to resolve one Ktor rather than two.
-ktor = "3.3.3"
+# Ktor, for the replay server only. Pinned to the version `kotlin-client` 0.4.1 requires -- its
+# module metadata says `ktor-client-core` 3.2.4 -- so that the sample's test classpath, which holds
+# the client and the replay server at once, resolves the Ktor upstream was compiled against rather
+# than pulling the client up to whatever the server asked for.
+ktor = "3.2.4"
 
 # kotlinx-datetime. Declared by `agui-agent` and by nothing else, and not because that module names
 # a datetime type -- it arrives transitively from two directions that disagree across a binary

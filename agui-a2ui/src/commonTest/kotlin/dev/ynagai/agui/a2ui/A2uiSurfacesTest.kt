@@ -134,14 +134,18 @@ class A2uiSurfacesTest {
     }
 
     @Test
-    fun `a rejected batch is taken back so the next step recreates rather than updates`() {
+    fun `a rejected batch is not retried until its payload changes`() {
         val ops = operations("s", "x")
         val step = A2uiSurfaces.Empty.accept(transcript(activity("a", ops)).a2uiPayloads())
-        val rolledBack = step.next.rejected(step.batches.single())
-        assertEquals(emptySet(), rolledBack.surfaceIds)
-        val again = rolledBack.accept(transcript(activity("a", ops)).a2uiPayloads())
-        assertEquals(emptyList(), again.deletes)
-        assertEquals(1, again.batches.size)
+        val refused = step.next.rejected(step.batches.single())
+        assertEquals(emptySet(), refused.surfaceIds)
+
+        val same = refused.accept(transcript(activity("a", ops)).a2uiPayloads())
+        assertTrue(same.isEmpty, "the same payload would throw the same way")
+
+        val changed = refused.accept(transcript(activity("a", operations("s", "y"))).a2uiPayloads())
+        assertEquals(emptyList(), changed.deletes, "nothing was live to delete")
+        assertEquals(1, changed.batches.size)
     }
 
     @Test

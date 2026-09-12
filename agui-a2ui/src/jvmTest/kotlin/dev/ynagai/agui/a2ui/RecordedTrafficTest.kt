@@ -116,6 +116,36 @@ class RecordedTrafficTest {
     }
 
     @Test
+    fun `an ACTIVITY_DELTA that patches the operations in is read like a snapshot`() {
+        // Not in any recording -- the middleware only ever snapshots -- but the protocol has
+        // the event and the reducer applies it, so a payload has to come out of the patched
+        // content the same way it comes out of a replaced one.
+        val reducer = UiTranscriptReducer(onWarning = { fail(it) })
+        val snapshot = kotlinx.serialization.json.Json.parseToJsonElement(
+            """{"type":"ACTIVITY_SNAPSHOT","messageId":"a","activityType":"a2ui-surface","content":{"status":"building"},"replace":true}""",
+        )
+        val delta = kotlinx.serialization.json.Json.parseToJsonElement(
+            """{"type":"ACTIVITY_DELTA","messageId":"a","activityType":"a2ui-surface","patch":[
+                {"op":"remove","path":"/status"},
+                {"op":"add","path":"/a2ui_operations","value":[
+                    {"version":"v0.9","createSurface":{"surfaceId":"d","catalogId":"${AguiA2ui.UPSTREAM_BASIC_CATALOG_ID}"}},
+                    {"version":"v0.9","updateComponents":{"surfaceId":"d","components":[{"id":"root","component":"Text","text":"patched"}]}}
+                ]}
+            ]}""",
+        )
+        reducer.accept(AgUiJson.decodeFromJsonElement(BaseEvent.serializer(), snapshot))
+        val building = reducer.accept(AgUiJson.decodeFromJsonElement(BaseEvent.serializer(), snapshot)).a2uiPayloads().single()
+        assertIs<A2uiPayload.Building>(building.payload)
+
+        val patched = reducer.accept(AgUiJson.decodeFromJsonElement(BaseEvent.serializer(), delta)).a2uiPayloads().single()
+        assertEquals(A2uiCarrier.Activity("a"), patched.carrier)
+        val surfaces = assertIs<A2uiPayload.Surfaces>(patched.payload)
+        assertEquals(listOf("d"), surfaces.surfaceIds)
+        val state = MessageProcessor.applyAll(RendererState(), surfaces.messages).state
+        assertTrue(state.surface("d")!!.isRenderable)
+    }
+
+    @Test
     fun `the recorded tool result translates to v1_0 messages that a2ui-core accepts on their own`() {
         // The check the evolution guide invites: take the operations upstream actually produced,
         // rewrite them, and let a2ui-core say whether they are a surface.

@@ -52,6 +52,10 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            // For the one test that runs `RenderA2UiTool` through `AgentSession`: the executor's
+            // contract is with 0008's loop, and only the loop can say whether it is kept.
+            implementation(projects.aguiAgent)
         }
         jvmTest.dependencies {
             // The recorded upstream traffic the trace-driven tests fold. JVM-only because the

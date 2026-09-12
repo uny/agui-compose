@@ -26,8 +26,9 @@ import dev.ynagai.agui.model.UiTranscript
  * and draws the surfaces, the lifecycle, or nothing, as the reconciler decided.
  *
  * A batch the renderer throws on -- a data-model path that is not a JSON Pointer, say -- is
- * reported through [onWarning], taken back from the bookkeeping, and shown in its slot as the
- * message the renderer gave. The other carriers' surfaces stand.
+ * reported through [onWarning], recorded as refused so it is not retried until its payload
+ * changes, and shown in its slot as the message the renderer gave. The other carriers' surfaces
+ * stand.
  *
  * One host per transcript, and one renderer per host: [A2uiSurfaces] assumes it is the only thing
  * creating surfaces in the renderer it plans for, and a second host sharing the renderer would

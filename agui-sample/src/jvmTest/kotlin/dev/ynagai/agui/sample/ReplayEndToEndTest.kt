@@ -27,7 +27,10 @@ class ReplayEndToEndTest {
     @Test
     fun the_recorded_hotel_comparison_draws_three_cards() = runComposeUiTest {
         val trace = ReplayTrace.resource("advanced-hotel-comparison")
-        val server = ReplayServer(traces = listOf(trace), port = 0, delayMillis = 0).start()
+        // A few milliseconds between events, so that the states between the first event and the
+        // last -- the building skeleton, the progressive paints -- are on screen long enough to
+        // be seen, rather than collapsed into one frame by a server faster than the compositor.
+        val server = ReplayServer(traces = listOf(trace), port = 0, delayMillis = 5).start()
         try {
             val port = server.boundPort
             setContent { SampleApp(chat = SampleChat()) }
@@ -37,6 +40,11 @@ class ReplayEndToEndTest {
             onNodeWithText("Message").performTextInput("Compare three hotels")
             onNodeWithText("Send").performClick()
 
+            // The middleware's `{"status": "building"}` activity, drawn by the Material 3 pending
+            // renderer, before any card exists.
+            waitUntil(timeoutMillis = 30_000) {
+                onAllNodesWithText("Building UI").fetchSemanticsNodes().isNotEmpty()
+            }
             waitUntil(timeoutMillis = 30_000) {
                 onAllNodesWithText("Boutique Loft").fetchSemanticsNodes().isNotEmpty()
             }
