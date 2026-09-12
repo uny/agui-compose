@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
@@ -104,8 +105,9 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
 
     // What the agent's `change_background` call comes to. A gradient of the colours the string
     // names, painted under a transparent `Surface`; one colour is painted flat, and a string that
-    // names none leaves the theme's own ground in place. The `Surface` stays for what it derives
-    // -- see below -- and only its colour gives way.
+    // names none leaves the theme's own ground in place. A transparent `Surface` derives no content
+    // colour -- `contentColorFor(Transparent)` is whatever was current, Material 3's black -- so
+    // the one to read against the painted ground is chosen here, off the first colour's luminance.
     val colors = remember(background) { background?.let(::backgroundColors).orEmpty().map { Color(it) } }
     val painted = when (colors.size) {
         0 -> Modifier
@@ -120,6 +122,11 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         Surface(
             modifier = modifier.fillMaxSize().then(painted),
             color = if (colors.isEmpty()) MaterialTheme.colorScheme.surface else Color.Transparent,
+            contentColor = when {
+                colors.isEmpty() -> MaterialTheme.colorScheme.onSurface
+                colors.first().luminance() > 0.5f -> Color.Black
+                else -> Color.White
+            },
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

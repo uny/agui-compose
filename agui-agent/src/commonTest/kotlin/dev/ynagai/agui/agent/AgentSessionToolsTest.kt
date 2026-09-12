@@ -24,6 +24,9 @@ import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -243,5 +246,60 @@ class AgentSessionToolsTest {
         } else {
             flow { answer(input.runId, "a-${input.runId}", "done").forEach { emit(it) } }
         }
+    }
+}
+
+/**
+ * Cancelled while a tool is still executing.
+ *
+ * Measured rather than assumed, because upstream's `executeToolCall` catches `Exception` and on
+ * the JVM a `CancellationException` is one: the manager does not let the cancellation through, it
+ * reports it as a failed execution -- `Tool execution failed: … was cancelled` -- and hands that
+ * back like any result. The session keeps it like any result. That is the right outcome for the
+ * history, which then holds a call *and* an answer rather than a call the server cannot continue
+ * from; what the answer says is the manager's wording, and the transcript draws it as a result.
+ */
+class AgentSessionToolsCancellationTest {
+
+    @Test
+    fun a_tool_cancelled_mid_execution_answers_with_the_managers_failure_report() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.messages.none { it is ToolMessage }) {
+                flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    emit(ToolCallStartEvent(toolCallId = "c1", toolCallName = "slow"))
+                    emit(ToolCallArgsEvent(toolCallId = "c1", delta = "{}"))
+                    emit(ToolCallEndEvent(toolCallId = "c1"))
+                    emit(RunFinishedEvent(threadId = THREAD, runId = input.runId))
+                }
+            } else {
+                flow { answer(input.runId, "a", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent, tools = toolRegistry(Slow()))
+
+        val job = launch { session.run(RunAgentParameters(runId = "r1")) }
+        yield()
+        yield()
+        job.cancel()
+        job.join()
+
+        // RUN_FINISHED was seen before the cancellation, which arrived while the manager was
+        // joining the tool's job; the agent's verdict stands, as it does for any late cancellation.
+        assertEquals(RunState.Finished("t", "r1"), session.transcript.value.run)
+        assertEquals(1, agent.inputs.size, "no follow-up: the cancelled coroutine starts nothing")
+        val part = session.transcript.value.messages.first().parts.filterIsInstance<ToolCallPart>().single()
+        assertEquals(ToolCallStatus.COMPLETE, part.status)
+        assertTrue(part.result.orEmpty().startsWith("Tool execution failed"), "got ${part.result}")
+
+        session.send(UserMessage(id = "u1", content = "again"))
+
+        val next = agent.inputs[1].messages.takeLast(2)
+        assertEquals("c1", assertIs<ToolMessage>(next[0]).toolCallId)
+        assertEquals("u1", next[1].id)
+    }
+
+    private class Slow : AbstractToolExecutor(Tool(name = "slow", description = "", parameters = JsonObject(emptyMap()))) {
+        override suspend fun executeInternal(context: ToolExecutionContext): ToolExecutionResult = awaitCancellation()
     }
 }

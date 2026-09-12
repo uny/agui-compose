@@ -86,6 +86,10 @@ import kotlin.uuid.Uuid
  * answer. It is kept, and goes out with the next [run] or [send] on this session, ahead of the
  * turn that call adds. The alternative was dropping it, which would leave the agent's history
  * holding a call with no result, and that is a history most model backends refuse to continue.
+ * A tool cancelled mid-execution has a result too: upstream's manager catches the cancellation
+ * as it would any exception and hands back its own failure report (`Tool execution failed: …`),
+ * which is kept and sent for the same reason -- the history then holds an answer to the call,
+ * even if the answer is that it was stopped.
  *
  * The reducer is fed only from the collecting coroutine. The manager executes tools on jobs of its
  * own, so the handler puts each result on a channel and the collector folds it -- before the next
@@ -309,7 +313,8 @@ public class AgentSession(
         } finally {
             // The manager joins its jobs before the stream completes, so on the ordinary path
             // everything is here by now. On a throw or a cancellation the jobs are cancelled with
-            // the stream's scope, and whatever they had already handed back is folded and kept.
+            // the stream's scope, and what they handed back -- a result, or the manager's report
+            // that the tool was stopped -- is folded and kept.
             foldResults()
         }
         return transcript.value.run
@@ -371,6 +376,7 @@ public class AgentSession(
         tools = (parameters?.tools ?: emptyList()) + (tools?.getAllTools() ?: emptyList()),
         context = parameters?.context ?: emptyList(),
         forwardedProps = parameters?.forwardedProps ?: JsonObject(emptyMap()),
+        given = parameters,
     )
 
     /** The input `prepareRunAgentInput` would build from [parameters], carrying [messages] instead of the agent's own. */
@@ -388,15 +394,25 @@ public class AgentSession(
      * `RunAgentParameters` with nothing left null. Upstream's carries every field nullable and
      * fills the gaps in `prepareRunAgentInput`; the runs here need the run id before the agent is
      * asked, and a follow-up run needs the rest to send again, so the gaps are filled once.
+     *
+     * [parameters] is for the one path that still goes through `prepareRunAgentInput` -- a [run]
+     * with nothing of its own to carry -- and hands that method what the caller gave it, nulls
+     * included, so an agent that overrides it to fill a null still gets to. Only the run id is
+     * always set, and the tools only when a registry adds to them.
      */
     private data class PreparedRun(
         val runId: String,
         val tools: List<Tool>,
         val context: List<Context>,
         val forwardedProps: JsonElement,
+        val given: RunAgentParameters?,
     ) {
-        fun parameters(): RunAgentParameters =
-            RunAgentParameters(runId = runId, tools = tools, context = context, forwardedProps = forwardedProps)
+        fun parameters(): RunAgentParameters = RunAgentParameters(
+            runId = runId,
+            tools = if (tools.isEmpty()) given?.tools else tools,
+            context = given?.context,
+            forwardedProps = given?.forwardedProps,
+        )
     }
 
     public companion object {

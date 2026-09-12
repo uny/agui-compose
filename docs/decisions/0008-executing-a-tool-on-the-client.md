@@ -74,10 +74,14 @@ Two facts about the surrounding pieces bear on the shape:
    protocol leaves it, which is also where a human-in-the-loop approval sits.
 5. **A result whose run did not finish is kept, not dropped.** A `RUN_ERROR`, a throw, or a
    cancellation while a tool was executing leaves the result folded on screen and held by the
-   session; it goes out ahead of the next `run` or `send`. The alternative -- dropping it -- leaves
-   `agent.messages` holding a call with no result, and that is a history most model backends
-   refuse to continue. `setMessages` is protected, so the session cannot repair the agent's copy;
-   carrying the message to the next input is the repair.
+   session; it goes out ahead of the next `run` or `send`. The alternative -- dropping it --
+   leaves `agent.messages` holding a call with no result, and that is a history most model
+   backends refuse to continue. `setMessages` is protected, so the session cannot repair the
+   agent's copy; carrying the message to the next input is the repair. A cancelled tool has a
+   result too, measured: `executeToolCall` catches `Exception`, which on the JVM a
+   `CancellationException` is, so the manager hands back its own `Tool execution failed: …`
+   report rather than letting the cancellation through, and that report is kept for the same
+   reason a real one is.
 
 `agui-sample` executes one tool, upstream's own `change_background`, and paints what it is sent.
 Verified against `server-starter-all-features`' `/agentic_chat`, which calls that tool on the turn
@@ -87,8 +91,9 @@ Verified against `server-starter-all-features`' `/agentic_chat`, which calls tha
 
 - `RunState.Finished` is the run's verdict and not the turn's. A transcript reads `Finished` while
   a tool is still executing and again between a run and the run that answers it; a UI gating on
-  "the agent is done" gates on the suspend call returning. The KDoc on `Finished` says so, and the
-  sample gates that way.
+  "the agent is done" gates on the suspend call returning. The KDoc on `Finished` says so; the
+  sample gates on nothing (its composer stays enabled and every send is launched), which is the
+  other correct answer.
 - The session's constructor changed shape -- the parameter is last and defaulted, so every
   existing call still compiles, but the JVM constructor is a new one. Nothing is published yet
   (decision 7's status note stands) and the ABI dumps are updated.

@@ -336,8 +336,8 @@ It is what the sample was verified against.
 
 The sample also executes one frontend tool, `change_background`, and paints whatever gradient it
 is sent. To see that go round, upstream's all-features starter is the server, and it needs no key
-either — but it does need the whole repository checked out, because its lockfile points at the
-Python SDK by path:
+either — but it does need a full (not sparse) checkout, because its lockfile points at the Python
+SDK by path; a shallow clone is fine:
 
 ```
 cd ag-ui/integrations/server-starter-all-features/python/examples
