@@ -80,7 +80,7 @@ application. The cost of not using it is written down under Consequences.
   brings a kotlinx-datetime that sorts above `0.8.0-0.6.x-compat`, the pin stops winning -- and it
   stops winning at run time, from a build that still succeeds. That is the same failure as before,
   with a later trigger -- but it is caught here, which is the reason this record is filed against a
-  sample rather than a note. `:agui-sample:jvmTest` fails 4 of its 9 on
+  sample rather than a note. `:agui-sample:jvmTest` fails 4 of its 10 on
   `NoClassDefFoundError: kotlinx/datetime/Clock$System` the moment the pin stops winning, because
   its runs go through `runAgentObservable` and upstream timestamps them. What is *not* caught is a
   bump that happens on a **consumer's** graph, which nothing in this repository resolves; that is

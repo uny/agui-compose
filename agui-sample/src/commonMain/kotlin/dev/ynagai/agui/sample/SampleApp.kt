@@ -89,9 +89,11 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     val uriHandler = remember(platformUriHandler) {
         object : UriHandler {
             override fun openUri(uri: String) {
-                val opened = uri.startsWith("http://", ignoreCase = true) ||
-                    uri.startsWith("https://", ignoreCase = true)
-                if (opened) platformUriHandler.openUri(uri)
+                // `lowercase()` rather than `startsWith(ignoreCase = true)`: that comparison folds
+                // through uppercase, so `httpſ://` (U+017F) satisfies `https://` and the string
+                // reaching the platform would not be the scheme this claims to have checked.
+                val scheme = uri.substringBefore("://", missingDelimiterValue = "").lowercase()
+                if (scheme == "http" || scheme == "https") platformUriHandler.openUri(uri)
             }
         }
     }

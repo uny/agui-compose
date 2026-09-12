@@ -53,8 +53,11 @@ class SampleAppTest {
         waitUntil { onAllNodesWithText(ANSWER_DRAWN).fetchSemanticsNodes().isNotEmpty() }
         onAllNodesWithText("hello")[0].assertExists()
         // The answer went out as `**ok**` and is on screen as `ok`, which is the only thing that
-        // separates "the Markdown renderer is fitted" from "something drew the text". Drop
-        // `textRenderer = textRenderer` from `SampleApp` and this is the assertion that fails.
+        // separates "the Markdown renderer is fitted" from "something drew the text". `waitUntil`
+        // above is what actually fails when `textRenderer = textRenderer` is dropped -- these
+        // matchers are exact, so the node would read `**ok**` and the wait would time out. This
+        // line says the same thing from the other side, so that a later change to the wait cannot
+        // quietly take the check with it.
         onAllNodesWithText(ANSWER).assertCountEquals(0)
         // The transcript's own report, which `AguiTranscript` deliberately does not draw -- so if
         // the sample stopped drawing it, nothing else here would notice.
