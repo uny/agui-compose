@@ -35,6 +35,11 @@ public sealed interface RunState {
     /**
      * The run finished.
      *
+     * This is the *run's* verdict, not the turn's. A client that executes tools answers a finished
+     * run with another run carrying the results, so a transcript can read [Finished] while a tool
+     * is still executing and again between that run and the next; a UI gating on "the agent is
+     * done" gates on the call that started the exchange returning, not on this.
+     *
      * @property result whatever the agent returned with `RUN_FINISHED`, which the protocol leaves
      *   untyped.
      * @property interrupted set when the run stopped to wait for the client -- a human approving a

@@ -3,21 +3,31 @@ package dev.ynagai.agui.agent
 import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.RunAgentParameters
 import com.agui.core.types.BaseEvent
+import com.agui.core.types.Context
+import com.agui.core.types.Message
 import com.agui.core.types.RunAgentInput
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
 import com.agui.core.types.RunStartedEvent
+import com.agui.core.types.Tool
+import com.agui.core.types.ToolCallResultEvent
+import com.agui.core.types.ToolMessage
 import com.agui.core.types.UserMessage
+import com.agui.tools.ToolExecutionManager
+import com.agui.tools.ToolRegistry
+import com.agui.tools.ToolResponseHandler
 import dev.ynagai.agui.core.UiTranscriptReducer
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.uuid.Uuid
 
@@ -47,16 +57,71 @@ import kotlin.uuid.Uuid
  * client it created itself, and the agent may be shared with something outside this session; the
  * owner that constructed it closes it.
  *
+ * ### Frontend tools
+ *
+ * A session given a [ToolRegistry] executes the tools in it on the client. Every run declares the
+ * registry's tools to the server, after whatever the caller's `RunAgentParameters.tools` names;
+ * when the agent calls one, upstream's `ToolExecutionManager` -- inserted between the agent's
+ * stream and the reducer -- assembles the call from its events, runs the executor, and hands the
+ * `ToolMessage` back here. The result is folded into the transcript as a `TOOL_CALL_RESULT`, so
+ * the call that was drawn `AWAITING_RESULT` is drawn `COMPLETE`, and once the run has finished it
+ * is **sent back in a run of its own**: the same `tools`, `context` and `forwardedProps`, a new
+ * run id, and the thread's history with the tool's answer appended. That run may call another
+ * tool, which is answered the same way, until a run ends without calling one. [run] and [send]
+ * suspend for the whole exchange and return the state the *last* run ended in.
+ *
+ * Upstream's `ClientToolResponseHandler` is not used for the sending. It answers a tool by
+ * starting a second run *inside* the handler and collecting it there, which is a run this session
+ * never sees: its events would not reach the transcript, and it would not take the lock the runs
+ * below take turns on. The handler here takes the message and nothing else; the run that carries
+ * it is started by the same code that started the one it answers.
+ *
+ * A tool the agent calls that the registry does not hold is left alone -- the manager reports it
+ * as server-handled and sends nothing -- so a backend tool's events fold exactly as they do with
+ * no registry at all, and a run that stops to wait for a human (`RUN_FINISHED` with an interrupt
+ * outcome) is not answered by anything automatic.
+ *
+ * A result whose run *failed* -- a `RUN_ERROR` from the agent, or a stream that threw or was
+ * cancelled while the tool was executing -- is not sent then, because there is no finished run to
+ * answer. It is kept, and goes out with the next [run] or [send] on this session, ahead of the
+ * turn that call adds. The alternative was dropping it, which would leave the agent's history
+ * holding a call with no result, and that is a history most model backends refuse to continue.
+ *
+ * The reducer is fed only from the collecting coroutine. The manager executes tools on jobs of its
+ * own, so the handler puts each result on a channel and the collector folds it -- before the next
+ * event, or after the stream ends -- rather than the job folding it from wherever it happens to be
+ * running.
+ *
  * @param agent the upstream agent to run. Its `threadId` names the thread this transcript is of.
  * @param onWarning see [UiTranscriptReducer]; this class adds one case of its own, a `RUN_ERROR`
  *   that arrived after the run had already ended and was therefore not folded.
+ * @param tools the tools this client executes, or null for a session that executes none. Declared
+ *   on every run through this session, and answered as described above.
  */
 public class AgentSession(
     public val agent: AbstractAgent,
     private val onWarning: (String) -> Unit = {},
+    public val tools: ToolRegistry? = null,
 ) {
     private val reducer = UiTranscriptReducer(onWarning)
     private val runs = Mutex()
+
+    /** Where the manager's jobs leave results; drained on the collecting coroutine only. */
+    private val results = Channel<ToolMessage>(Channel.UNLIMITED)
+
+    /** Results folded into the transcript that no run has yet carried to the server. */
+    private val unsent = mutableListOf<ToolMessage>()
+
+    private val executor: ToolExecutionManager? = tools?.let { registry ->
+        ToolExecutionManager(
+            registry,
+            object : ToolResponseHandler {
+                override suspend fun sendToolResponse(toolMessage: ToolMessage, threadId: String?, runId: String?) {
+                    results.send(toolMessage)
+                }
+            },
+        )
+    }
 
     private val mutableTranscript = MutableStateFlow(reducer.transcript)
 
@@ -106,12 +171,25 @@ public class AgentSession(
      * that upstream's `runAgent` starts, and `runAgentObservable` starts none, so through this
      * class it is inert.
      *
-     * @param parameters the run's id, tools, context and forwarded properties, each defaulted by
-     *   the agent when absent. The messages sent are the agent's own -- what it was constructed
-     *   with, plus what earlier runs through it produced.
+     * With a [tools] registry, a run that calls one of its tools is answered by another run, and
+     * this returns the state the last of those ended in; see the class note. A tool result an
+     * earlier run failed to carry goes out with this one, appended to the history.
+     *
+     * @param parameters the run's id, tools, context and forwarded properties. The id is generated
+     *   here when absent rather than by the agent, because a tool executed during the run is told
+     *   which run called it; the rest are defaulted the way the agent defaults them, with the
+     *   registry's tools declared after the caller's. The messages sent are the agent's own --
+     *   what it was constructed with, plus what earlier runs through it produced.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
-        foldRun { agent.runAgentObservable(parameters) }
+        val prepared = prepare(parameters)
+        val ended = if (unsent.isEmpty()) {
+            foldRun(prepared.runId) { agent.runAgentObservable(prepared.parameters()) }
+        } else {
+            val messages = agent.messages + takeUnsent()
+            foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages)) }
+        }
+        answerTools(ended, prepared)
     }
 
     /**
@@ -141,6 +219,10 @@ public class AgentSession(
      * messages before the run that fails, so [run] asks the same question again, while a second
      * [send] would append it a second time and the server would be asked twice.
      *
+     * With a [tools] registry, a run that calls one of its tools is answered by another run, and
+     * this returns the state the last of those ended in; see the class note. A tool result an
+     * earlier run failed to carry goes out with this one, ahead of [message].
+     *
      * The input is built here rather than by `AbstractAgent.prepareRunAgentInput`, which is the one
      * thing this path cannot reuse -- it takes `RunAgentParameters`, which is what carries no
      * messages. Field for field it is defaulted the way that method defaults them, but it is not
@@ -155,21 +237,16 @@ public class AgentSession(
      *   turn included.
      * @param parameters the run's id, tools, context and forwarded properties. Defaulted here the
      *   way `AbstractAgent` defaults them: a generated run id, no tools, no context, and empty
-     *   forwarded properties.
+     *   forwarded properties. The registry's tools, when there is one, are declared after the
+     *   caller's.
      */
     public suspend fun send(message: UserMessage, parameters: RunAgentParameters? = null): RunState =
         runs.withLock {
             mutableTranscript.value = reducer.appendUserMessage(message)
-            val input = RunAgentInput(
-                threadId = agent.threadId,
-                runId = parameters?.runId ?: Uuid.random().toString(),
-                state = agent.state,
-                messages = agent.messages + message,
-                tools = parameters?.tools ?: emptyList(),
-                context = parameters?.context ?: emptyList(),
-                forwardedProps = parameters?.forwardedProps ?: JsonObject(emptyMap()),
-            )
-            foldRun { agent.runAgentObservable(input) }
+            val prepared = prepare(parameters)
+            val messages = agent.messages + takeUnsent() + message
+            val ended = foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages)) }
+            answerTools(ended, prepared)
         }
 
     /**
@@ -195,12 +272,17 @@ public class AgentSession(
      * would evaluate that at the call site, outside the `try` below, and the throw would escape
      * to a caller this class promises never to throw at.
      */
-    private suspend fun foldRun(events: () -> Flow<BaseEvent>): RunState {
+    private suspend fun foldRun(runId: String, events: () -> Flow<BaseEvent>): RunState {
         // Per run, not per call: upstream's verifier lets one stream carry RUN_STARTED again after
         // RUN_FINISHED, and the reducer follows it, so the flag has to follow it too.
         var ended = false
         try {
-            events().collect { event ->
+            val stream = events().let { executor?.processEventStream(it, agent.threadId, runId) ?: it }
+            stream.collect { event ->
+                // A result the manager produced since the last event goes in first. The manager
+                // emits TOOL_CALL_END downstream before it starts the job, and `emit` returns
+                // only after this lambda has, so no result can land ahead of its own call.
+                foldResults()
                 when (event) {
                     is RunStartedEvent -> ended = false
                     is RunFinishedEvent -> ended = true
@@ -224,12 +306,97 @@ public class AgentSession(
             throw e
         } catch (e: Exception) {
             if (!ended) fail(message = e.message ?: e::class.simpleName ?: "Run failed", code = CLIENT_ERROR_CODE)
+        } finally {
+            // The manager joins its jobs before the stream completes, so on the ordinary path
+            // everything is here by now. On a throw or a cancellation the jobs are cancelled with
+            // the stream's scope, and whatever they had already handed back is folded and kept.
+            foldResults()
         }
         return transcript.value.run
     }
 
     private fun fail(message: String, code: String) {
         mutableTranscript.value = reducer.accept(RunErrorEvent(message = message, code = code))
+    }
+
+    /**
+     * Folds every result the manager has handed back since the last call, and keeps each to send.
+     *
+     * Non-suspending on purpose: it is called from a `finally` that may be running cancelled, and
+     * `tryReceive` neither suspends nor throws for that.
+     */
+    private fun foldResults() {
+        while (true) {
+            val message = results.tryReceive().getOrNull() ?: break
+            unsent += message
+            mutableTranscript.value = reducer.accept(
+                ToolCallResultEvent(messageId = message.id, toolCallId = message.toolCallId, content = message.content),
+            )
+        }
+    }
+
+    /**
+     * Sends the results of [ended] back, and the results of that run, until a run calls no tool.
+     *
+     * Only a run that finished is answered: a failed one has no answer to continue, and an
+     * interrupted one is still a finished one -- a client that executed the tool the agent stopped
+     * for has the answer the interrupt was waiting on. What is left unsent when this returns is
+     * carried by the next [run] or [send].
+     */
+    private suspend fun answerTools(ended: RunState, parameters: PreparedRun): RunState {
+        var current = ended
+        while (current is RunState.Finished && unsent.isNotEmpty()) {
+            val next = parameters.copy(runId = Uuid.random().toString())
+            val messages = agent.messages + takeUnsent()
+            current = foldRun(next.runId) { agent.runAgentObservable(input(next, messages)) }
+        }
+        return current
+    }
+
+    /**
+     * The results to put on the wire, cleared here because `runAgentObservable` adopts the input's
+     * messages as the agent's before it runs -- once sent, they are the agent's history, and a run
+     * that then fails is retried through [run] the way a failed [send] is.
+     */
+    private fun takeUnsent(): List<ToolMessage> = unsent.toList().also { unsent.clear() }
+
+    /**
+     * [parameters] with a run id it may have lacked and the registry's tools added after its own,
+     * every field defaulted the way `AbstractAgent.prepareRunAgentInput` defaults it. Neither tool
+     * list is deduplicated: two tools of one name is the caller's to sort out, and a server that
+     * receives both will say which it took.
+     */
+    private fun prepare(parameters: RunAgentParameters?): PreparedRun = PreparedRun(
+        runId = parameters?.runId ?: Uuid.random().toString(),
+        tools = (parameters?.tools ?: emptyList()) + (tools?.getAllTools() ?: emptyList()),
+        context = parameters?.context ?: emptyList(),
+        forwardedProps = parameters?.forwardedProps ?: JsonObject(emptyMap()),
+    )
+
+    /** The input `prepareRunAgentInput` would build from [parameters], carrying [messages] instead of the agent's own. */
+    private fun input(parameters: PreparedRun, messages: List<Message>): RunAgentInput = RunAgentInput(
+        threadId = agent.threadId,
+        runId = parameters.runId,
+        state = agent.state,
+        messages = messages,
+        tools = parameters.tools,
+        context = parameters.context,
+        forwardedProps = parameters.forwardedProps,
+    )
+
+    /**
+     * `RunAgentParameters` with nothing left null. Upstream's carries every field nullable and
+     * fills the gaps in `prepareRunAgentInput`; the runs here need the run id before the agent is
+     * asked, and a follow-up run needs the rest to send again, so the gaps are filled once.
+     */
+    private data class PreparedRun(
+        val runId: String,
+        val tools: List<Tool>,
+        val context: List<Context>,
+        val forwardedProps: JsonElement,
+    ) {
+        fun parameters(): RunAgentParameters =
+            RunAgentParameters(runId = runId, tools = tools, context = context, forwardedProps = forwardedProps)
     }
 
     public companion object {

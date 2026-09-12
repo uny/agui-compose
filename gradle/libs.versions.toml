@@ -65,6 +65,12 @@ agui-core = { module = "com.ag-ui.community:kotlin-core", version.ref = "agui" }
 # `ktor-client-core` itself. `agui-agent` names none, so it declares none.
 agui-client = { module = "com.ag-ui.community:kotlin-client", version.ref = "agui" }
 
+# `kotlin-tools`: `ToolRegistry`, `ToolExecutor`, `ToolExecutionManager`. It would arrive with
+# `kotlin-client` anyway -- that module exposes it as `api` -- but `AgentSession` names
+# `ToolRegistry` in its own signature, and by the rule above a module whose public signatures
+# name a type declares the artifact that carries it.
+agui-tools = { module = "com.ag-ui.community:kotlin-tools", version.ref = "agui" }
+
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 
 json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
