@@ -33,6 +33,7 @@ kotlin {
             // `HttpAgent`, which this sample constructs. Both are `implementation`: nothing here
             // is a library surface.
             implementation(projects.aguiMaterial3)
+            implementation(projects.aguiA2uiMaterial3)
             implementation(projects.aguiAgent)
             // The Markdown renderer, fitted through `LocalAguiTextRenderer`. An agent's prose is
             // Markdown in practice and the library deliberately does not assume it, so the sample
@@ -57,6 +58,9 @@ kotlin {
             // As in every module that draws in a test: Compose's JVM harness draws through Skiko,
             // whose native library ships with the desktop artifact rather than with `ui-test`.
             implementation(compose.desktop.currentOs)
+            // The replay server, for the one test that goes through a socket: the recorded
+            // dojo traffic, over SSE, into this window. JVM-only because the server is.
+            implementation(projects.aguiReplay)
         }
         jvmMain.dependencies {
             // `Window` and `application` are the desktop artifact's, not `compose.ui`'s.
@@ -75,4 +79,13 @@ compose.desktop {
     application {
         mainClass = "dev.ynagai.agui.sample.SampleMain"
     }
+}
+
+/**
+ * `-PaguiSampleScreenshot=<file>` makes the end-to-end replay test write what it drew to that
+ * file. Off by default: a test that writes into the checkout on every run would be a test with
+ * a side effect, and the picture is for a human reading a pull request rather than for CI.
+ */
+tasks.withType<Test>().configureEach {
+    findProperty("aguiSampleScreenshot")?.let { systemProperty("agui.sample.screenshot", it) }
 }

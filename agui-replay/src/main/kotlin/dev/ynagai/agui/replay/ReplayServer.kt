@@ -1,5 +1,6 @@
 package dev.ynagai.agui.replay
 
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -9,12 +10,14 @@ import io.ktor.server.request.receiveText
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.sse.SSE
 import io.ktor.server.sse.ServerSSESession
 import io.ktor.server.sse.sse
 import io.ktor.sse.ServerSentEvent
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -44,8 +47,30 @@ public class ReplayServer(
     private val byName = traces.associateBy { it.name }
     private val turns = mutableMapOf<String, AtomicInt>()
 
-    /** Builds the server. Call `start(wait = ...)` on what comes back. */
-    public fun build(): EmbeddedServer<*, *> = embeddedServer(CIO, port = port) {
+    private var server: EmbeddedServer<*, *>? = null
+
+    /**
+     * The port the server is bound to: [port], or the one the system chose when [port] was 0.
+     * Meaningful after [start].
+     */
+    public val boundPort: Int
+        get() = runBlocking { server?.engine?.resolvedConnectors()?.single()?.port ?: port }
+
+    /** Starts listening. Returns this, so a caller can read [boundPort] off it. */
+    public fun start(wait: Boolean = false): ReplayServer {
+        server = build().start(wait = wait)
+        return this
+    }
+
+    /** Stops listening, at once. */
+    public fun stop() {
+        server?.stop(gracePeriodMillis = 0, timeoutMillis = 200)
+        server = null
+    }
+
+    // Ktor's types stay out of the public signatures, so a consumer of this module -- the
+    // sample's tests -- needs no Ktor of its own to start and stop it.
+    private fun build(): EmbeddedServer<*, *> = embeddedServer(CIO, port = port) {
         install(SSE)
         routing {
             get("/") {
@@ -55,11 +80,12 @@ public class ReplayServer(
                 // `sse` rather than a hand-written response: it sets the content type, keeps the
                 // connection open and flushes each event, which is what a client's SSE parser
                 // needs to see the events as they are sent rather than when the response ends.
-                sse("/${trace.name}") { play(trace) }
+                // Under an explicit POST route, because the `sse(path)` shorthand answers GET
+                // only and AG-UI's transport is a POST.
+                route("/${trace.name}", HttpMethod.Post) { sse { play(trace) } }
             }
             post("/{name}") {
-                // Ktor's `sse` answers GET and POST alike, so this is reached only for a name no
-                // trace has; a clear 404 beats CIO's default empty one.
+                // Reached only for a name no trace has; a clear 404 beats CIO's default empty one.
                 call.respondText("No trace named `${call.parameters["name"]}`\n", status = HttpStatusCode.NotFound)
             }
         }
@@ -97,7 +123,7 @@ public object ReplayMain {
         val server = ReplayServer(port = port, delayMillis = delay)
         println("Replaying ${server.traces.size} recorded traces on http://localhost:$port/ :")
         for (trace in server.traces) println("  http://localhost:$port/${trace.name}  (${trace.runs.size} run(s))")
-        server.build().start(wait = true)
+        server.start(wait = true)
     }
 }
 

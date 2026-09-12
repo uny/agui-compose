@@ -31,10 +31,18 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
+import dev.ynagai.a2ui.compose.A2uiRenderer
+import dev.ynagai.a2ui.compose.A2uiRendererConfig
+import dev.ynagai.a2ui.compose.BasicCatalog
+import dev.ynagai.a2ui.core.protocol.ActionMessage
+import dev.ynagai.agui.a2ui.compose.rememberA2uiHost
+import dev.ynagai.agui.a2ui.material3.withMaterial3A2ui
+import dev.ynagai.agui.a2ui.toUserText
 import dev.ynagai.agui.compose.AguiTranscript
 import dev.ynagai.agui.markdown.MarkdownAguiTextRenderer
 import dev.ynagai.agui.markdown.markdownAguiColors
 import dev.ynagai.agui.markdown.markdownAguiTypography
+import dev.ynagai.agui.material3.Material3AguiComponents
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -90,6 +98,28 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     // of an application, so it decides rather than leaving the platform's open-anything default in
     // place. http and https only: a transcript may not hand the OS a `file:` path or a registered
     // custom scheme just because a server asked it to.
+    // One renderer per connection: the surfaces are the thread's, and a new endpoint is a new
+    // thread. The two catalogs are the basic one and the dojo's -- what this window can draw.
+    val renderer = remember(connection) {
+        A2uiRenderer(A2uiRendererConfig.Default.withCatalogs(listOf(BasicCatalog.definition, DojoCatalog.definition)))
+    }
+    val host = rememberA2uiHost(transcript, renderer, onWarning = { println("agui-sample: $it") })
+    val components = remember(host) {
+        Material3AguiComponents().withMaterial3A2ui(
+            host = host,
+            registry = DojoCatalog.registry,
+            onMessage = { message ->
+                // A button on a surface: sent as a user turn in the text form upstream's own
+                // Kotlin example settled on, so a backend that cannot read `forwardedProps`
+                // still hears it. The replay server hears it as "next recorded run".
+                if (message is ActionMessage) {
+                    runs.removeAll { it.isCompleted }
+                    runs += scope.launch { chat.send(message.toUserText()) }
+                }
+            },
+        )
+    }
+
     val platformUriHandler = LocalUriHandler.current
     val uriHandler = remember(platformUriHandler) {
         object : UriHandler {
@@ -155,7 +185,7 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 )
 
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
-                    ProvideMaterial3Agui(textRenderer = textRenderer) {
+                    ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {
                         AguiTranscript(
                             transcript = transcript,
                             modifier = Modifier.fillMaxWidth().weight(1f),
