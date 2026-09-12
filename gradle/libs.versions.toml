@@ -34,9 +34,10 @@ agui = "0.4.1"
 # upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
 jsonPatch = "1.0.0"
 
-# kotlinx-datetime, named only so the sample can pin it. No published module declares it -- it
-# arrives transitively, twice, from two directions that disagree across a binary break. The whole
-# argument is in `agui-sample/build.gradle.kts`, next to the one line that resolves it.
+# kotlinx-datetime. Declared by `agui-agent` and by nothing else, and not because that module names
+# a datetime type -- it arrives transitively from two directions that disagree across a binary
+# break, and this coordinate is the one both sides can be loaded against. See
+# `docs/decisions/0007`.
 datetime = "0.8.0-0.6.x-compat"
 
 # The published floor: this becomes `minCompileSdk` in the AAR metadata, so it is what every

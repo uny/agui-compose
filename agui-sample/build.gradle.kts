@@ -39,37 +39,6 @@ kotlin {
             // is where that decision gets made the way an application makes it.
             implementation(projects.aguiMarkdown)
 
-            // Not used by a line of this module, and required for it to run at all.
-            //
-            // Two dependencies bring kotlinx-datetime and they disagree across a binary break.
-            // Upstream's `kotlin-core`/`kotlin-client` 0.4.1 are compiled against 0.6.2, whose
-            // `kotlinx.datetime.Clock` is a class; Compose Material 3 1.9.0 brings 0.7.1, where
-            // `Clock` and `Instant` have moved to `kotlin.time` and the old classes are gone.
-            // Gradle resolves the conflict to 0.7.1, which compiles and then dies on the first
-            // event upstream timestamps:
-            //
-            //   java.lang.NoClassDefFoundError: kotlinx/datetime/Clock$System
-            //
-            // `0.8.0-0.6.x-compat` is the artifact kotlinx-datetime publishes for exactly this:
-            // 0.8.0 with the 0.6.x binary surface kept, so both sides find what they were compiled
-            // against.
-            //
-            // It wins because Gradle resolves a conflict to the highest version and this one sorts
-            // above 0.7.1 -- not because it is declared here rather than arriving transitively.
-            // `dependencyInsight --configuration jvmRuntimeClasspath` says so in as many words:
-            // "By conflict resolution: between versions 0.8.0-0.6.x-compat, 0.7.1 and 0.6.2". The
-            // consequence is worth writing down: the day something on this graph brings a version
-            // that sorts higher still, this stops winning, and it stops winning at run time rather
-            // than at compile time. A `strictly` would hold it, and is deliberately not used --
-            // this line is the one the README tells a reader to write, and a version range in a
-            // README is a worse thing to copy than a coordinate. The check that catches it is the
-            // live one the README describes, not this module's tests.
-            //
-            // **This is not the sample's problem to own.** Any application taking `agui-material3`
-            // and `agui-agent` together hits it, which is what a sample is for -- finding the thing
-            // no module's own test classpath could. The README says so where a reader will meet it.
-            implementation(libs.kotlinx.datetime)
-
             // Named even though they arrive transitively: the Compose compiler plugin is applied
             // to this module and refuses to run without the runtime on the compile class path.
             implementation(libs.compose.runtime)

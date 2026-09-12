@@ -18,7 +18,10 @@ parser under all of it, without a design system to style it from, is
 upstream transport meets all of that — and what it decides about Ktor on your behalf — is
 [docs/decisions/0005](docs/decisions/0005-running-the-upstream-agent.md). Why saying something needs
 a second entry point, and why upstream's own API leaves no other way in, is
-[docs/decisions/0006](docs/decisions/0006-saying-something.md).
+[docs/decisions/0006](docs/decisions/0006-saying-something.md). And what a sample application found
+that no module's own tests could — a dependency neither of two modules names, on which they
+disagree — is
+[docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -296,19 +299,14 @@ For an agent that actually thinks, any of the other
 protocol on the same shape of endpoint; those are LLM-backed and want a provider key of their own.
 The sample does not care which — it is a URL.
 
-**One dependency clash an application has to resolve itself.** Upstream's `kotlin-core` and
-`kotlin-client` 0.4.1 are compiled against kotlinx-datetime 0.6.2; Compose Material 3 1.9.0 brings
-0.7.1, where `Clock` and `Instant` moved to `kotlin.time` and the old classes are gone. Gradle picks
-0.7.1, everything compiles, and the first event upstream timestamps dies with
-`NoClassDefFoundError: kotlinx/datetime/Clock$System`. Any application taking `agui-material3` and
-`agui-agent` together will meet this. The fix is one line, and it is what `agui-sample` does:
-
-```kotlin
-implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat")
-```
-
-That artifact is 0.8.0 with the 0.6.x binary surface kept, published for exactly this, so both
-sides find what they were compiled against.
+**One dependency clash you do not have to resolve.** Upstream's `kotlin-client` and `kotlin-tools`
+0.4.1 are compiled against kotlinx-datetime 0.6.2; Compose Material 3 1.9.0 brings 0.7.1, where
+`Clock` and `Instant` moved to `kotlin.time` and the old classes are gone. Taking `agui-material3`
+and `agui-agent` together used to compile and then die on the first event upstream timestamps, with
+`NoClassDefFoundError: kotlinx/datetime/Clock$System`. `agui-agent` now declares the coordinate that
+carries both binary surfaces, so this is handled — it is written down in
+[docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md) because it
+is the kind of thing that comes back, and because it is what the sample found on its first run.
 
 What the sample deliberately does not do yet: run frontend tools, render an `ACTIVITY_SNAPSHOT`,
 or build for Android or iOS. It is one target and one screen, and the module is laid out so that
