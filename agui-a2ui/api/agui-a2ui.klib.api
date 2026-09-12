@@ -1,0 +1,295 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-a2ui>
+sealed interface dev.ynagai.agui.a2ui/A2uiCarrier { // dev.ynagai.agui.a2ui/A2uiCarrier|null[0]
+    abstract val precedence // dev.ynagai.agui.a2ui/A2uiCarrier.precedence|{}precedence[0]
+        abstract fun <get-precedence>(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.precedence.<get-precedence>|<get-precedence>(){}[0]
+
+    final class Activity : dev.ynagai.agui.a2ui/A2uiCarrier { // dev.ynagai.agui.a2ui/A2uiCarrier.Activity|null[0]
+        constructor <init>(kotlin/String) // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.<init>|<init>(kotlin.String){}[0]
+
+        final val messageId // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.messageId|{}messageId[0]
+            final fun <get-messageId>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.messageId.<get-messageId>|<get-messageId>(){}[0]
+        final val precedence // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.precedence|{}precedence[0]
+            final fun <get-precedence>(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.precedence.<get-precedence>|<get-precedence>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): dev.ynagai.agui.a2ui/A2uiCarrier.Activity // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.Activity.toString|toString(){}[0]
+    }
+
+    final class ToolArguments : dev.ynagai.agui.a2ui/A2uiCarrier { // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments|null[0]
+        constructor <init>(kotlin/String) // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.<init>|<init>(kotlin.String){}[0]
+
+        final val precedence // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.precedence|{}precedence[0]
+            final fun <get-precedence>(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.precedence.<get-precedence>|<get-precedence>(){}[0]
+        final val toolCallId // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.toolCallId|{}toolCallId[0]
+            final fun <get-toolCallId>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.toolCallId.<get-toolCallId>|<get-toolCallId>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolArguments.toString|toString(){}[0]
+    }
+
+    final class ToolResult : dev.ynagai.agui.a2ui/A2uiCarrier { // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult|null[0]
+        constructor <init>(kotlin/String) // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.<init>|<init>(kotlin.String){}[0]
+
+        final val precedence // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.precedence|{}precedence[0]
+            final fun <get-precedence>(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.precedence.<get-precedence>|<get-precedence>(){}[0]
+        final val toolCallId // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.toolCallId|{}toolCallId[0]
+            final fun <get-toolCallId>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.toolCallId.<get-toolCallId>|<get-toolCallId>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarrier.ToolResult.toString|toString(){}[0]
+    }
+}
+
+sealed interface dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload|null[0]
+    final class Building : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Building|null[0]
+        constructor <init>(kotlin/Int? = ...) // dev.ynagai.agui.a2ui/A2uiPayload.Building.<init>|<init>(kotlin.Int?){}[0]
+
+        final val progressTokens // dev.ynagai.agui.a2ui/A2uiPayload.Building.progressTokens|{}progressTokens[0]
+            final fun <get-progressTokens>(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Building.progressTokens.<get-progressTokens>|<get-progressTokens>(){}[0]
+
+        final fun component1(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Building.component1|component1(){}[0]
+        final fun copy(kotlin/Int? = ...): dev.ynagai.agui.a2ui/A2uiPayload.Building // dev.ynagai.agui.a2ui/A2uiPayload.Building.copy|copy(kotlin.Int?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiPayload.Building.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiPayload.Building.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Building.toString|toString(){}[0]
+    }
+
+    final class Failed : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Failed|null[0]
+        constructor <init>(kotlin/String, kotlinx.serialization.json/JsonElement? = ..., kotlin/Int? = ...) // dev.ynagai.agui.a2ui/A2uiPayload.Failed.<init>|<init>(kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Int?){}[0]
+
+        final val attempts // dev.ynagai.agui.a2ui/A2uiPayload.Failed.attempts|{}attempts[0]
+            final fun <get-attempts>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.a2ui/A2uiPayload.Failed.attempts.<get-attempts>|<get-attempts>(){}[0]
+        final val error // dev.ynagai.agui.a2ui/A2uiPayload.Failed.error|{}error[0]
+            final fun <get-error>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Failed.error.<get-error>|<get-error>(){}[0]
+        final val maxAttempts // dev.ynagai.agui.a2ui/A2uiPayload.Failed.maxAttempts|{}maxAttempts[0]
+            final fun <get-maxAttempts>(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Failed.maxAttempts.<get-maxAttempts>|<get-maxAttempts>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Failed.component1|component1(){}[0]
+        final fun component2(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.a2ui/A2uiPayload.Failed.component2|component2(){}[0]
+        final fun component3(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Failed.component3|component3(){}[0]
+        final fun copy(kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/Int? = ...): dev.ynagai.agui.a2ui/A2uiPayload.Failed // dev.ynagai.agui.a2ui/A2uiPayload.Failed.copy|copy(kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Int?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiPayload.Failed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiPayload.Failed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Failed.toString|toString(){}[0]
+    }
+
+    final class Malformed : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Malformed|null[0]
+        constructor <init>(kotlin/String, kotlinx.serialization.json/JsonElement) // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.<init>|<init>(kotlin.String;kotlinx.serialization.json.JsonElement){}[0]
+
+        final val content // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.content|{}content[0]
+            final fun <get-content>(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.content.<get-content>|<get-content>(){}[0]
+        final val reason // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.reason|{}reason[0]
+            final fun <get-reason>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.reason.<get-reason>|<get-reason>(){}[0]
+
+        final fun component1(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.component1|component1(){}[0]
+        final fun component2(): kotlinx.serialization.json/JsonElement // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.component2|component2(){}[0]
+        final fun copy(kotlin/String = ..., kotlinx.serialization.json/JsonElement = ...): dev.ynagai.agui.a2ui/A2uiPayload.Malformed // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.copy|copy(kotlin.String;kotlinx.serialization.json.JsonElement){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Malformed.toString|toString(){}[0]
+    }
+
+    final class Retrying : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Retrying|null[0]
+        constructor <init>(kotlin/Int? = ..., kotlin/Int? = ..., kotlinx.serialization.json/JsonElement? = ...) // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.<init>|<init>(kotlin.Int?;kotlin.Int?;kotlinx.serialization.json.JsonElement?){}[0]
+
+        final val attempt // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.attempt|{}attempt[0]
+            final fun <get-attempt>(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.attempt.<get-attempt>|<get-attempt>(){}[0]
+        final val errors // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.errors|{}errors[0]
+            final fun <get-errors>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.errors.<get-errors>|<get-errors>(){}[0]
+        final val maxAttempts // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.maxAttempts|{}maxAttempts[0]
+            final fun <get-maxAttempts>(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.maxAttempts.<get-maxAttempts>|<get-maxAttempts>(){}[0]
+
+        final fun component1(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.component1|component1(){}[0]
+        final fun component2(): kotlin/Int? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.component2|component2(){}[0]
+        final fun component3(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.component3|component3(){}[0]
+        final fun copy(kotlin/Int? = ..., kotlin/Int? = ..., kotlinx.serialization.json/JsonElement? = ...): dev.ynagai.agui.a2ui/A2uiPayload.Retrying // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.copy|copy(kotlin.Int?;kotlin.Int?;kotlinx.serialization.json.JsonElement?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Retrying.toString|toString(){}[0]
+    }
+
+    final class Surfaces : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces|null[0]
+        constructor <init>(kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage>) // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.<init>|<init>(kotlin.collections.List<dev.ynagai.a2ui.core.protocol.AgentToRendererMessage>){}[0]
+
+        final val messages // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.messages|{}messages[0]
+            final fun <get-messages>(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.messages.<get-messages>|<get-messages>(){}[0]
+        final val surfaceIds // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.surfaceIds|{}surfaceIds[0]
+            final fun <get-surfaceIds>(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.surfaceIds.<get-surfaceIds>|<get-surfaceIds>(){}[0]
+
+        final fun component1(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> = ...): dev.ynagai.agui.a2ui/A2uiPayload.Surfaces // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.copy|copy(kotlin.collections.List<dev.ynagai.a2ui.core.protocol.AgentToRendererMessage>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.toString|toString(){}[0]
+    }
+
+    final object Companion { // dev.ynagai.agui.a2ui/A2uiPayload.Companion|null[0]
+        final fun of(dev.ynagai.agui.model/ActivityPart, dev.ynagai.agui.a2ui/A2uiTranslation = ...): dev.ynagai.agui.a2ui/A2uiPayload? // dev.ynagai.agui.a2ui/A2uiPayload.Companion.of|of(dev.ynagai.agui.model.ActivityPart;dev.ynagai.agui.a2ui.A2uiTranslation){}[0]
+        final fun ofArguments(dev.ynagai.agui.model/ToolCallPart, dev.ynagai.agui.a2ui/A2uiTranslation = ..., kotlin.collections/Set<kotlin/String> = ...): dev.ynagai.agui.a2ui/A2uiPayload? // dev.ynagai.agui.a2ui/A2uiPayload.Companion.ofArguments|ofArguments(dev.ynagai.agui.model.ToolCallPart;dev.ynagai.agui.a2ui.A2uiTranslation;kotlin.collections.Set<kotlin.String>){}[0]
+        final fun ofResult(dev.ynagai.agui.model/ToolCallPart, dev.ynagai.agui.a2ui/A2uiTranslation = ...): dev.ynagai.agui.a2ui/A2uiPayload? // dev.ynagai.agui.a2ui/A2uiPayload.Companion.ofResult|ofResult(dev.ynagai.agui.model.ToolCallPart;dev.ynagai.agui.a2ui.A2uiTranslation){}[0]
+    }
+}
+
+sealed interface dev.ynagai.agui.a2ui/A2uiSlot { // dev.ynagai.agui.a2ui/A2uiSlot|null[0]
+    final class Pending : dev.ynagai.agui.a2ui/A2uiSlot { // dev.ynagai.agui.a2ui/A2uiSlot.Pending|null[0]
+        constructor <init>(dev.ynagai.agui.a2ui/A2uiPayload) // dev.ynagai.agui.a2ui/A2uiSlot.Pending.<init>|<init>(dev.ynagai.agui.a2ui.A2uiPayload){}[0]
+
+        final val payload // dev.ynagai.agui.a2ui/A2uiSlot.Pending.payload|{}payload[0]
+            final fun <get-payload>(): dev.ynagai.agui.a2ui/A2uiPayload // dev.ynagai.agui.a2ui/A2uiSlot.Pending.payload.<get-payload>|<get-payload>(){}[0]
+
+        final fun component1(): dev.ynagai.agui.a2ui/A2uiPayload // dev.ynagai.agui.a2ui/A2uiSlot.Pending.component1|component1(){}[0]
+        final fun copy(dev.ynagai.agui.a2ui/A2uiPayload = ...): dev.ynagai.agui.a2ui/A2uiSlot.Pending // dev.ynagai.agui.a2ui/A2uiSlot.Pending.copy|copy(dev.ynagai.agui.a2ui.A2uiPayload){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiSlot.Pending.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiSlot.Pending.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiSlot.Pending.toString|toString(){}[0]
+    }
+
+    final class Shadowed : dev.ynagai.agui.a2ui/A2uiSlot { // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed|null[0]
+        constructor <init>(dev.ynagai.agui.a2ui/A2uiCarrier) // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.<init>|<init>(dev.ynagai.agui.a2ui.A2uiCarrier){}[0]
+
+        final val by // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.by|{}by[0]
+            final fun <get-by>(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.by.<get-by>|<get-by>(){}[0]
+
+        final fun component1(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.component1|component1(){}[0]
+        final fun copy(dev.ynagai.agui.a2ui/A2uiCarrier = ...): dev.ynagai.agui.a2ui/A2uiSlot.Shadowed // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.copy|copy(dev.ynagai.agui.a2ui.A2uiCarrier){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiSlot.Shadowed.toString|toString(){}[0]
+    }
+
+    final class Surfaces : dev.ynagai.agui.a2ui/A2uiSlot { // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces|null[0]
+        constructor <init>(kotlin.collections/List<kotlin/String>) // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.<init>|<init>(kotlin.collections.List<kotlin.String>){}[0]
+
+        final val surfaceIds // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.surfaceIds|{}surfaceIds[0]
+            final fun <get-surfaceIds>(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.surfaceIds.<get-surfaceIds>|<get-surfaceIds>(){}[0]
+
+        final fun component1(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.component1|component1(){}[0]
+        final fun copy(kotlin.collections/List<kotlin/String> = ...): dev.ynagai.agui.a2ui/A2uiSlot.Surfaces // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.copy|copy(kotlin.collections.List<kotlin.String>){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiSlot.Surfaces.toString|toString(){}[0]
+    }
+}
+
+final class dev.ynagai.agui.a2ui/A2uiBatch { // dev.ynagai.agui.a2ui/A2uiBatch|null[0]
+    constructor <init>(dev.ynagai.agui.a2ui/A2uiCarrier, kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage>) // dev.ynagai.agui.a2ui/A2uiBatch.<init>|<init>(dev.ynagai.agui.a2ui.A2uiCarrier;kotlin.collections.List<dev.ynagai.a2ui.core.protocol.AgentToRendererMessage>){}[0]
+
+    final val carrier // dev.ynagai.agui.a2ui/A2uiBatch.carrier|{}carrier[0]
+        final fun <get-carrier>(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiBatch.carrier.<get-carrier>|<get-carrier>(){}[0]
+    final val messages // dev.ynagai.agui.a2ui/A2uiBatch.messages|{}messages[0]
+        final fun <get-messages>(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiBatch.messages.<get-messages>|<get-messages>(){}[0]
+
+    final fun component1(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiBatch.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiBatch.component2|component2(){}[0]
+    final fun copy(dev.ynagai.agui.a2ui/A2uiCarrier = ..., kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> = ...): dev.ynagai.agui.a2ui/A2uiBatch // dev.ynagai.agui.a2ui/A2uiBatch.copy|copy(dev.ynagai.agui.a2ui.A2uiCarrier;kotlin.collections.List<dev.ynagai.a2ui.core.protocol.AgentToRendererMessage>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiBatch.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiBatch.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiBatch.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.a2ui/A2uiCarried { // dev.ynagai.agui.a2ui/A2uiCarried|null[0]
+    constructor <init>(dev.ynagai.agui.a2ui/A2uiCarrier, dev.ynagai.agui.a2ui/A2uiPayload) // dev.ynagai.agui.a2ui/A2uiCarried.<init>|<init>(dev.ynagai.agui.a2ui.A2uiCarrier;dev.ynagai.agui.a2ui.A2uiPayload){}[0]
+
+    final val carrier // dev.ynagai.agui.a2ui/A2uiCarried.carrier|{}carrier[0]
+        final fun <get-carrier>(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiCarried.carrier.<get-carrier>|<get-carrier>(){}[0]
+    final val payload // dev.ynagai.agui.a2ui/A2uiCarried.payload|{}payload[0]
+        final fun <get-payload>(): dev.ynagai.agui.a2ui/A2uiPayload // dev.ynagai.agui.a2ui/A2uiCarried.payload.<get-payload>|<get-payload>(){}[0]
+
+    final fun component1(): dev.ynagai.agui.a2ui/A2uiCarrier // dev.ynagai.agui.a2ui/A2uiCarried.component1|component1(){}[0]
+    final fun component2(): dev.ynagai.agui.a2ui/A2uiPayload // dev.ynagai.agui.a2ui/A2uiCarried.component2|component2(){}[0]
+    final fun copy(dev.ynagai.agui.a2ui/A2uiCarrier = ..., dev.ynagai.agui.a2ui/A2uiPayload = ...): dev.ynagai.agui.a2ui/A2uiCarried // dev.ynagai.agui.a2ui/A2uiCarried.copy|copy(dev.ynagai.agui.a2ui.A2uiCarrier;dev.ynagai.agui.a2ui.A2uiPayload){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiCarried.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.a2ui/A2uiCarried.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarried.toString|toString(){}[0]
+}
+
+final class dev.ynagai.agui.a2ui/A2uiSurfaces { // dev.ynagai.agui.a2ui/A2uiSurfaces|null[0]
+    final val surfaceIds // dev.ynagai.agui.a2ui/A2uiSurfaces.surfaceIds|{}surfaceIds[0]
+        final fun <get-surfaceIds>(): kotlin.collections/Set<kotlin/String> // dev.ynagai.agui.a2ui/A2uiSurfaces.surfaceIds.<get-surfaceIds>|<get-surfaceIds>(){}[0]
+
+    final fun accept(kotlin.collections/List<dev.ynagai.agui.a2ui/A2uiCarried>): dev.ynagai.agui.a2ui/A2uiSurfaces.Step // dev.ynagai.agui.a2ui/A2uiSurfaces.accept|accept(kotlin.collections.List<dev.ynagai.agui.a2ui.A2uiCarried>){}[0]
+    final fun rejected(dev.ynagai.agui.a2ui/A2uiBatch): dev.ynagai.agui.a2ui/A2uiSurfaces // dev.ynagai.agui.a2ui/A2uiSurfaces.rejected|rejected(dev.ynagai.agui.a2ui.A2uiBatch){}[0]
+
+    final class Step { // dev.ynagai.agui.a2ui/A2uiSurfaces.Step|null[0]
+        final val batches // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.batches|{}batches[0]
+            final fun <get-batches>(): kotlin.collections/List<dev.ynagai.agui.a2ui/A2uiBatch> // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.batches.<get-batches>|<get-batches>(){}[0]
+        final val deletes // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.deletes|{}deletes[0]
+            final fun <get-deletes>(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/DeleteSurfaceMessage> // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.deletes.<get-deletes>|<get-deletes>(){}[0]
+        final val isEmpty // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.isEmpty|{}isEmpty[0]
+            final fun <get-isEmpty>(): kotlin/Boolean // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.isEmpty.<get-isEmpty>|<get-isEmpty>(){}[0]
+        final val next // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.next|{}next[0]
+            final fun <get-next>(): dev.ynagai.agui.a2ui/A2uiSurfaces // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.next.<get-next>|<get-next>(){}[0]
+        final val slots // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.slots|{}slots[0]
+            final fun <get-slots>(): kotlin.collections/Map<dev.ynagai.agui.a2ui/A2uiCarrier, dev.ynagai.agui.a2ui/A2uiSlot> // dev.ynagai.agui.a2ui/A2uiSurfaces.Step.slots.<get-slots>|<get-slots>(){}[0]
+    }
+
+    final object Companion { // dev.ynagai.agui.a2ui/A2uiSurfaces.Companion|null[0]
+        final val Empty // dev.ynagai.agui.a2ui/A2uiSurfaces.Companion.Empty|{}Empty[0]
+            final fun <get-Empty>(): dev.ynagai.agui.a2ui/A2uiSurfaces // dev.ynagai.agui.a2ui/A2uiSurfaces.Companion.Empty.<get-Empty>|<get-Empty>(){}[0]
+    }
+}
+
+final class dev.ynagai.agui.a2ui/A2uiTranslation { // dev.ynagai.agui.a2ui/A2uiTranslation|null[0]
+    constructor <init>(kotlin/Function1<kotlin/String, kotlin/String> = ..., kotlin/String = ...) // dev.ynagai.agui.a2ui/A2uiTranslation.<init>|<init>(kotlin.Function1<kotlin.String,kotlin.String>;kotlin.String){}[0]
+
+    final val catalogIds // dev.ynagai.agui.a2ui/A2uiTranslation.catalogIds|{}catalogIds[0]
+        final fun <get-catalogIds>(): kotlin/Function1<kotlin/String, kotlin/String> // dev.ynagai.agui.a2ui/A2uiTranslation.catalogIds.<get-catalogIds>|<get-catalogIds>(){}[0]
+    final val defaultCatalogId // dev.ynagai.agui.a2ui/A2uiTranslation.defaultCatalogId|{}defaultCatalogId[0]
+        final fun <get-defaultCatalogId>(): kotlin/String // dev.ynagai.agui.a2ui/A2uiTranslation.defaultCatalogId.<get-defaultCatalogId>|<get-defaultCatalogId>(){}[0]
+
+    final fun message(kotlinx.serialization.json/JsonObject): dev.ynagai.a2ui.core.protocol/AgentToRendererMessage // dev.ynagai.agui.a2ui/A2uiTranslation.message|message(kotlinx.serialization.json.JsonObject){}[0]
+    final fun operations(kotlinx.serialization.json/JsonArray): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiTranslation.operations|operations(kotlinx.serialization.json.JsonArray){}[0]
+    final fun rendered(kotlinx.serialization.json/JsonObject): dev.ynagai.a2ui.core.protocol/AgentToRendererMessage // dev.ynagai.agui.a2ui/A2uiTranslation.rendered|rendered(kotlinx.serialization.json.JsonObject){}[0]
+
+    final object Companion { // dev.ynagai.agui.a2ui/A2uiTranslation.Companion|null[0]
+        final val Default // dev.ynagai.agui.a2ui/A2uiTranslation.Companion.Default|{}Default[0]
+            final fun <get-Default>(): dev.ynagai.agui.a2ui/A2uiTranslation // dev.ynagai.agui.a2ui/A2uiTranslation.Companion.Default.<get-Default>|<get-Default>(){}[0]
+
+        final fun upstreamCatalogIds(kotlin/String): kotlin/String // dev.ynagai.agui.a2ui/A2uiTranslation.Companion.upstreamCatalogIds|upstreamCatalogIds(kotlin.String){}[0]
+    }
+}
+
+final class dev.ynagai.agui.a2ui/RenderA2UiTool : com.agui.tools/AbstractToolExecutor { // dev.ynagai.agui.a2ui/RenderA2UiTool|null[0]
+    constructor <init>(kotlin/String = ..., dev.ynagai.agui.a2ui/A2uiTranslation = ...) // dev.ynagai.agui.a2ui/RenderA2UiTool.<init>|<init>(kotlin.String;dev.ynagai.agui.a2ui.A2uiTranslation){}[0]
+}
+
+final object dev.ynagai.agui.a2ui/AguiA2ui { // dev.ynagai.agui.a2ui/AguiA2ui|null[0]
+    final const val ACTIVITY_TYPE // dev.ynagai.agui.a2ui/AguiA2ui.ACTIVITY_TYPE|{}ACTIVITY_TYPE[0]
+        final fun <get-ACTIVITY_TYPE>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.ACTIVITY_TYPE.<get-ACTIVITY_TYPE>|<get-ACTIVITY_TYPE>(){}[0]
+    final const val OPERATIONS_KEY // dev.ynagai.agui.a2ui/AguiA2ui.OPERATIONS_KEY|{}OPERATIONS_KEY[0]
+        final fun <get-OPERATIONS_KEY>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.OPERATIONS_KEY.<get-OPERATIONS_KEY>|<get-OPERATIONS_KEY>(){}[0]
+    final const val RENDER_TOOL_NAME // dev.ynagai.agui.a2ui/AguiA2ui.RENDER_TOOL_NAME|{}RENDER_TOOL_NAME[0]
+        final fun <get-RENDER_TOOL_NAME>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.RENDER_TOOL_NAME.<get-RENDER_TOOL_NAME>|<get-RENDER_TOOL_NAME>(){}[0]
+    final const val SCHEMA_CONTEXT_DESCRIPTION // dev.ynagai.agui.a2ui/AguiA2ui.SCHEMA_CONTEXT_DESCRIPTION|{}SCHEMA_CONTEXT_DESCRIPTION[0]
+        final fun <get-SCHEMA_CONTEXT_DESCRIPTION>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.SCHEMA_CONTEXT_DESCRIPTION.<get-SCHEMA_CONTEXT_DESCRIPTION>|<get-SCHEMA_CONTEXT_DESCRIPTION>(){}[0]
+    final const val UPSTREAM_BASIC_CATALOG_ID // dev.ynagai.agui.a2ui/AguiA2ui.UPSTREAM_BASIC_CATALOG_ID|{}UPSTREAM_BASIC_CATALOG_ID[0]
+        final fun <get-UPSTREAM_BASIC_CATALOG_ID>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.UPSTREAM_BASIC_CATALOG_ID.<get-UPSTREAM_BASIC_CATALOG_ID>|<get-UPSTREAM_BASIC_CATALOG_ID>(){}[0]
+    final const val UPSTREAM_VERSION // dev.ynagai.agui.a2ui/AguiA2ui.UPSTREAM_VERSION|{}UPSTREAM_VERSION[0]
+        final fun <get-UPSTREAM_VERSION>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.UPSTREAM_VERSION.<get-UPSTREAM_VERSION>|<get-UPSTREAM_VERSION>(){}[0]
+    final const val V09_BASIC_CATALOG_ID // dev.ynagai.agui.a2ui/AguiA2ui.V09_BASIC_CATALOG_ID|{}V09_BASIC_CATALOG_ID[0]
+        final fun <get-V09_BASIC_CATALOG_ID>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.V09_BASIC_CATALOG_ID.<get-V09_BASIC_CATALOG_ID>|<get-V09_BASIC_CATALOG_ID>(){}[0]
+    final const val V10_BASIC_CATALOG_ID // dev.ynagai.agui.a2ui/AguiA2ui.V10_BASIC_CATALOG_ID|{}V10_BASIC_CATALOG_ID[0]
+        final fun <get-V10_BASIC_CATALOG_ID>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.V10_BASIC_CATALOG_ID.<get-V10_BASIC_CATALOG_ID>|<get-V10_BASIC_CATALOG_ID>(){}[0]
+}
+
+final fun (dev.ynagai.a2ui.core.protocol/ActionMessage).dev.ynagai.agui.a2ui/toForwardedProps(): kotlinx.serialization.json/JsonObject // dev.ynagai.agui.a2ui/toForwardedProps|toForwardedProps@dev.ynagai.a2ui.core.protocol.ActionMessage(){}[0]
+final fun (dev.ynagai.a2ui.core.protocol/ActionMessage).dev.ynagai.agui.a2ui/toUserText(): kotlin/String // dev.ynagai.agui.a2ui/toUserText|toUserText@dev.ynagai.a2ui.core.protocol.ActionMessage(){}[0]
+final fun (dev.ynagai.a2ui.core.protocol/AgentToRendererMessage).dev.ynagai.agui.a2ui/surfaceIdOrNull(): kotlin/String? // dev.ynagai.agui.a2ui/surfaceIdOrNull|surfaceIdOrNull@dev.ynagai.a2ui.core.protocol.AgentToRendererMessage(){}[0]
+final fun (dev.ynagai.agui.model/UiTranscript).dev.ynagai.agui.a2ui/a2uiPayloads(dev.ynagai.agui.a2ui/A2uiTranslation = ..., kotlin.collections/Set<kotlin/String> = ...): kotlin.collections/List<dev.ynagai.agui.a2ui/A2uiCarried> // dev.ynagai.agui.a2ui/a2uiPayloads|a2uiPayloads@dev.ynagai.agui.model.UiTranscript(dev.ynagai.agui.a2ui.A2uiTranslation;kotlin.collections.Set<kotlin.String>){}[0]
+final fun dev.ynagai.agui.a2ui/catalogContext(dev.ynagai.a2ui.core.protocol/CatalogDefinition): com.agui.core.types/Context // dev.ynagai.agui.a2ui/catalogContext|catalogContext(dev.ynagai.a2ui.core.protocol.CatalogDefinition){}[0]

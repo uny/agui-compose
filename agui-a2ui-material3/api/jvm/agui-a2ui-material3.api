@@ -1,0 +1,11 @@
+public final class dev/ynagai/agui/a2ui/material3/Material3A2uiKt {
+	public static final fun withMaterial3A2ui (Ldev/ynagai/agui/compose/AguiComponents;Ldev/ynagai/agui/a2ui/compose/A2uiHost;Ldev/ynagai/a2ui/compose/ComponentRegistry;Lkotlin/jvm/functions/Function1;Ldev/ynagai/a2ui/compose/A2uiPlaceholder;Ljava/util/Set;)Ldev/ynagai/agui/compose/AguiComponents;
+	public static synthetic fun withMaterial3A2ui$default (Ldev/ynagai/agui/compose/AguiComponents;Ldev/ynagai/agui/a2ui/compose/A2uiHost;Ldev/ynagai/a2ui/compose/ComponentRegistry;Lkotlin/jvm/functions/Function1;Ldev/ynagai/a2ui/compose/A2uiPlaceholder;Ljava/util/Set;ILjava/lang/Object;)Ldev/ynagai/agui/compose/AguiComponents;
+}
+
+public final class dev/ynagai/agui/a2ui/material3/Material3A2uiPending : dev/ynagai/agui/a2ui/compose/A2uiPendingRenderer {
+	public static final field $stable I
+	public static final field INSTANCE Ldev/ynagai/agui/a2ui/material3/Material3A2uiPending;
+	public fun Render (Ldev/ynagai/agui/a2ui/A2uiPayload;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+}
+

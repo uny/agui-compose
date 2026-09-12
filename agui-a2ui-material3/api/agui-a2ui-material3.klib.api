@@ -1,0 +1,16 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-a2ui-material3>
+final object dev.ynagai.agui.a2ui.material3/Material3A2uiPending : dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer { // dev.ynagai.agui.a2ui.material3/Material3A2uiPending|null[0]
+    final fun Render(dev.ynagai.agui.a2ui/A2uiPayload, androidx.compose.ui/Modifier, androidx.compose.runtime/Composer?, kotlin/Int) // dev.ynagai.agui.a2ui.material3/Material3A2uiPending.Render|Render(dev.ynagai.agui.a2ui.A2uiPayload;androidx.compose.ui.Modifier;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+}
+
+final val dev.ynagai.agui.a2ui.material3/dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop // dev.ynagai.agui.a2ui.material3/dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop|#static{}dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop[0]
+
+final fun (dev.ynagai.agui.compose/AguiComponents).dev.ynagai.agui.a2ui.material3/withMaterial3A2ui(dev.ynagai.agui.a2ui.compose/A2uiHost, dev.ynagai.a2ui.compose/ComponentRegistry = ..., kotlin/Function1<dev.ynagai.a2ui.core.protocol/RendererToAgentMessage, kotlin/Unit> = ..., dev.ynagai.a2ui.compose/A2uiPlaceholder = ..., kotlin.collections/Set<kotlin/String> = ...): dev.ynagai.agui.compose/AguiComponents // dev.ynagai.agui.a2ui.material3/withMaterial3A2ui|withMaterial3A2ui@dev.ynagai.agui.compose.AguiComponents(dev.ynagai.agui.a2ui.compose.A2uiHost;dev.ynagai.a2ui.compose.ComponentRegistry;kotlin.Function1<dev.ynagai.a2ui.core.protocol.RendererToAgentMessage,kotlin.Unit>;dev.ynagai.a2ui.compose.A2uiPlaceholder;kotlin.collections.Set<kotlin.String>){}[0]
+final fun dev.ynagai.agui.a2ui.material3/dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop_getter(): kotlin/Int // dev.ynagai.agui.a2ui.material3/dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop_getter|dev_ynagai_agui_a2ui_material3_Material3A2uiPending$stableprop_getter(){}[0]
