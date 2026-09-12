@@ -404,4 +404,21 @@ class AgentSessionTest {
 
         assertFailsWith<AssertionError> { session.run() }
     }
+
+    /**
+     * A throw that lands *before* the first event does not escape either. `runAgentObservable`
+     * does real work eagerly -- it adopts the input's messages and state, and calls the agent's
+     * own `run` -- so an agent that fails while building its stream throws from the call that
+     * builds it, not from the collection. The transcript is still the report.
+     */
+    @Test
+    fun a_throw_while_the_stream_is_being_built_is_recorded_rather_than_rethrown() = runTest {
+        val agent = ScriptedAgent({ error("offline") })
+        val session = AgentSession(agent)
+
+        val ended = session.run()
+
+        assertEquals(RunState.Failed("offline", AgentSession.CLIENT_ERROR_CODE), ended)
+        assertEquals(RunState.Failed("offline", AgentSession.CLIENT_ERROR_CODE), session.transcript.value.run)
+    }
 }

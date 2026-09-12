@@ -111,7 +111,7 @@ public class AgentSession(
      *   with, plus what earlier runs through it produced.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
-        foldRun(agent.runAgentObservable(parameters))
+        foldRun { agent.runAgentObservable(parameters) }
     }
 
     /**
@@ -153,7 +153,7 @@ public class AgentSession(
                 context = parameters?.context ?: emptyList(),
                 forwardedProps = parameters?.forwardedProps ?: JsonObject(emptyMap()),
             )
-            foldRun(agent.runAgentObservable(input))
+            foldRun { agent.runAgentObservable(input) }
         }
 
     /**
@@ -171,13 +171,20 @@ public class AgentSession(
      *
      * Called with the session's lock already held, by [run] and by [send]. `Mutex` is not
      * reentrant, so this must not take it.
+     *
+     * [events] is a factory rather than a `Flow`, because building the stream is itself part of
+     * the run: `runAgentObservable` adopts the input's messages and state and calls the agent's
+     * own `run` before it returns anything, so an agent that fails to start throws from the call
+     * that builds the flow rather than from collecting it. Taking the built flow as a parameter
+     * would evaluate that at the call site, outside the `try` below, and the throw would escape
+     * to a caller this class promises never to throw at.
      */
-    private suspend fun foldRun(events: Flow<BaseEvent>): RunState {
+    private suspend fun foldRun(events: () -> Flow<BaseEvent>): RunState {
         // Per run, not per call: upstream's verifier lets one stream carry RUN_STARTED again after
         // RUN_FINISHED, and the reducer follows it, so the flag has to follow it too.
         var ended = false
         try {
-            events.collect { event ->
+            events().collect { event ->
                 when (event) {
                     is RunStartedEvent -> ended = false
                     is RunFinishedEvent -> ended = true

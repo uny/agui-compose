@@ -112,6 +112,23 @@ class AgentSessionSendTest {
         assertEquals("hello", (session.transcript.value.messages.single().parts.single() as TextPart).text)
     }
 
+    /**
+     * The same guarantee [AgentSession.run] gives, on a path where breaking it would be worse: the
+     * line is already on screen, so a throw escaping here would leave a message no run state ever
+     * accounts for. `runAgentObservable` calls the agent's own `run` before it returns a flow, so
+     * an agent that fails to start fails while the stream is being built.
+     */
+    @Test
+    fun a_throw_while_the_stream_is_being_built_leaves_the_message_and_a_failed_run() = runTest {
+        val agent = ScriptedAgent({ error("offline") })
+        val session = AgentSession(agent)
+
+        val ended = session.send("hello")
+
+        assertEquals(RunState.Failed("offline", AgentSession.CLIENT_ERROR_CODE), ended)
+        assertEquals("hello", (session.transcript.value.messages.single().parts.single() as TextPart).text)
+    }
+
     @Test
     fun sending_text_mints_an_id_per_message() = runTest {
         val agent = ScriptedAgent()
