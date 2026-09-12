@@ -34,6 +34,12 @@ agui = "0.4.1"
 # upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
 jsonPatch = "1.0.0"
 
+# kotlinx-datetime. Declared by `agui-agent` and by nothing else, and not because that module names
+# a datetime type -- it arrives transitively from two directions that disagree across a binary
+# break, and this coordinate is the one both sides can be loaded against. See
+# `docs/decisions/0007`.
+datetime = "0.8.0-0.6.x-compat"
+
 # The published floor: this becomes `minCompileSdk` in the AAR metadata, so it is what every
 # Android consumer must compile against. One value for the whole repository rather than a lower one
 # for the non-UI modules -- the Compose modules this repository will ship force 37 through
@@ -58,6 +64,8 @@ agui-core = { module = "com.ag-ui.community:kotlin-core", version.ref = "agui" }
 # as `api`. A module whose public signatures name an `io.ktor` type therefore has to declare
 # `ktor-client-core` itself. `agui-agent` names none, so it declares none.
 agui-client = { module = "com.ag-ui.community:kotlin-client", version.ref = "agui" }
+
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 
 json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
 

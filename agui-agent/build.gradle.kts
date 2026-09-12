@@ -48,6 +48,36 @@ kotlin {
             // `api` -- so a consumer holds both to call it at all.
             api(projects.aguiCore)
             api(libs.agui.client)
+
+            // Not named by a line of this module, and required for anything built on it to run.
+            //
+            // `kotlin-client` and `kotlin-tools` 0.4.1 are compiled against kotlinx-datetime 0.6.2,
+            // where `kotlinx.datetime.Clock` is a class -- `AbstractAgent.Companion`,
+            // `AgUiAgent`, `ToolExecutionManager` and four more call it. In 0.7 `Clock` and
+            // `Instant` moved to `kotlin.time` and those classes are gone, so an application that
+            // resolves to 0.7 compiles and then dies on the first event upstream timestamps:
+            //
+            //   java.lang.NoClassDefFoundError: kotlinx/datetime/Clock$System
+            //
+            // That is not hypothetical. Compose Material 3 1.9.0 brings 0.7.1, so *any* consumer
+            // taking `agui-material3` and this module together hit it until this line existed --
+            // and nothing in either module's own test classpath could have caught it, because the
+            // two never meet until something depends on both. `agui-sample` is what found it.
+            //
+            // `0.8.0-0.6.x-compat` is the artifact kotlinx-datetime publishes for exactly this
+            // case: 0.8.0 with the 0.6.x binary surface kept, so both sides find what they were
+            // compiled against. `implementation` rather than `api` -- nothing in this module's
+            // compile surface names a datetime type, and it is the *runtime* classpath that
+            // crashed -- which is enough: an `implementation` dependency rides in this module's
+            // published `runtimeElements`, and that is the classpath a consumer resolves.
+            //
+            // It wins because Gradle resolves a conflict to the highest version and this one sorts
+            // above 0.7.1, not because of where it is declared. So it stops winning the day
+            // something on a consumer's graph brings a version that sorts higher still -- at run
+            // time, not at build time. `strictly` would hold it and is deliberately not used: this
+            // library does not get to decide that a consumer may never take a newer datetime. The
+            // whole argument is in `docs/decisions/0007`.
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
