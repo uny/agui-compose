@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -15,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
 import dev.ynagai.agui.compose.AguiTranscript
 import dev.ynagai.agui.markdown.MarkdownAguiTextRenderer
@@ -70,7 +72,23 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         )
     }
 
-    val listState = rememberLazyListState()
+    // `agui-markdown` makes agent text clickable, and its own KDoc says what that costs: the
+    // parser emits a `LinkAnnotation.Url` carrying the model's string with no scheme filtering, so
+    // whatever a server writes reaches the ambient `UriHandler` -- under GFM, bare URLs included.
+    // The application is the layer that gets to decide what it will act on, and this is the sample
+    // of an application, so it decides rather than leaving the platform's open-anything default in
+    // place. http and https only: a transcript may not hand the OS a `file:` path or a registered
+    // custom scheme just because a server asked it to.
+    val platformUriHandler = LocalUriHandler.current
+    val uriHandler = remember(platformUriHandler) {
+        object : UriHandler {
+            override fun openUri(uri: String) {
+                val opened = uri.startsWith("http://", ignoreCase = true) ||
+                    uri.startsWith("https://", ignoreCase = true)
+                if (opened) platformUriHandler.openUri(uri)
+            }
+        }
+    }
 
     MaterialTheme {
         // Not decoration: `MaterialTheme` leaves `LocalContentColor` at Material 3's default black,
@@ -93,12 +111,13 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.labelMedium,
                 )
 
-                ProvideMaterial3Agui(textRenderer = textRenderer) {
-                    AguiTranscript(
-                        transcript = transcript,
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        state = listState,
-                    )
+                CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                    ProvideMaterial3Agui(textRenderer = textRenderer) {
+                        AguiTranscript(
+                            transcript = transcript,
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                        )
+                    }
                 }
 
                 Composer(
