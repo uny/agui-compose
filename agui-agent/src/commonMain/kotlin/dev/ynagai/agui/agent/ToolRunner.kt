@@ -38,8 +38,9 @@ import kotlin.uuid.Uuid
  * and the `ConcurrentModificationException` that raises cancels every job still running; it names
  * each answer `msg_<epoch millis>`, so two answers in one millisecond share an id; and a job
  * cancelled before its body ran leaves the call with no answer at all. Here the jobs are joined
- * from a snapshot, ids are random, and every call started is answered -- a job that never ran
- * answers with the fact that it did not.
+ * from a snapshot, ids are random, and every call whose job was started is answered -- a job
+ * that never ran answers with the fact that it did not. A call whose `TOOL_CALL_END` never came
+ * has no job and no answer, as before: it is a call the agent never finished making.
  *
  * Every answer is a `ToolMessage` whose content is the executor's result the way the manager
  * formats it: the JSON result when there is one, else the message, else `true` / `false`. A
