@@ -8,6 +8,7 @@ public final class dev/ynagai/agui/core/UiTranscriptReducer {
 	public fun <init> (Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun accept (Lcom/agui/core/types/BaseEvent;)Ldev/ynagai/agui/model/UiTranscript;
+	public final fun appendUserMessage (Lcom/agui/core/types/UserMessage;)Ldev/ynagai/agui/model/UiTranscript;
 	public final fun getTranscript ()Ldev/ynagai/agui/model/UiTranscript;
 }
 

@@ -117,7 +117,9 @@ assembled answer arrives in the second run's input.
   the lossy shape decision 1 describes. So a chat surface cannot yet show what the user just sent
   before the agent answers. This is a boundary question -- either `agui-core` gains a public append
   entry, or the UI prepends it -- and it is deferred, not forgotten. The first sample application
-  will force it.
+  will force it. **Resolved by [decision 6](0006-saying-something.md)**, which found the hole to be
+  larger than this bullet says: `run` cannot *send* a new turn either, because
+  `RunAgentParameters` carries no messages and `setMessages` is protected.
 - Frontend tools are not wired. `kotlin-tools` arrives with `kotlin-client`, and upstream's
   `ToolExecutionManager` sits between the observable and a consumer; `AgentSession` takes the
   observable directly, so a tool call streams into the transcript and nothing executes it. The

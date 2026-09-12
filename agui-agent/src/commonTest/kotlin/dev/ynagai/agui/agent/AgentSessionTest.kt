@@ -1,11 +1,8 @@
 package dev.ynagai.agui.agent
 
-import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.AgentConfig
 import com.agui.client.agent.RunAgentParameters
 import com.agui.core.types.AssistantMessage
-import com.agui.core.types.BaseEvent
-import com.agui.core.types.RunAgentInput
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
 import com.agui.core.types.RunStartedEvent
@@ -22,7 +19,6 @@ import dev.ynagai.agui.model.ToolCallStatus
 import dev.ynagai.agui.model.UiRole
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -32,30 +28,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-
-/**
- * An [AbstractAgent] whose `run` is a script rather than a socket. What it is handed on each run
- * is kept, because what upstream sends as history is part of what is under test.
- */
-private class ScriptedAgent(
-    private val script: (RunAgentInput) -> Flow<BaseEvent>,
-    config: AgentConfig = AgentConfig(threadId = "t"),
-) : AbstractAgent(config) {
-    val inputs = mutableListOf<RunAgentInput>()
-
-    override fun run(input: RunAgentInput): Flow<BaseEvent> {
-        inputs += input
-        return script(input)
-    }
-}
-
-private fun answer(runId: String, messageId: String, vararg deltas: String): List<BaseEvent> = buildList {
-    add(RunStartedEvent(threadId = "t", runId = runId))
-    add(TextMessageStartEvent(messageId = messageId))
-    deltas.forEach { add(TextMessageContentEvent(messageId = messageId, delta = it)) }
-    add(TextMessageEndEvent(messageId = messageId))
-    add(RunFinishedEvent(threadId = "t", runId = runId))
-}
 
 class AgentSessionTest {
 

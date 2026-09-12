@@ -16,7 +16,9 @@ Material 3 layer decides on your behalf is in
 parser under all of it, without a design system to style it from, is
 [docs/decisions/0004](docs/decisions/0004-parsing-markdown-without-a-design-system.md). Where the
 upstream transport meets all of that — and what it decides about Ktor on your behalf — is
-[docs/decisions/0005](docs/decisions/0005-running-the-upstream-agent.md).
+[docs/decisions/0005](docs/decisions/0005-running-the-upstream-agent.md). Why saying something needs
+a second entry point, and why upstream's own API leaves no other way in, is
+[docs/decisions/0006](docs/decisions/0006-saying-something.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -103,8 +105,17 @@ import dev.ynagai.agui.agent.AgentSession
 val session = AgentSession(HttpAgent(HttpAgentConfig(url = "https://…/agui")))
 
 session.transcript                  // StateFlow<UiTranscript>, grows with every run
-session.run()                       // suspends until the run ends; returns its RunState
+session.send("What changed today?") // the user's turn: on screen at once, then the run
+// or, with no new turn to send -- a retry, a resumed interrupt:
+session.run()                       // runs from the history the agent already holds
 ```
+
+`send` is how a client says something, and it is not a convenience over `run`: upstream's
+`RunAgentParameters` carries no messages and its `setMessages` is protected, so a run started from
+parameters alone can only ever send the history the agent already holds. `send` puts the turn on
+screen before the first event arrives, sends it with that history, and leaves it on screen if the
+run fails — what was said was said, and a retry needs it. Pass a `UserMessage` instead of a
+`String` to supply the id yourself, or to send files alongside the text.
 
 The transcript is the report: a run that fails — `RUN_ERROR` from the agent, or a stream that
 broke the protocol and was rejected by upstream's verifier — ends in `RunState.Failed` rather than
