@@ -1,13 +1,19 @@
 package dev.ynagai.agui.sample
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlin.test.Test
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * The window, without a window.
@@ -44,10 +50,34 @@ class SampleAppTest {
         onNodeWithText("Send").performClick()
 
         // The run is launched rather than awaited, so the assertion waits the way the screen does.
-        waitUntil { onAllNodesWithText("ok").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil { onAllNodesWithText(ANSWER_DRAWN).fetchSemanticsNodes().isNotEmpty() }
         onAllNodesWithText("hello")[0].assertExists()
+        // The answer went out as `**ok**` and is on screen as `ok`, which is the only thing that
+        // separates "the Markdown renderer is fitted" from "something drew the text". Drop
+        // `textRenderer = textRenderer` from `SampleApp` and this is the assertion that fails.
+        onAllNodesWithText(ANSWER).assertCountEquals(0)
         // The transcript's own report, which `AguiTranscript` deliberately does not draw -- so if
         // the sample stopped drawing it, nothing else here would notice.
         onNodeWithText("thread $THREAD — finished").assertExists()
+    }
+
+    @Test
+    fun leaving_the_composition_disposes_the_agent() = runComposeUiTest {
+        val agents = mutableListOf<ScriptedAgent>()
+        val chat = SampleChat { url -> ScriptedAgent(url).also { agents += it } }
+        var windowed by mutableStateOf(true)
+
+        setContent { if (windowed) SampleApp(chat = chat) }
+        onNodeWithText("AG-UI endpoint").performTextInput("http://localhost:8000/")
+        onNodeWithText("Connect").performClick()
+
+        // Closing the window is this, and nothing else: the composition goes away and
+        // `DisposableEffect` is what turns that into a disposed agent. Without it every window
+        // that was ever opened keeps its HTTP client.
+        windowed = false
+        waitForIdle()
+
+        assertTrue(agents.single().disposed, "the window closed and the agent was left open")
+        assertNull(chat.connection.value)
     }
 }

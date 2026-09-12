@@ -47,7 +47,7 @@ class SampleChatTest {
         // otherwise leave to inference.
         val secondRun = agents.single().inputs.last()
         assertEquals(
-            listOf("first", "ok", "second"),
+            listOf("first", ANSWER, "second"),
             secondRun.messages.map { it.content },
         )
     }
