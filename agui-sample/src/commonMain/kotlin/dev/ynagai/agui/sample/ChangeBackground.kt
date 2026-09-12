@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -47,7 +48,8 @@ internal class ChangeBackground(
 ) {
     override suspend fun executeInternal(context: ToolExecutionContext): ToolExecutionResult {
         val arguments = Json.parseToJsonElement(context.toolCall.function.arguments).jsonObject
-        val background = arguments["background"]?.jsonPrimitive?.content
+        // `contentOrNull`: a JSON `null` is not a background either.
+        val background = arguments["background"]?.jsonPrimitive?.contentOrNull
             ?: return ToolExecutionResult.failure("`background` is required")
         onChange(background)
         return ToolExecutionResult.success(buildJsonObject { put("changed", true) }, "Background changed")

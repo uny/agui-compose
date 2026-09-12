@@ -1,6 +1,9 @@
 package dev.ynagai.agui.sample
 
+import com.agui.core.types.FunctionCall
+import com.agui.core.types.ToolCall
 import com.agui.core.types.ToolMessage
+import com.agui.tools.ToolExecutionContext
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
@@ -8,6 +11,7 @@ import dev.ynagai.agui.model.UiRole
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -91,6 +95,23 @@ class SampleChatTest {
         chat.connect("http://localhost:8001/")
 
         assertNull(chat.background.value)
+    }
+
+    /** What the agent is told when the call is not one the tool can act on; the window is left alone. */
+    @Test
+    fun a_call_without_a_background_fails_and_paints_nothing() = runTest {
+        var painted: String? = null
+        val tool = ChangeBackground { painted = it }
+        val call = { arguments: String ->
+            ToolExecutionContext(ToolCall(id = "c", function = FunctionCall(name = "change_background", arguments = arguments)))
+        }
+
+        assertFalse(tool.execute(call("{}")).success)
+        assertFalse(tool.execute(call("""{"background":null}""")).success)
+        assertFalse(tool.execute(call("not json")).success)
+        assertNull(painted)
+        assertTrue(tool.execute(call("""{"background":"#fff"}""")).success)
+        assertEquals("#fff", painted)
     }
 
     @Test
