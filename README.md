@@ -105,17 +105,22 @@ import dev.ynagai.agui.agent.AgentSession
 val session = AgentSession(HttpAgent(HttpAgentConfig(url = "https://…/agui")))
 
 session.transcript                  // StateFlow<UiTranscript>, grows with every run
-session.send("What changed today?") // the user's turn: on screen at once, then the run
+session.send("What changed today?") // the user's turn, then the run it starts
 // or, with no new turn to send -- a retry, a resumed interrupt:
 session.run()                       // runs from the history the agent already holds
 ```
 
 `send` is how a client says something, and it is not a convenience over `run`: upstream's
-`RunAgentParameters` carries no messages and its `setMessages` is protected, so a run started from
-parameters alone can only ever send the history the agent already holds. `send` puts the turn on
-screen before the first event arrives, sends it with that history, and leaves it on screen if the
-run fails — what was said was said, and a retry needs it. Pass a `UserMessage` instead of a
-`String` to supply the id yourself, or to send files alongside the text.
+`RunAgentParameters` carries no messages and `AbstractAgent.setMessages` is protected, so a run
+started from parameters alone can only ever send the history the agent already holds. `send` puts
+the turn on screen before the first event of the run arrives — it waits for a run already in
+flight, so "before the answer" is a promise about the answer to *this* turn, not about the clock —
+sends it with that history, and leaves it on screen if the run fails. Pass a `UserMessage` instead
+of a `String` to supply the id yourself, or to send files alongside the text.
+
+Retry a failed turn with `run`, not with a second `send`. The turn is already the agent's history
+by the time the run fails, so `run` asks it again; `send` would append it a second time, and the
+server would be asked twice.
 
 The transcript is the report: a run that fails — `RUN_ERROR` from the agent, or a stream that
 broke the protocol and was rejected by upstream's verifier — ends in `RunState.Failed` rather than

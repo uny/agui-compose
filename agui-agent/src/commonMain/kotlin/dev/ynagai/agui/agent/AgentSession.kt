@@ -131,12 +131,25 @@ public class AgentSession(
      * The transcript is for the screen and keeps the ordering that shape loses.
      *
      * The message reaches the transcript before the run starts, under the session's own lock, so
-     * the sender sees their line immediately and no other run can slip events between the line and
-     * the answer to it. A run that fails leaves it there -- what was said was said, and a UI that
-     * offers a retry needs it on screen to retry from.
+     * the sender sees their line before the answer to it and no other run can slip events between
+     * the two. It is the lock, not the clock: a send that arrives while an earlier run is still
+     * streaming waits for that run, and nothing of this turn is on screen until it does.
      *
-     * @param message the turn to send. Supply the id; it is what a later `MESSAGES_SNAPSHOT`
-     *   matches this message by.
+     * A run that fails leaves the message there -- what was said was said, and a UI that offers a
+     * retry needs it on screen to retry from. **Retry through [run], not through a second [send].**
+     * The turn is already the agent's history by then: `runAgentObservable` adopts the input's
+     * messages before the run that fails, so [run] asks the same question again, while a second
+     * [send] would append it a second time and the server would be asked twice.
+     *
+     * The input is built here rather than by `AbstractAgent.prepareRunAgentInput`, which is the one
+     * thing this path cannot reuse -- it takes `RunAgentParameters`, which is what carries no
+     * messages. The fields are defaulted exactly as that method defaults them, but an agent that
+     * *overrides* it to add something of its own gets that on [run] and not here.
+     *
+     * @param message the turn to send. Supply the id when the client has one to supply; it is the
+     *   id the message is drawn under, and the one it goes on the wire with. A later
+     *   `MESSAGES_SNAPSHOT` does not reconcile against it -- a snapshot replaces the transcript
+     *   whole, the server's copy of this turn included.
      * @param parameters the run's id, tools, context and forwarded properties. Defaulted here the
      *   way `AbstractAgent` defaults them: a generated run id, no tools, no context, and empty
      *   forwarded properties.

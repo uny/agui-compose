@@ -181,6 +181,8 @@ public class UiTranscriptReducer(
      *
      * @param message the local turn. Its `id` is subject to the same de-duplication as an id off
      *   the wire, so a caller that reuses one gets a second message rather than a corrupted first.
+     *   It is not an id a later snapshot reconciles against: [replaceMessages] rebuilds the whole
+     *   transcript from the snapshot, so what replaces this message is the list, not a match.
      */
     public fun appendUserMessage(message: UserMessage): UiTranscript {
         detachTurn()

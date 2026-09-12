@@ -84,7 +84,10 @@ answered by the next run.
   the same shape as the ones the agent would have generated. Nothing on the wire cares, and a client
   that does passes its own.
 - A failed run leaves the message on screen. A UI offering a retry needs the line it would retry
-  from, and the reducer has no way to take a message back.
+  from, and the reducer has no way to take a message back. The retry itself is `run`, not a second
+  `send`: `runAgentObservable` adopts the input's messages *before* it calls the agent's own `run`,
+  so the turn is already history by the time the run fails, and sending it again would put it on
+  the wire twice.
 - Still not addressed: a local **system** or **developer** message, and editing or deleting a turn
   already sent. All three are additive when something needs them.
 
