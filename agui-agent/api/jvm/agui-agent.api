@@ -8,6 +8,10 @@ public final class dev/ynagai/agui/agent/AgentSession {
 	public final fun getTranscript ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun run (Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun run$default (Ldev/ynagai/agui/agent/AgentSession;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun send (Lcom/agui/core/types/UserMessage;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun send (Ljava/lang/String;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun send$default (Ldev/ynagai/agui/agent/AgentSession;Lcom/agui/core/types/UserMessage;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun send$default (Ldev/ynagai/agui/agent/AgentSession;Ljava/lang/String;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class dev/ynagai/agui/agent/AgentSession$Companion {

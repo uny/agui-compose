@@ -148,13 +148,50 @@ public class UiTranscriptReducer(
     private var sharedState: JsonElement = JsonObject(emptyMap())
     private val steps = mutableListOf<String>()
 
-    /** The transcript as of the last [accept]. */
+    /** The transcript as of the last [accept] or [appendUserMessage]. */
     public var transcript: UiTranscript = UiTranscript()
         private set
 
     /** Applies one event and returns the transcript it produced. */
     public fun accept(event: BaseEvent): UiTranscript {
         apply(event)
+        return commit()
+    }
+
+    /**
+     * Appends a message the client composed itself, and returns the transcript it produced.
+     *
+     * The one thing an event stream cannot tell a client: what its own user just said. The
+     * protocol carries a user message only inside `MESSAGES_SNAPSHOT`, which *replaces* the
+     * transcript -- and replaces it with a lossy rebuild, in which the order of a sentence and the
+     * tool call that followed it is gone (see [replaceMessages]). Synthesising a snapshot to show
+     * the sender their own line would therefore degrade every turn already on screen, every time
+     * they sent one. So the local turn is appended rather than folded, and this is the only entry
+     * point that is not an event.
+     *
+     * Appending does not finish the assistant turn, it detaches it: a message sent while the agent
+     * is still talking means the *next* assistant part belongs in a new bubble, not that the words
+     * arriving now stop arriving. What was streaming keeps streaming, and is settled when the run
+     * ends, exactly as an `ACTIVITY_SNAPSHOT` mid-stream is.
+     *
+     * This is bookkeeping for the screen, not for the wire. Sending the message is the caller's --
+     * `agui-agent`'s `AgentSession.send` appends here and puts the same message in the run input,
+     * and a run whose server answers with a `MESSAGES_SNAPSHOT` replaces what was appended with
+     * the server's own copy of it.
+     *
+     * @param message the local turn. Its `id` is subject to the same de-duplication as an id off
+     *   the wire, so a caller that reuses one gets a second message rather than a corrupted first.
+     *   It is not an id a later snapshot reconciles against: [replaceMessages] rebuilds the whole
+     *   transcript from the snapshot, so what replaces this message is the list, not a match.
+     */
+    public fun appendUserMessage(message: UserMessage): UiTranscript {
+        detachTurn()
+        messages += buildUserMessage(message)
+        return commit()
+    }
+
+    /** Rebuilds [transcript] from the current state, after an [accept] or an append. */
+    private fun commit(): UiTranscript {
         transcript = UiTranscript(
             messages = messages.map { it.build() },
             run = run,
@@ -760,6 +797,50 @@ public class UiTranscriptReducer(
     // ---- Snapshots ---------------------------------------------------------------------------
 
     /**
+     * Builds the message a user turn draws as, from a snapshot or from [appendUserMessage].
+     *
+     * Multimodal content is laid out in the order the parts arrived, because that order is the
+     * only thing that says whether a caption came before its image or after it. A message with no
+     * `contentParts` is the plain case and draws as one text part.
+     *
+     * Not registered in `textOwners`: that map answers `TOOL_CALL_START.parentMessageId`, which
+     * names an assistant message. A user message is never one.
+     */
+    private fun buildUserMessage(message: UserMessage): MessageBuilder {
+        val builder = mintMessage(message.id, UiRole.USER, message.name)
+        val contentParts = message.contentParts
+        if (contentParts != null) {
+            contentParts.forEachIndexed { index, content ->
+                when (content) {
+                    is TextInputContent -> builder.append(
+                        TextPart(
+                            id = "text:${message.id}#$index",
+                            text = content.text,
+                            messageId = message.id,
+                        ),
+                    )
+
+                    is BinaryInputContent -> builder.append(
+                        FilePart(
+                            id = "file:${message.id}#$index",
+                            mimeType = content.mimeType,
+                            remoteId = content.id,
+                            url = content.url,
+                            data = content.data,
+                            filename = content.filename,
+                        ),
+                    )
+                }
+            }
+        } else {
+            builder.append(
+                TextPart(id = "text:${message.id}", text = message.content, messageId = message.id),
+            )
+        }
+        return builder
+    }
+
+    /**
      * `MESSAGES_SNAPSHOT` replaces the transcript.
      *
      * Ordering *within* a rebuilt assistant message is not recoverable, and this is where that
@@ -841,43 +922,7 @@ public class UiTranscriptReducer(
                     messages += builder
                 }
 
-                is UserMessage -> {
-                    val builder = mintMessage(message.id, UiRole.USER, message.name)
-                    val contentParts = message.contentParts
-                    if (contentParts != null) {
-                        contentParts.forEachIndexed { index, content ->
-                            when (content) {
-                                is TextInputContent -> builder.append(
-                                    TextPart(
-                                        id = "text:${message.id}#$index",
-                                        text = content.text,
-                                        messageId = message.id,
-                                    ),
-                                )
-
-                                is BinaryInputContent -> builder.append(
-                                    FilePart(
-                                        id = "file:${message.id}#$index",
-                                        mimeType = content.mimeType,
-                                        remoteId = content.id,
-                                        url = content.url,
-                                        data = content.data,
-                                        filename = content.filename,
-                                    ),
-                                )
-                            }
-                        }
-                    } else {
-                        builder.append(
-                            TextPart(
-                                id = "text:${message.id}",
-                                text = message.content,
-                                messageId = message.id,
-                            ),
-                        )
-                    }
-                    messages += builder
-                }
+                is UserMessage -> messages += buildUserMessage(message)
 
                 is SystemMessage, is DeveloperMessage -> {
                     val role = if (message is SystemMessage) UiRole.SYSTEM else UiRole.DEVELOPER

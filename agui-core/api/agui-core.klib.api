@@ -13,6 +13,7 @@ final class dev.ynagai.agui.core/UiTranscriptReducer { // dev.ynagai.agui.core/U
         final fun <get-transcript>(): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.core/UiTranscriptReducer.transcript.<get-transcript>|<get-transcript>(){}[0]
 
     final fun accept(com.agui.core.types/BaseEvent): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.core/UiTranscriptReducer.accept|accept(com.agui.core.types.BaseEvent){}[0]
+    final fun appendUserMessage(com.agui.core.types/UserMessage): dev.ynagai.agui.model/UiTranscript // dev.ynagai.agui.core/UiTranscriptReducer.appendUserMessage|appendUserMessage(com.agui.core.types.UserMessage){}[0]
 }
 
 final fun (kotlinx.coroutines.flow/Flow<com.agui.core.types/BaseEvent>).dev.ynagai.agui.core/foldToTranscript(kotlin/Function1<kotlin/String, kotlin/Unit> = ...): kotlinx.coroutines.flow/Flow<dev.ynagai.agui.model/UiTranscript> // dev.ynagai.agui.core/foldToTranscript|foldToTranscript@kotlinx.coroutines.flow.Flow<com.agui.core.types.BaseEvent>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
