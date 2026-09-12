@@ -1,5 +1,6 @@
 package dev.ynagai.agui.sample
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
@@ -57,6 +60,7 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     DisposableEffect(chat) { onDispose { chat.close() } }
 
     val connection by chat.connection.collectAsState()
+    val background by chat.background.collectAsState()
     val transcript by (connection?.transcript?.collectAsState() ?: remember { mutableStateOf(UiTranscript()) })
     val scope = rememberCoroutineScope()
 
@@ -98,11 +102,25 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         }
     }
 
+    // What the agent's `change_background` call comes to. A gradient of the colours the string
+    // names, painted under a transparent `Surface`; one colour is painted flat, and a string that
+    // names none leaves the theme's own ground in place. The `Surface` stays for what it derives
+    // -- see below -- and only its colour gives way.
+    val colors = remember(background) { background?.let(::backgroundColors).orEmpty().map { Color(it) } }
+    val painted = when (colors.size) {
+        0 -> Modifier
+        1 -> Modifier.background(colors.single())
+        else -> Modifier.background(Brush.linearGradient(colors))
+    }
+
     MaterialTheme {
         // Not decoration: `MaterialTheme` leaves `LocalContentColor` at Material 3's default black,
         // and a `Surface` is what derives it from the background it paints. Without one this
         // transcript draws black prose on a dark ground in dark mode.
-        Surface(modifier = modifier.fillMaxSize()) {
+        Surface(
+            modifier = modifier.fillMaxSize().then(painted),
+            color = if (colors.isEmpty()) MaterialTheme.colorScheme.surface else Color.Transparent,
+        ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
