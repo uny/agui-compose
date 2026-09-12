@@ -40,7 +40,7 @@ class A2uiTranslationTest {
     }
 
     @Test
-    fun `an updateDataModel without a value gets null, which v1_0 reads as delete`() {
+    fun `an updateDataModel without a value gets null which v1_0 reads as delete`() {
         val message = A2uiTranslation.Default.message(
             json("""{"version":"v0.9","updateDataModel":{"surfaceId":"s","path":"/x"}}"""),
         )
@@ -64,7 +64,7 @@ class A2uiTranslationTest {
     }
 
     @Test
-    fun `an unknown version is refused by a2ui-core, not here`() {
+    fun `an unknown version is refused by a2ui-core and not here`() {
         assertFailsWith<A2uiFormatException> {
             A2uiTranslation.Default.message(json("""{"version":"v0.8","createSurface":{"surfaceId":"s"}}"""))
         }

@@ -77,7 +77,7 @@ class A2uiSurfacesTest {
     }
 
     @Test
-    fun `the lifecycle before the paint is a pending slot, not a surface`() {
+    fun `the lifecycle before the paint is a pending slot and not a surface`() {
         val step = A2uiSurfaces.Empty.accept(transcript(activity("a", """{"status":"building","progressTokens":20}""")).a2uiPayloads())
         assertTrue(step.isEmpty)
         val slot = assertIs<A2uiSlot.Pending>(step.slots.getValue(A2uiCarrier.Activity("a")))
@@ -85,7 +85,7 @@ class A2uiSurfacesTest {
     }
 
     @Test
-    fun `an activity outranks the tool result that carries the same surface, whichever came first`() {
+    fun `an activity outranks the tool result that carries the same surface whichever came first`() {
         val ops = operations("s", "x")
         val carried = transcript(toolCall("t", result = ops), activity("a", ops)).a2uiPayloads()
         val step = A2uiSurfaces.Empty.accept(carried)
