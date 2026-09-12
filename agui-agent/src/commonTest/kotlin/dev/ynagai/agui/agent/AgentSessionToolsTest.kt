@@ -9,6 +9,9 @@ import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
 import com.agui.core.types.RunFinishedInterruptOutcome
 import com.agui.core.types.RunStartedEvent
+import com.agui.core.types.TextMessageContentEvent
+import com.agui.core.types.TextMessageEndEvent
+import com.agui.core.types.TextMessageStartEvent
 import com.agui.core.types.Tool
 import com.agui.core.types.ToolCallArgsEvent
 import com.agui.core.types.ToolCallEndEvent
@@ -25,6 +28,7 @@ import dev.ynagai.agui.model.ToolCallStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.test.runTest
@@ -181,7 +185,7 @@ class AgentSessionToolsTest {
         assertEquals(2, agent.inputs.size, "the answer called no tool, so that was the end")
     }
 
-    /** The manager turns a throwing executor into a result that says so; the agent hears about it. */
+    /** The registry turns a throwing executor into a result that says so; the agent hears about it. */
     @Test
     fun a_tool_that_throws_answers_with_the_failure() = runTest {
         val agent = ScriptedAgent(callThenAnswer(toolName = "broken"))
@@ -192,6 +196,138 @@ class AgentSessionToolsTest {
         assertEquals(2, agent.inputs.size)
         val result = assertIs<ToolMessage>(agent.inputs[1].messages.last())
         assertTrue("no can do" in result.content, result.content)
+    }
+
+    /** Through [AgentSession.run] as much as through [AgentSession.send]: the registry's tools are on the wire. */
+    @Test
+    fun run_declares_the_registry_tools_after_the_callers() = runTest {
+        val agent = ScriptedAgent(callThenAnswer())
+        val session = AgentSession(agent, tools = toolRegistry(Echo()))
+        val callers = Tool(name = "search", description = "look it up", parameters = JsonObject(emptyMap()))
+
+        session.run(RunAgentParameters(runId = "r1", tools = listOf(callers)))
+        session.run(RunAgentParameters(runId = "r2"))
+
+        assertEquals(listOf("search", "echo"), agent.inputs[0].tools.map { it.name })
+        assertEquals(listOf("echo"), agent.inputs.last().tools.map { it.name })
+    }
+
+    /** The other way a kept result goes out: [AgentSession.run], which adds no turn of its own. */
+    @Test
+    fun a_result_of_a_failed_run_goes_with_the_next_run() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.messages.none { it is ToolMessage }) {
+                flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    toolCall("c1", "echo", """{"text":"hi"}""").forEach { emit(it) }
+                    emit(RunErrorEvent(message = "boom", code = "E"))
+                }
+            } else {
+                flow { answer(input.runId, "a", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent, tools = toolRegistry(Echo()))
+        session.run(RunAgentParameters(runId = "r1"))
+
+        val ended = session.run(RunAgentParameters(runId = "r2"))
+
+        assertIs<RunState.Finished>(ended)
+        assertEquals(2, agent.inputs.size)
+        assertEquals("c1", assertIs<ToolMessage>(agent.inputs[1].messages.last()).toolCallId)
+    }
+
+    /**
+     * A stream that dies right after `TOOL_CALL_END` cancels the job before its body runs, so no
+     * executor is there to report the cancellation. The runner answers for it, and the history
+     * the next turn carries still holds an answer to every call.
+     */
+    @Test
+    fun a_tool_whose_run_died_before_it_started_is_answered_as_not_run() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.messages.none { it is ToolMessage }) {
+                flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    toolCall("c1", "echo", """{"text":"hi"}""").forEach { emit(it) }
+                    throw IllegalStateException("net")
+                }
+            } else {
+                flow { answer(input.runId, "a", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent, tools = toolRegistry(Echo()))
+
+        val failed = session.run(RunAgentParameters(runId = "r1"))
+        assertIs<RunState.Failed>(failed)
+        val part = session.transcript.value.messages.first().parts.filterIsInstance<ToolCallPart>().single()
+        assertEquals(ToolCallStatus.COMPLETE, part.status)
+        assertEquals(ToolRunner.NOT_EXECUTED, part.result)
+
+        session.send(UserMessage(id = "u1", content = "again"))
+
+        val next = agent.inputs[1].messages.takeLast(2)
+        assertEquals("c1", assertIs<ToolMessage>(next[0]).toolCallId)
+        assertEquals("u1", next[1].id)
+    }
+
+    /**
+     * Two tools in one run, the second still running when `RUN_FINISHED` arrives. Both are waited
+     * for and both answer with their own result under their own id -- which is what upstream's
+     * manager got wrong, twice over (see the [ToolRunner] note).
+     */
+    @Test
+    fun two_tools_in_one_run_are_both_answered_with_distinct_ids() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.messages.none { it is ToolMessage }) {
+                flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    toolCall("c1", "echo", """{"text":"1"}""").forEach { emit(it) }
+                    toolCall("c2", "slow", "{}").forEach { emit(it) }
+                    emit(RunFinishedEvent(threadId = THREAD, runId = input.runId))
+                }
+            } else {
+                flow { answer(input.runId, "a", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent, tools = toolRegistry(Echo(), Slow()))
+
+        session.run(RunAgentParameters(runId = "r1"))
+
+        val results = agent.inputs[1].messages.filterIsInstance<ToolMessage>()
+        assertEquals(mapOf("c1" to """{"echoed":"1"}""", "c2" to "slept"), results.associate { it.toolCallId to it.content })
+        assertEquals(2, results.map { it.id }.toSet().size, "ids: ${results.map { it.id }}")
+    }
+
+    /**
+     * The answer goes where a model backend requires it, directly after the message that made the
+     * call, not at the end of whatever the agent said afterwards.
+     */
+    @Test
+    fun a_result_is_placed_after_the_message_that_called_for_it() = runTest {
+        val agent = ScriptedAgent({ input ->
+            if (input.messages.none { it is ToolMessage }) {
+                flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    emit(TextMessageStartEvent(messageId = "a1"))
+                    emit(TextMessageContentEvent(messageId = "a1", delta = "calling"))
+                    emit(TextMessageEndEvent(messageId = "a1"))
+                    toolCall("c1", "echo", """{"text":"hi"}""").forEach { emit(it) }
+                    emit(TextMessageStartEvent(messageId = "a2"))
+                    emit(TextMessageContentEvent(messageId = "a2", delta = "meanwhile"))
+                    emit(TextMessageEndEvent(messageId = "a2"))
+                    emit(RunFinishedEvent(threadId = THREAD, runId = input.runId))
+                }
+            } else {
+                flow { answer(input.runId, "a", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent, tools = toolRegistry(Echo()))
+
+        session.run(RunAgentParameters(runId = "r1"))
+
+        val messages = agent.inputs[1].messages
+        val call = messages.indexOfFirst { (it as? AssistantMessage)?.toolCalls?.any { c -> c.id == "c1" } == true }
+        assertEquals("c1", assertIs<ToolMessage>(messages[call + 1]).toolCallId)
+        assertEquals("a2", messages[call + 2].id)
     }
 
     @Test
@@ -213,6 +349,15 @@ class AgentSessionToolsTest {
         override suspend fun executeInternal(context: ToolExecutionContext): ToolExecutionResult {
             val text = (context.toolCall.function.arguments.let { kotlinx.serialization.json.Json.parseToJsonElement(it) } as JsonObject)["text"]
             return ToolExecutionResult.success(buildJsonObject { put("echoed", text ?: JsonPrimitive("")) })
+        }
+    }
+
+    private class Slow : AbstractToolExecutor(
+        Tool(name = "slow", description = "takes its time", parameters = JsonObject(emptyMap())),
+    ) {
+        override suspend fun executeInternal(context: ToolExecutionContext): ToolExecutionResult {
+            delay(1_000)
+            return ToolExecutionResult.success(message = "slept")
         }
     }
 
@@ -252,12 +397,13 @@ class AgentSessionToolsTest {
 /**
  * Cancelled while a tool is still executing.
  *
- * Measured rather than assumed, because upstream's `executeToolCall` catches `Exception` and on
- * the JVM a `CancellationException` is one: the manager does not let the cancellation through, it
- * reports it as a failed execution -- `Tool execution failed: … was cancelled` -- and hands that
- * back like any result. The session keeps it like any result. That is the right outcome for the
- * history, which then holds a call *and* an answer rather than a call the server cannot continue
- * from; what the answer says is the manager's wording, and the transcript draws it as a result.
+ * Measured rather than assumed, because upstream's `AbstractToolExecutor.execute` catches
+ * `Exception` and on the JVM a `CancellationException` is one: the executor does not let the
+ * cancellation through, it reports it as a failed execution -- `Tool execution failed: … was
+ * cancelled` -- and hands that back like any result. The session keeps it like any result. That
+ * is the right outcome for the history, which then holds a call *and* an answer rather than a
+ * call the server cannot continue from; what the answer says is the executor's wording, and the
+ * transcript draws it as a result.
  */
 class AgentSessionToolsCancellationTest {
 
@@ -284,7 +430,7 @@ class AgentSessionToolsCancellationTest {
         job.cancel()
         job.join()
 
-        // RUN_FINISHED was seen before the cancellation, which arrived while the manager was
+        // RUN_FINISHED was seen before the cancellation, which arrived while the runner was
         // joining the tool's job; the agent's verdict stands, as it does for any late cancellation.
         assertEquals(RunState.Finished("t", "r1"), session.transcript.value.run)
         assertEquals(1, agent.inputs.size, "no follow-up: the cancelled coroutine starts nothing")

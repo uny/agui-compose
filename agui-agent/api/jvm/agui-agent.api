@@ -2,8 +2,8 @@ public final class dev/ynagai/agui/agent/AgentSession {
 	public static final field CANCELLED_CODE Ljava/lang/String;
 	public static final field CLIENT_ERROR_CODE Ljava/lang/String;
 	public static final field Companion Ldev/ynagai/agui/agent/AgentSession$Companion;
-	public fun <init> (Lcom/agui/client/agent/AbstractAgent;Lkotlin/jvm/functions/Function1;Lcom/agui/tools/ToolRegistry;)V
-	public synthetic fun <init> (Lcom/agui/client/agent/AbstractAgent;Lkotlin/jvm/functions/Function1;Lcom/agui/tools/ToolRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/agui/client/agent/AbstractAgent;Lcom/agui/tools/ToolRegistry;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/agui/client/agent/AbstractAgent;Lcom/agui/tools/ToolRegistry;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAgent ()Lcom/agui/client/agent/AbstractAgent;
 	public final fun getTools ()Lcom/agui/tools/ToolRegistry;
 	public final fun getTranscript ()Lkotlinx/coroutines/flow/StateFlow;

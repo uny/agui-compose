@@ -161,11 +161,12 @@ session.send("tool")   // returns when the agent has been told the result and ha
 
 The protocol has one channel for a tool's result: the next run's input. So a run that called a
 tool is answered by a run of its own — the same tools, context and forwarded properties, the
-thread's history with the result appended — and `send` or `run` suspends until a run ends without
-calling one. The call is drawn `AWAITING_RESULT` while the tool executes and `COMPLETE` once it has
+thread's history with the result placed after its call — and `send` or `run` suspends until a run
+ends without calling one. The call is drawn `AWAITING_RESULT` while the tool executes and `COMPLETE` once it has
 a result, in the transcript, before the answering run starts. A tool the registry does not hold is
 left alone: a backend tool's events fold exactly as they do with no registry, and a run that stops
-for a human (`RunState.Finished.interrupted`) is not answered by anything automatic.
+for a human (`RunState.Finished.interrupted`) is answered only if it also called one of these
+tools, and then with that result alone; an approval no tool gives is yours to send.
 
 `RunState.Finished` is the run's verdict, not the turn's — a transcript reads it while a tool is
 still executing and again between a run and the run that answers it. Gate "the agent is done" on
