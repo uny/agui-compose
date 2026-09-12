@@ -50,6 +50,13 @@ public class SampleChat(
      * unit and the old one belonged to the old endpoint. Nothing is validated beyond emptiness --
      * a URL that does not resolve is a run that fails, and a failed run is something this sample
      * is meant to show rather than something it should prevent.
+     *
+     * **This does not stop a run that is already going.** [AgentSession] collects a run in the
+     * coroutine that called [send], not in the agent's own scope, and `dispose()` cancels only the
+     * latter -- so a run started against the replaced connection survives this call and is the
+     * caller's to cancel. [SampleApp] is where that happens, because the coroutine belongs to the
+     * composition. Doing it here would mean this class owning a scope, which is the larger change
+     * and not the one this sample is for.
      */
     public fun connect(url: String) {
         val trimmed = url.trim()

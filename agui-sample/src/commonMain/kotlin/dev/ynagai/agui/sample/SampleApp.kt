@@ -34,6 +34,7 @@ import dev.ynagai.agui.markdown.markdownAguiTypography
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -61,6 +62,11 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
 
     var endpoint by remember { mutableStateOf("") }
     var draft by remember { mutableStateOf("") }
+
+    // The runs this window has started and not yet seen end. `AgentSession` collects a run in the
+    // coroutine that started it rather than in the agent's own scope, so `dispose()` does not stop
+    // one -- there is nothing else here that could. Held so that reconnecting can.
+    val runs = remember { mutableListOf<Job>() }
 
     // `remember` with no keys, as the README insists. The local it is provided through is static,
     // so a renderer rebuilt on recomposition would re-render every visible message on every frame
@@ -102,7 +108,17 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 EndpointBar(
                     endpoint = endpoint,
                     onEndpointChange = { endpoint = it },
-                    onConnect = { chat.connect(endpoint) },
+                    onConnect = {
+                        // Before the endpoint changes, not after. A run left behind keeps
+                        // streaming into a transcript nobody is looking at and keeps the old
+                        // connection open for as long as the server holds it; a turn still parked
+                        // on the old session's mutex would wake up afterwards, be appended to that
+                        // transcript, and be sent to an agent that has already been disposed --
+                        // gone from the composer and drawn nowhere.
+                        runs.forEach { it.cancel() }
+                        runs.clear()
+                        chat.connect(endpoint)
+                    },
                     connectedTo = connection?.url,
                 )
 
@@ -130,9 +146,14 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                             draft = ""
                             // Launched rather than awaited, and the field is not disabled while it
                             // runs: `send` suspends for the length of the run, and a second send
-                            // meanwhile queues behind the session's own mutex. That queueing is
-                            // library behaviour worth having on screen.
-                            scope.launch { chat.send(text) }
+                            // meanwhile queues behind the session's own mutex. Note what that
+                            // costs, because it is the library's behaviour and not a bug to fix
+                            // here: a queued turn reaches the transcript when it acquires the lock,
+                            // so between the click and the first run ending it is on screen
+                            // nowhere. Pruning completed runs on the way in keeps this bounded
+                            // without a completion callback on another thread.
+                            runs.removeAll { it.isCompleted }
+                            runs += scope.launch { chat.send(text) }
                         }
                     },
                 )
