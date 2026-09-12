@@ -139,11 +139,17 @@ class LocalUserMessageTest {
     /**
      * A server that answers with its own copy of the thread replaces the local turn rather than
      * being appended beside it -- the snapshot's whole job.
+     *
+     * The server's copy says something the local one does not, because a snapshot that merely
+     * kept the local message would be indistinguishable from one that replaced it with an
+     * identical copy. A server that normalises a turn -- trims it, redacts it, resolves an
+     * uploaded file's id -- is the case that would otherwise go on drawing the client's own
+     * pre-normalisation text forever.
      */
     @Test
     fun a_later_snapshot_replaces_the_appended_message_rather_than_doubling_it() {
         val reducer = UiTranscriptReducer()
-        reducer.appendUserMessage(UserMessage(id = "u1", content = "Hello"))
+        reducer.appendUserMessage(UserMessage(id = "u1", content = "Hello "))
 
         val transcript = reducer.accept(
             MessagesSnapshotEvent(
