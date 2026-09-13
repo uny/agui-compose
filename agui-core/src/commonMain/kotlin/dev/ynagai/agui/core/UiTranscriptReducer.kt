@@ -112,6 +112,14 @@ public class UiTranscriptReducer(
     private val toolParts = mutableMapOf<String, PartRef>()
     private val activityMessages = mutableMapOf<String, MessageBuilder>()
 
+    /**
+     * The calls held [ToolCallStatus.AWAITING_APPROVAL], by id. Kept here rather than read back
+     * off [run] when the next run starts, because a `RUN_ERROR` in between -- a resume that could
+     * not reach the server -- replaces the finished run with a failed one that names no
+     * interrupts, while the calls it held are still waiting.
+     */
+    private val heldForApproval = mutableSetOf<String>()
+
     private var lastTextMessageId: String? = null
     private var lastToolCallId: String? = null
     private var lastReasoningMessageId: String? = null
@@ -625,6 +633,7 @@ public class UiTranscriptReducer(
         // whatever the producer says about it.
         if (part.status != ToolCallStatus.AWAITING_RESULT) return
         ref.message.replace(ref.index, part.copy(status = ToolCallStatus.AWAITING_APPROVAL))
+        heldForApproval += part.toolCallId
     }
 
     /**
@@ -634,13 +643,13 @@ public class UiTranscriptReducer(
      * be a lie for ever. Back to [ToolCallStatus.AWAITING_RESULT], which is what the protocol knows.
      */
     private fun releaseApprovals() {
-        val held = (run as? RunState.Finished)?.interrupts ?: return
-        for (interrupt in held) {
-            val ref = toolParts[interrupt.toolCallId ?: continue] ?: continue
+        for (toolCallId in heldForApproval) {
+            val ref = toolParts[toolCallId] ?: continue
             val part = ref.part<ToolCallPart>()
             if (part.status != ToolCallStatus.AWAITING_APPROVAL) continue
             ref.message.replace(ref.index, part.copy(status = ToolCallStatus.AWAITING_RESULT))
         }
+        heldForApproval.clear()
     }
 
     private fun Interrupt.toUi(): UiInterrupt = UiInterrupt(

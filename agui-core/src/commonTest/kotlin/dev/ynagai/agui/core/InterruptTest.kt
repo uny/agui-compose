@@ -1,6 +1,7 @@
 package dev.ynagai.agui.core
 
 import com.agui.core.types.Interrupt
+import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
 import com.agui.core.types.RunFinishedInterruptOutcome
 import com.agui.core.types.RunStartedEvent
@@ -111,6 +112,24 @@ class InterruptTest {
         reducer.accept(ToolCallResultEvent(messageId = "m", toolCallId = "c1", content = "sent"))
         assertEquals(ToolCallStatus.COMPLETE, reducer.transcript.toolCall("c1").status)
         assertEquals("sent", reducer.transcript.toolCall("c1").result)
+    }
+
+    /**
+     * A resume whose run failed before it started -- a transport failure is a lone `RUN_ERROR`
+     * -- leaves the transcript's run [RunState.Failed] with the questions still open. The next
+     * run to start still releases the call: what was held is remembered here, not read back off
+     * a run state that has since been replaced.
+     */
+    @Test
+    fun a_failed_run_between_the_ask_and_the_next_start_still_releases_the_call() {
+        val reducer = UiTranscriptReducer()
+        (call("c1") + ask("c1")).forEach { reducer.accept(it) }
+        reducer.accept(RunErrorEvent(message = "upstream is down", code = "BOOM"))
+        assertIs<RunState.Failed>(reducer.transcript.run)
+        assertEquals(ToolCallStatus.AWAITING_APPROVAL, reducer.transcript.toolCall("c1").status)
+
+        reducer.accept(RunStartedEvent(threadId = "t", runId = "r2"))
+        assertEquals(ToolCallStatus.AWAITING_RESULT, reducer.transcript.toolCall("c1").status)
     }
 
     private fun UiTranscript.toolCall(id: String): ToolCallPart =
