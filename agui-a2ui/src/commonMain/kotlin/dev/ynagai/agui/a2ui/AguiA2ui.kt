@@ -39,8 +39,9 @@ public object AguiA2ui {
 
     /**
      * The `forwardedProps` key an agent's adapter reads to decide whether to inject its
-     * `generate_a2ui` tool this run. Absent, no injection; the adapters are explicit that this
-     * mirrors the LangGraph contract. `true`, or a string naming a custom render tool.
+     * `generate_a2ui` tool this run. `true`, or a string naming a custom render tool; `false`
+     * turns injection off even where the server opted in, and absence defers to the server's
+     * own configuration. The adapters are explicit that this mirrors the LangGraph contract.
      */
     public const val INJECT_TOOL_KEY: String = "injectA2UITool"
 
