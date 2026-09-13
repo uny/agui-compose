@@ -37,6 +37,21 @@ public object AguiA2ui {
         "A2UI Component Schema — available components for generating UI surfaces. " +
             "Use these component names and properties when creating A2UI operations."
 
+    /**
+     * The `forwardedProps` key an agent's adapter reads to decide whether to inject its
+     * `generate_a2ui` tool this run. Absent, no injection; the adapters are explicit that this
+     * mirrors the LangGraph contract. `true`, or a string naming a custom render tool.
+     */
+    public const val INJECT_TOOL_KEY: String = "injectA2UITool"
+
+    /**
+     * The `description` of the `Context` entry that carries the render tool's usage guide, for
+     * the tool named [toolName]. The middleware sends it beside the schema entry when it injects
+     * the tool, and replaces an existing entry of the same description rather than adding one.
+     */
+    public fun guidelinesContextDescription(toolName: String): String =
+        "A2UI render tool usage guide — how to call $toolName with valid arguments."
+
     /** The `version` upstream's toolkit and middleware put on every envelope they emit. */
     public const val UPSTREAM_VERSION: String = "v0.9"
 

@@ -221,6 +221,13 @@ final class dev.ynagai.agui.a2ui/A2uiCarried { // dev.ynagai.agui.a2ui/A2uiCarri
     final fun toString(): kotlin/String // dev.ynagai.agui.a2ui/A2uiCarried.toString|toString(){}[0]
 }
 
+final class dev.ynagai.agui.a2ui/A2uiRequest { // dev.ynagai.agui.a2ui/A2uiRequest|null[0]
+    constructor <init>(dev.ynagai.a2ui.core.protocol/CatalogDefinition, kotlin/String = ..., kotlin/Boolean = ...) // dev.ynagai.agui.a2ui/A2uiRequest.<init>|<init>(dev.ynagai.a2ui.core.protocol.CatalogDefinition;kotlin.String;kotlin.Boolean){}[0]
+
+    final fun context(kotlin.collections/List<com.agui.core.types/Context> = ...): kotlin.collections/List<com.agui.core.types/Context> // dev.ynagai.agui.a2ui/A2uiRequest.context|context(kotlin.collections.List<com.agui.core.types.Context>){}[0]
+    final fun forwardedProps(kotlinx.serialization.json/JsonObject = ...): kotlinx.serialization.json/JsonObject // dev.ynagai.agui.a2ui/A2uiRequest.forwardedProps|forwardedProps(kotlinx.serialization.json.JsonObject){}[0]
+}
+
 final class dev.ynagai.agui.a2ui/A2uiSurfaces { // dev.ynagai.agui.a2ui/A2uiSurfaces|null[0]
     final val surfaceIds // dev.ynagai.agui.a2ui/A2uiSurfaces.surfaceIds|{}surfaceIds[0]
         final fun <get-surfaceIds>(): kotlin.collections/Set<kotlin/String> // dev.ynagai.agui.a2ui/A2uiSurfaces.surfaceIds.<get-surfaceIds>|<get-surfaceIds>(){}[0]
@@ -274,6 +281,8 @@ final class dev.ynagai.agui.a2ui/RenderA2UiTool : com.agui.tools/AbstractToolExe
 final object dev.ynagai.agui.a2ui/AguiA2ui { // dev.ynagai.agui.a2ui/AguiA2ui|null[0]
     final const val ACTIVITY_TYPE // dev.ynagai.agui.a2ui/AguiA2ui.ACTIVITY_TYPE|{}ACTIVITY_TYPE[0]
         final fun <get-ACTIVITY_TYPE>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.ACTIVITY_TYPE.<get-ACTIVITY_TYPE>|<get-ACTIVITY_TYPE>(){}[0]
+    final const val INJECT_TOOL_KEY // dev.ynagai.agui.a2ui/AguiA2ui.INJECT_TOOL_KEY|{}INJECT_TOOL_KEY[0]
+        final fun <get-INJECT_TOOL_KEY>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.INJECT_TOOL_KEY.<get-INJECT_TOOL_KEY>|<get-INJECT_TOOL_KEY>(){}[0]
     final const val OPERATIONS_KEY // dev.ynagai.agui.a2ui/AguiA2ui.OPERATIONS_KEY|{}OPERATIONS_KEY[0]
         final fun <get-OPERATIONS_KEY>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.OPERATIONS_KEY.<get-OPERATIONS_KEY>|<get-OPERATIONS_KEY>(){}[0]
     final const val RENDER_TOOL_NAME // dev.ynagai.agui.a2ui/AguiA2ui.RENDER_TOOL_NAME|{}RENDER_TOOL_NAME[0]
@@ -288,6 +297,8 @@ final object dev.ynagai.agui.a2ui/AguiA2ui { // dev.ynagai.agui.a2ui/AguiA2ui|nu
         final fun <get-V09_BASIC_CATALOG_ID>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.V09_BASIC_CATALOG_ID.<get-V09_BASIC_CATALOG_ID>|<get-V09_BASIC_CATALOG_ID>(){}[0]
     final const val V10_BASIC_CATALOG_ID // dev.ynagai.agui.a2ui/AguiA2ui.V10_BASIC_CATALOG_ID|{}V10_BASIC_CATALOG_ID[0]
         final fun <get-V10_BASIC_CATALOG_ID>(): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.V10_BASIC_CATALOG_ID.<get-V10_BASIC_CATALOG_ID>|<get-V10_BASIC_CATALOG_ID>(){}[0]
+
+    final fun guidelinesContextDescription(kotlin/String): kotlin/String // dev.ynagai.agui.a2ui/AguiA2ui.guidelinesContextDescription|guidelinesContextDescription(kotlin.String){}[0]
 }
 
 final fun (dev.ynagai.a2ui.core.protocol/ActionMessage).dev.ynagai.agui.a2ui/toForwardedProps(): kotlinx.serialization.json/JsonObject // dev.ynagai.agui.a2ui/toForwardedProps|toForwardedProps@dev.ynagai.a2ui.core.protocol.ActionMessage(){}[0]
