@@ -37,6 +37,7 @@ import dev.ynagai.a2ui.compose.BasicCatalog
 import dev.ynagai.a2ui.core.protocol.ActionMessage
 import dev.ynagai.agui.a2ui.compose.rememberA2uiHost
 import dev.ynagai.agui.a2ui.material3.withMaterial3A2ui
+import dev.ynagai.agui.a2ui.A2uiTranslation
 import dev.ynagai.agui.a2ui.toUserText
 import dev.ynagai.agui.compose.AguiTranscript
 import dev.ynagai.agui.markdown.MarkdownAguiTextRenderer
@@ -91,19 +92,21 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         )
     }
 
-    // `agui-markdown` makes agent text clickable, and its own KDoc says what that costs: the
-    // parser emits a `LinkAnnotation.Url` carrying the model's string with no scheme filtering, so
-    // whatever a server writes reaches the ambient `UriHandler` -- under GFM, bare URLs included.
-    // The application is the layer that gets to decide what it will act on, and this is the sample
-    // of an application, so it decides rather than leaving the platform's open-anything default in
-    // place. http and https only: a transcript may not hand the OS a `file:` path or a registered
-    // custom scheme just because a server asked it to.
     // One renderer per connection: the surfaces are the thread's, and a new endpoint is a new
     // thread. The two catalogs are the basic one and the dojo's -- what this window can draw.
     val renderer = remember(connection) {
         A2uiRenderer(A2uiRendererConfig.Default.withCatalogs(listOf(BasicCatalog.definition, DojoCatalog.definition)))
     }
-    val host = rememberA2uiHost(transcript, renderer, onWarning = { println("agui-sample: $it") })
+    // A `render_a2ui` call names no catalog, and the default would bind it to the basic one --
+    // which the middleware's own activity does not, since it stamps the catalog this window
+    // sends in context. The same catalog here, so the surface draws the same once the run's
+    // closing snapshot drops the activity and the call's arguments are what is left to draw from.
+    val host = rememberA2uiHost(
+        transcript,
+        renderer,
+        translation = remember { A2uiTranslation(defaultCatalogId = DojoCatalog.ID) },
+        onWarning = { println("agui-sample: $it") },
+    )
     val components = remember(host) {
         Material3AguiComponents().withMaterial3A2ui(
             host = host,
@@ -120,6 +123,13 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         )
     }
 
+    // `agui-markdown` makes agent text clickable, and its own KDoc says what that costs: the
+    // parser emits a `LinkAnnotation.Url` carrying the model's string with no scheme filtering, so
+    // whatever a server writes reaches the ambient `UriHandler` -- under GFM, bare URLs included.
+    // The application is the layer that gets to decide what it will act on, and this is the sample
+    // of an application, so it decides rather than leaving the platform's open-anything default in
+    // place. http and https only: a transcript may not hand the OS a `file:` path or a registered
+    // custom scheme just because a server asked it to.
     val platformUriHandler = LocalUriHandler.current
     val uriHandler = remember(platformUriHandler) {
         object : UriHandler {

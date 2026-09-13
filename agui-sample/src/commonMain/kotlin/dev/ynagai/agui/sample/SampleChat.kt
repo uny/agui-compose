@@ -107,7 +107,9 @@ public class SampleChat(
      * What every run carries besides the messages: the catalog this window draws, as the
      * `Context` entry upstream's middleware reads the catalog id from. Against the replay server
      * it is ignored, as everything in the request is; against a live middleware it is what keeps
-     * a streamed `render_a2ui` surface bound to a catalog this window holds.
+     * a streamed `render_a2ui` surface bound to a catalog this window holds -- together with the
+     * window's translation naming the same catalog, for the moment the run's closing snapshot
+     * leaves the call's arguments as the only carrier.
      */
     private val parameters = RunAgentParameters(context = listOf(catalogContext(DojoCatalog.definition)))
 
