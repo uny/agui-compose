@@ -1,0 +1,43 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.ynagai.agui:agui-a2ui-compose>
+abstract fun interface dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer { // dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer|null[0]
+    abstract fun Render(dev.ynagai.agui.a2ui/A2uiPayload, androidx.compose.ui/Modifier, androidx.compose.runtime/Composer?, kotlin/Int) // dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer.Render|Render(dev.ynagai.agui.a2ui.A2uiPayload;androidx.compose.ui.Modifier;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+}
+
+final class dev.ynagai.agui.a2ui.compose/A2uiHost { // dev.ynagai.agui.a2ui.compose/A2uiHost|null[0]
+    constructor <init>(dev.ynagai.a2ui.compose/A2uiRenderer, dev.ynagai.agui.a2ui/A2uiTranslation = ..., kotlin.collections/Set<kotlin/String> = ..., kotlin/Function1<kotlin/String, kotlin/Unit> = ...) // dev.ynagai.agui.a2ui.compose/A2uiHost.<init>|<init>(dev.ynagai.a2ui.compose.A2uiRenderer;dev.ynagai.agui.a2ui.A2uiTranslation;kotlin.collections.Set<kotlin.String>;kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+
+    final val renderer // dev.ynagai.agui.a2ui.compose/A2uiHost.renderer|{}renderer[0]
+        final fun <get-renderer>(): dev.ynagai.a2ui.compose/A2uiRenderer // dev.ynagai.agui.a2ui.compose/A2uiHost.renderer.<get-renderer>|<get-renderer>(){}[0]
+
+    final var onWarning // dev.ynagai.agui.a2ui.compose/A2uiHost.onWarning|{}onWarning[0]
+        final fun <get-onWarning>(): kotlin/Function1<kotlin/String, kotlin/Unit> // dev.ynagai.agui.a2ui.compose/A2uiHost.onWarning.<get-onWarning>|<get-onWarning>(){}[0]
+        final fun <set-onWarning>(kotlin/Function1<kotlin/String, kotlin/Unit>) // dev.ynagai.agui.a2ui.compose/A2uiHost.onWarning.<set-onWarning>|<set-onWarning>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+    final var rejected // dev.ynagai.agui.a2ui.compose/A2uiHost.rejected|{}rejected[0]
+        final fun <get-rejected>(): kotlin.collections/Map<dev.ynagai.agui.a2ui/A2uiCarrier, kotlin/String> // dev.ynagai.agui.a2ui.compose/A2uiHost.rejected.<get-rejected>|<get-rejected>(){}[0]
+    final var slots // dev.ynagai.agui.a2ui.compose/A2uiHost.slots|{}slots[0]
+        final fun <get-slots>(): kotlin.collections/Map<dev.ynagai.agui.a2ui/A2uiCarrier, dev.ynagai.agui.a2ui/A2uiSlot> // dev.ynagai.agui.a2ui.compose/A2uiHost.slots.<get-slots>|<get-slots>(){}[0]
+    final var toolNames // dev.ynagai.agui.a2ui.compose/A2uiHost.toolNames|{}toolNames[0]
+        final fun <get-toolNames>(): kotlin.collections/Set<kotlin/String> // dev.ynagai.agui.a2ui.compose/A2uiHost.toolNames.<get-toolNames>|<get-toolNames>(){}[0]
+        final fun <set-toolNames>(kotlin.collections/Set<kotlin/String>) // dev.ynagai.agui.a2ui.compose/A2uiHost.toolNames.<set-toolNames>|<set-toolNames>(kotlin.collections.Set<kotlin.String>){}[0]
+    final var translation // dev.ynagai.agui.a2ui.compose/A2uiHost.translation|{}translation[0]
+        final fun <get-translation>(): dev.ynagai.agui.a2ui/A2uiTranslation // dev.ynagai.agui.a2ui.compose/A2uiHost.translation.<get-translation>|<get-translation>(){}[0]
+        final fun <set-translation>(dev.ynagai.agui.a2ui/A2uiTranslation) // dev.ynagai.agui.a2ui.compose/A2uiHost.translation.<set-translation>|<set-translation>(dev.ynagai.agui.a2ui.A2uiTranslation){}[0]
+
+    final fun accept(dev.ynagai.agui.model/UiTranscript) // dev.ynagai.agui.a2ui.compose/A2uiHost.accept|accept(dev.ynagai.agui.model.UiTranscript){}[0]
+    final fun slot(dev.ynagai.agui.a2ui/A2uiCarrier): dev.ynagai.agui.a2ui/A2uiSlot? // dev.ynagai.agui.a2ui.compose/A2uiHost.slot|slot(dev.ynagai.agui.a2ui.A2uiCarrier){}[0]
+}
+
+final val dev.ynagai.agui.a2ui.compose/BasicPending // dev.ynagai.agui.a2ui.compose/BasicPending|{}BasicPending[0]
+    final fun <get-BasicPending>(): dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer // dev.ynagai.agui.a2ui.compose/BasicPending.<get-BasicPending>|<get-BasicPending>(){}[0]
+final val dev.ynagai.agui.a2ui.compose/dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop // dev.ynagai.agui.a2ui.compose/dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop|#static{}dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop[0]
+
+final fun (dev.ynagai.agui.compose/AguiComponents).dev.ynagai.agui.a2ui.compose/withA2ui(dev.ynagai.agui.a2ui.compose/A2uiHost, dev.ynagai.a2ui.compose/ComponentRegistry, kotlin/Function1<dev.ynagai.a2ui.core.protocol/RendererToAgentMessage, kotlin/Unit> = ..., dev.ynagai.agui.a2ui.compose/A2uiPendingRenderer = ..., dev.ynagai.a2ui.compose/A2uiPlaceholder = ..., kotlin.collections/Set<kotlin/String> = ...): dev.ynagai.agui.compose/AguiComponents // dev.ynagai.agui.a2ui.compose/withA2ui|withA2ui@dev.ynagai.agui.compose.AguiComponents(dev.ynagai.agui.a2ui.compose.A2uiHost;dev.ynagai.a2ui.compose.ComponentRegistry;kotlin.Function1<dev.ynagai.a2ui.core.protocol.RendererToAgentMessage,kotlin.Unit>;dev.ynagai.agui.a2ui.compose.A2uiPendingRenderer;dev.ynagai.a2ui.compose.A2uiPlaceholder;kotlin.collections.Set<kotlin.String>){}[0]
+final fun dev.ynagai.agui.a2ui.compose/dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop_getter(): kotlin/Int // dev.ynagai.agui.a2ui.compose/dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop_getter|dev_ynagai_agui_a2ui_compose_A2uiHost$stableprop_getter(){}[0]
+final fun dev.ynagai.agui.a2ui.compose/rememberA2uiHost(dev.ynagai.agui.model/UiTranscript, dev.ynagai.a2ui.compose/A2uiRenderer, dev.ynagai.agui.a2ui/A2uiTranslation?, kotlin.collections/Set<kotlin/String>?, kotlin/Function1<kotlin/String, kotlin/Unit>?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int): dev.ynagai.agui.a2ui.compose/A2uiHost // dev.ynagai.agui.a2ui.compose/rememberA2uiHost|rememberA2uiHost(dev.ynagai.agui.model.UiTranscript;dev.ynagai.a2ui.compose.A2uiRenderer;dev.ynagai.agui.a2ui.A2uiTranslation?;kotlin.collections.Set<kotlin.String>?;kotlin.Function1<kotlin.String,kotlin.Unit>?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]

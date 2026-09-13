@@ -147,3 +147,8 @@ Note for later: A2UI reaches a client by two routes, not one. The ACTIVITY event
 other is a `render_a2ui` frontend tool call, which is what upstream's own example uses — its
 `RenderA2UiToolExecutor` exists so that "the middleware no longer has to synthesize
 `ACTIVITY_SNAPSHOT` + a fake `TOOL_CALL_RESULT`". A complete client handles both.
+
+*Corrected 2026-09-13, in [0009](0009-drawing-a2ui-from-three-carriers.md):* there are three routes,
+not two — a tool result carrying `a2ui_operations` is the third — and `RenderA2UiToolExecutor` is
+not in `kotlin-tools`. It is in the example application `chatapp-shared`, wrapping
+`com.contextable:a2ui-4k` 0.9.3; `kotlin-tools` carries nothing A2UI-specific.

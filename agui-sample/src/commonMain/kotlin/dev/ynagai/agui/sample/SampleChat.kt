@@ -3,8 +3,10 @@ package dev.ynagai.agui.sample
 import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.HttpAgent
 import com.agui.client.agent.HttpAgentConfig
+import com.agui.client.agent.RunAgentParameters
 import com.agui.tools.ToolRegistry
 import com.agui.tools.toolRegistry
+import dev.ynagai.agui.a2ui.catalogContext
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -99,7 +101,17 @@ public class SampleChat(
      * already in the history -- which is the library's documented behaviour and the thing a sample
      * should exercise rather than hide behind a disabled button.
      */
-    public suspend fun send(text: String): RunState? = mutableConnection.value?.session?.send(text)
+    public suspend fun send(text: String): RunState? = mutableConnection.value?.session?.send(text, parameters)
+
+    /**
+     * What every run carries besides the messages: the catalog this window draws, as the
+     * `Context` entry upstream's middleware reads the catalog id from. Against the replay server
+     * it is ignored, as everything in the request is; against a live middleware it is what keeps
+     * a streamed `render_a2ui` surface bound to a catalog this window holds -- together with the
+     * window's translation naming the same catalog, for the moment the run's closing snapshot
+     * leaves the call's arguments as the only carrier.
+     */
+    private val parameters = RunAgentParameters(context = listOf(catalogContext(DojoCatalog.definition)))
 
     /**
      * Disposes the agent and forgets the connection.

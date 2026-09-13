@@ -31,10 +31,19 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
+import dev.ynagai.a2ui.compose.A2uiRenderer
+import dev.ynagai.a2ui.compose.A2uiRendererConfig
+import dev.ynagai.a2ui.compose.BasicCatalog
+import dev.ynagai.a2ui.core.protocol.ActionMessage
+import dev.ynagai.agui.a2ui.compose.rememberA2uiHost
+import dev.ynagai.agui.a2ui.material3.withMaterial3A2ui
+import dev.ynagai.agui.a2ui.A2uiTranslation
+import dev.ynagai.agui.a2ui.toUserText
 import dev.ynagai.agui.compose.AguiTranscript
 import dev.ynagai.agui.markdown.MarkdownAguiTextRenderer
 import dev.ynagai.agui.markdown.markdownAguiColors
 import dev.ynagai.agui.markdown.markdownAguiTypography
+import dev.ynagai.agui.material3.Material3AguiComponents
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiTranscript
@@ -80,6 +89,41 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         MarkdownAguiTextRenderer(
             colors = { markdownAguiColors(text = LocalContentColor.current) },
             typography = { markdownAguiTypography(base = LocalTextStyle.current) },
+        )
+    }
+
+    // One renderer per connection: the surfaces are the thread's, and a new endpoint is a new
+    // thread. The catalogs are the basic one and the dojo's two -- what this window can draw.
+    val renderer = remember(connection) {
+        A2uiRenderer(
+            A2uiRendererConfig.Default.withCatalogs(
+                listOf(BasicCatalog.definition, DojoCatalog.definition, DojoCatalog.fixedDefinition),
+            ),
+        )
+    }
+    // A `render_a2ui` call names no catalog, and the default would bind it to the basic one --
+    // which the middleware's own activity does not, since it stamps the catalog this window
+    // sends in context. The same catalog here, so the surface draws the same once the run's
+    // closing snapshot drops the activity and the call's arguments are what is left to draw from.
+    val host = rememberA2uiHost(
+        transcript,
+        renderer,
+        translation = remember { A2uiTranslation(defaultCatalogId = DojoCatalog.ID) },
+        onWarning = { println("agui-sample: $it") },
+    )
+    val components = remember(host) {
+        Material3AguiComponents().withMaterial3A2ui(
+            host = host,
+            registry = DojoCatalog.registry,
+            onMessage = { message ->
+                // A button on a surface: sent as a user turn in the text form upstream's own
+                // Kotlin example settled on, so a backend that cannot read `forwardedProps`
+                // still hears it. The replay server hears it as "next recorded run".
+                if (message is ActionMessage) {
+                    runs.removeAll { it.isCompleted }
+                    runs += scope.launch { chat.send(message.toUserText()) }
+                }
+            },
         )
     }
 
@@ -155,7 +199,7 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 )
 
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
-                    ProvideMaterial3Agui(textRenderer = textRenderer) {
+                    ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {
                         AguiTranscript(
                             transcript = transcript,
                             modifier = Modifier.fillMaxWidth().weight(1f),

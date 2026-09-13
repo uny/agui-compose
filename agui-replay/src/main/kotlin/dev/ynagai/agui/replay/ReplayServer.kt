@@ -1,0 +1,132 @@
+package dev.ynagai.agui.replay
+
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.install
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.request.receiveText
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
+import io.ktor.server.sse.SSE
+import io.ktor.server.sse.ServerSSESession
+import io.ktor.server.sse.sse
+import io.ktor.sse.ServerSentEvent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
+
+/**
+ * An AG-UI server whose every answer is a recording.
+ *
+ * One route per trace: `POST /<name>` takes a `RunAgentInput`, reads its `threadId` and `runId`,
+ * and streams the trace's next run for that thread as `text/event-stream`, one `data:` line per
+ * event, [delayMillis] apart so that a client draws it as a stream rather than as a blink. The
+ * request body is otherwise ignored -- what the user typed cannot change what was recorded --
+ * and `GET /` lists the routes.
+ *
+ * Runs are counted per thread, so a client that keeps its `threadId` across turns walks through a
+ * multi-run recording, and one that starts a new thread starts the recording over.
+ */
+@OptIn(ExperimentalAtomicApi::class)
+public class ReplayServer(
+    public val traces: List<ReplayTrace> = ReplayTrace.RESOURCES.map(ReplayTrace::resource),
+    public val host: String = DEFAULT_HOST,
+    public val port: Int = DEFAULT_PORT,
+    public val delayMillis: Long = DEFAULT_DELAY_MILLIS,
+) {
+    private val byName = traces.associateBy { it.name }
+    private val turns = mutableMapOf<String, AtomicInt>()
+
+    private var server: EmbeddedServer<*, *>? = null
+
+    /**
+     * The port the server is bound to: [port], or the one the system chose when [port] was 0.
+     * Meaningful after [start].
+     */
+    public val boundPort: Int
+        get() = runBlocking { server?.engine?.resolvedConnectors()?.single()?.port ?: port }
+
+    /** Starts listening. Returns this, so a caller can read [boundPort] off it. */
+    public fun start(wait: Boolean = false): ReplayServer {
+        server = build().start(wait = wait)
+        return this
+    }
+
+    /** Stops listening, at once. */
+    public fun stop() {
+        server?.stop(gracePeriodMillis = 0, timeoutMillis = 200)
+        server = null
+    }
+
+    // Ktor's types stay out of the public signatures, so a consumer of this module -- the
+    // sample's tests -- needs no Ktor of its own to start and stop it.
+    private fun build(): EmbeddedServer<*, *> = embeddedServer(CIO, host = host, port = port) {
+        install(SSE)
+        routing {
+            get("/") {
+                call.respondText(byName.keys.joinToString("\n") { "POST /$it" } + "\n")
+            }
+            for (trace in traces) {
+                // `sse` rather than a hand-written response: it sets the content type, keeps the
+                // connection open and flushes each event, which is what a client's SSE parser
+                // needs to see the events as they are sent rather than when the response ends.
+                // Under an explicit POST route, because the `sse(path)` shorthand answers GET
+                // only and AG-UI's transport is a POST.
+                route("/${trace.name}", HttpMethod.Post) { sse { play(trace) } }
+            }
+            post("/{name}") {
+                // Reached only for a name no trace has; a clear 404 beats CIO's default empty one.
+                call.respondText("No trace named `${call.parameters["name"]}`\n", status = HttpStatusCode.NotFound)
+            }
+        }
+    }
+
+    private suspend fun ServerSSESession.play(trace: ReplayTrace) {
+        val input = runCatching { json.parseToJsonElement(call.receiveText()).jsonObject }.getOrNull()
+        val threadId = input.string("threadId") ?: "thread"
+        val runId = input.string("runId") ?: "run"
+        val turn = synchronized(turns) { turns.getOrPut("${trace.name}/$threadId") { AtomicInt(-1) } }
+            .incrementAndFetch()
+        for (event in trace.run(turn, threadId, runId)) {
+            send(ServerSentEvent(data = event.toString()))
+            if (delayMillis > 0) delay(delayMillis)
+        }
+    }
+
+    private fun JsonObject?.string(key: String): String? =
+        this?.get(key)?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content }
+
+    public companion object {
+        /** Loopback, not every interface: the recordings are public, but a dev server is not a service. */
+        public const val DEFAULT_HOST: String = "127.0.0.1"
+        public const val DEFAULT_PORT: Int = 8000
+        public const val DEFAULT_DELAY_MILLIS: Long = 40
+
+        private val json = Json { ignoreUnknownKeys = true }
+    }
+}
+
+/** `./gradlew :agui-replay:run [--args="<port> [<delay-ms>]"]`. */
+public object ReplayMain {
+    @JvmStatic
+    public fun main(args: Array<String>) {
+        val port = args.getOrNull(0)?.toIntOrNull() ?: ReplayServer.DEFAULT_PORT
+        val delay = args.getOrNull(1)?.toLongOrNull() ?: ReplayServer.DEFAULT_DELAY_MILLIS
+        val server = ReplayServer(port = port, delayMillis = delay)
+        println("Replaying ${server.traces.size} recorded traces on http://localhost:$port/ :")
+        for (trace in server.traces) println("  http://localhost:$port/${trace.name}  (${trace.runs.size} run(s))")
+        server.start(wait = true)
+    }
+}
+

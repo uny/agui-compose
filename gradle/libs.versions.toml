@@ -34,6 +34,19 @@ agui = "0.4.1"
 # upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
 jsonPatch = "1.0.0"
 
+# The A2UI renderer `agui-a2ui` maps activities and tool calls onto. `0.1.0` is the first release
+# on Central and its API is declared unstable; it targets A2UI v1.0 only, which is why the
+# translation from the v0.9 envelopes upstream's a2ui-middleware emits lives here and not there.
+# Publishes `android`, `jvm`, `iosArm64`, `iosSimulatorArm64` plus web and macOS -- and no
+# `iosX64`, so no module that depends on it can keep the fifth target `agui-agent` ships.
+a2ui = "0.1.0"
+
+# Ktor, for the replay server only. Pinned to the version `kotlin-client` 0.4.1 requires -- its
+# module metadata says `ktor-client-core` 3.2.4 -- so that the sample's test classpath, which holds
+# the client and the replay server at once, resolves the Ktor upstream was compiled against rather
+# than pulling the client up to whatever the server asked for.
+ktor = "3.2.4"
+
 # kotlinx-datetime. Declared by `agui-agent` and by nothing else, and not because that module names
 # a datetime type -- it arrives transitively from two directions that disagree across a binary
 # break, and this coordinate is the one both sides can be loaded against. See
@@ -75,6 +88,17 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 
 json-patch = { module = "io.github.reidsync:kotlin-json-patch", version.ref = "jsonPatch" }
 
+# The three layers of a2ui-compose, taken one per module here: `a2ui-core` carries the v1.0
+# protocol and no Compose, `a2ui-compose` the surface composable and the component registry with
+# no design system, `a2ui-material3` the Material 3 renderers for the basic catalog. The layering
+# is the same as this repository's, which is what lets `agui-a2ui` depend on exactly one of them.
+a2ui-core = { module = "dev.ynagai.a2ui:a2ui-core", version.ref = "a2ui" }
+a2ui-compose = { module = "dev.ynagai.a2ui:a2ui-compose", version.ref = "a2ui" }
+a2ui-material3 = { module = "dev.ynagai.a2ui:a2ui-material3", version.ref = "a2ui" }
+
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-sse = { module = "io.ktor:ktor-server-sse", version.ref = "ktor" }
+
 # Compose Multiplatform artifacts are declared explicitly rather than through the `compose.runtime`
 # shorthand on the plugin extension, which is deprecated as of CMP 1.12.
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
@@ -93,6 +117,7 @@ markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", v
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }

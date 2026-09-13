@@ -16,6 +16,11 @@ nothing in this repository executed anything or sent anything back. Everything a
 library is aimed at -- generative UI, A2UI, human-in-the-loop -- enters through a frontend tool, so
 this is the seam the rest hangs from.
 
+*Qualified 2026-09-13, in [0009](0009-drawing-a2ui-from-three-carriers.md):* A2UI enters through a
+frontend tool in one of upstream's two models (the ADK adapter's) and not the other (LangGraph's,
+where `render_a2ui` is a subagent's call the server closes itself). `RenderA2UiTool` rides this
+loop for the first and is registered for nothing by default.
+
 Upstream's `kotlin-tools` 0.4.1 has most of it, measured with `javap` over the published jar
 because the source is not what ships:
 

@@ -41,10 +41,13 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
 | `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
 | `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | not yet |
+| `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | not yet |
+| `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | not yet |
+| `agui-a2ui-material3` | The basic catalog's Material 3 renderers and a Material 3 "building UI" state, so a Material 3 transcript draws A2UI with one call. | not yet |
+| `agui-replay` | A Ktor server that replays upstream's recorded A2UI traffic over SSE — the sample's server, and the trace-driven tests' fixtures. JVM only. See [Replaying upstream](#replaying-upstream). | never |
 | `agui-sample` | A desktop window that talks to a real AG-UI server: the whole stack above, assembled the way an application would. See [The sample](#the-sample). | never |
 
-`agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an optional dependency) and
-the `agui-provider-*` adapters come next.
+The `agui-provider-*` adapters come next.
 
 ## Targets
 
@@ -309,6 +312,55 @@ attachments, or render an `ACTIVITY_SNAPSHOT` payload (that is `agui-a2ui`). Eac
 dependency with an opinion, and each is one `copy` away for an application that wants it. The
 reasoning is in [docs/decisions/0003](docs/decisions/0003-what-material-3-decides-for-you.md).
 
+### Drawing A2UI
+
+[A2UI](https://a2ui.org/) is how an agent describes a user interface as JSON for the client to draw
+with its own widgets. Over AG-UI it arrives in three carriers, and the same surface commonly
+arrives in all three during one run: an `ACTIVITY_SNAPSHOT` with `activityType: "a2ui-surface"`
+that upstream's `a2ui-middleware` synthesises and repaints progressively; the streamed arguments
+of a `render_a2ui` tool call; and a tool result whose content holds `a2ui_operations`. `agui-a2ui`
+reads all three off the transcript, decides which one draws a surface that came in several
+(activity over result over arguments, so nothing is drawn twice), and hands
+[a2ui-compose](https://github.com/uny/a2ui-compose) the messages — deleting a surface before a
+cumulative snapshot recreates it, since a2ui-core refuses to create one that exists.
+
+```kotlin
+import dev.ynagai.a2ui.compose.A2uiRenderer
+import dev.ynagai.a2ui.compose.A2uiRendererConfig
+import dev.ynagai.a2ui.compose.BasicCatalog
+import dev.ynagai.agui.a2ui.compose.rememberA2uiHost
+import dev.ynagai.agui.a2ui.material3.withMaterial3A2ui
+
+val renderer = remember { A2uiRenderer(A2uiRendererConfig.Default.withCatalogs(listOf(BasicCatalog.definition))) }
+val host = rememberA2uiHost(transcript, renderer)
+val components = remember(host) { Material3AguiComponents().withMaterial3A2ui(host) }
+
+ProvideMaterial3Agui(components = components) { AguiTranscript(transcript) }
+```
+
+That draws the basic catalog. A catalog is the renderer's trust boundary — the agent may name only
+what the client holds — so an agent that generates its own components needs their
+`CatalogDefinition` in the renderer and their `ComponentRenderer`s in the registry
+(`Material3Components.Basic.with(...)`); the sample's `DojoCatalog` is one of those, for upstream's
+dojo. An action a user takes on a surface reaches `onMessage` as a2ui-core's `ActionMessage`;
+`toForwardedProps()` and `toUserText()` are the two shapes upstream reads it in, and sending it is
+yours.
+
+**Versions.** Upstream emits A2UI **v0.9** envelopes; a2ui-compose implements **v1.0** and nothing
+older. For the four messages upstream sends the wire difference is mechanical — the version
+string, a dropped `theme`, a renamed `attachDataModel`, a `value` that became required — and
+`agui-a2ui` rewrites the JSON before a2ui-core parses it, checked against upstream's recorded
+traffic rather than against the evolution guide's word. One thing is not mechanical: upstream's
+basic catalog id is `…/v0_9/basic_catalog.json`, which is not even the v0.9 specification's, and
+`A2uiTranslation` maps upstream's spellings -- that URL, the v0.9 specification's, and a bare
+`basic` -- to the v1.0 basic catalog and passes any other id through. The reasoning is in
+[docs/decisions/0009](docs/decisions/0009-drawing-a2ui-from-three-carriers.md).
+
+`RenderA2UiTool` is the `render_a2ui` tool as a frontend tool, for an agent that calls it directly
+and waits on the answer. It is not registered by anything here, on purpose: upstream's LangGraph
+adapter calls `render_a2ui` from a subagent and closes it on the server, and a client that answered
+that call would be answering a question it was not asked. Register it for the agents that ask.
+
 ## The sample
 
 `agui-sample` is one desktop window: an endpoint to point at, a transcript, and a line to type
@@ -363,9 +415,35 @@ carries both binary surfaces, so this is handled — it is written down in
 [docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md) because it
 is the kind of thing that comes back, and because it is what the sample found on its first run.
 
-What the sample deliberately does not do yet: run frontend tools, render an `ACTIVITY_SNAPSHOT`,
-or build for Android or iOS. It is one target and one screen, and the module is laid out so that
-the second target is a source set rather than a rewrite.
+### Replaying upstream
+
+A2UI needs an agent that generates UI, and every upstream agent that does is LLM-backed and wants
+a key — and, as of this writing, a Python runtime beside it. Rather than ask for either, this
+repository ships the traffic those agents produced: five event streams recorded by upstream's own
+end-to-end suite off its LangGraph agents, through its `a2ui-middleware`, converted to JSON with
+no other change (`agui-replay/src/main/resources/traces/`). `agui-replay` serves them the way an
+AG-UI server would, one route per recording:
+
+```
+./gradlew :agui-replay:run
+```
+
+Point the sample at `http://localhost:8000/advanced-hotel-comparison` and type anything: the
+server streams the recording — the `render_a2ui` arguments as they were generated, the
+middleware's `building` activity, the cumulative surface snapshots, the outer tool's result — and
+the window draws three hotel cards from the dojo's catalog, which the sample registers because
+a catalog is the renderer's trust boundary and the agent cannot add to it. `GET /` lists the
+routes; `fixed-multiple-surfaces` answers two turns. What you typed does not reach anything: the
+request's thread and run ids are honoured and the rest of it is not, because a recording cannot
+answer a question it was not asked.
+
+The same recordings are what `agui-a2ui`'s trace-driven tests fold, and what the sample's
+end-to-end test plays over a real socket into a real window. So "verified against a real server"
+here means verified against what a real server said, byte for byte, minus the model that said it.
+
+What the sample deliberately does not do yet: build for Android or iOS. It is one target and one
+screen, and the module is laid out so that the second target is a source set rather than a
+rewrite.
 
 ## Building
 

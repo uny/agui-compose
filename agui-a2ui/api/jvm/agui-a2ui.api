@@ -1,0 +1,259 @@
+public final class dev/ynagai/agui/a2ui/A2uiActionsKt {
+	public static final fun toForwardedProps (Ldev/ynagai/a2ui/core/protocol/ActionMessage;)Lkotlinx/serialization/json/JsonObject;
+	public static final fun toUserText (Ldev/ynagai/a2ui/core/protocol/ActionMessage;)Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiBatch {
+	public fun <init> (Ldev/ynagai/agui/a2ui/A2uiCarrier;Ljava/util/List;)V
+	public final fun component1 ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ldev/ynagai/agui/a2ui/A2uiCarrier;Ljava/util/List;)Ldev/ynagai/agui/a2ui/A2uiBatch;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiBatch;Ldev/ynagai/agui/a2ui/A2uiCarrier;Ljava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiBatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCarrier ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public final fun getMessages ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCarried {
+	public fun <init> (Ldev/ynagai/agui/a2ui/A2uiCarrier;Ldev/ynagai/agui/a2ui/A2uiPayload;)V
+	public final fun component1 ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public final fun component2 ()Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public final fun copy (Ldev/ynagai/agui/a2ui/A2uiCarrier;Ldev/ynagai/agui/a2ui/A2uiPayload;)Ldev/ynagai/agui/a2ui/A2uiCarried;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiCarried;Ldev/ynagai/agui/a2ui/A2uiCarrier;Ldev/ynagai/agui/a2ui/A2uiPayload;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiCarried;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCarrier ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public final fun getPayload ()Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/ynagai/agui/a2ui/A2uiCarrier {
+	public abstract fun getPrecedence ()I
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCarrier$Activity : dev/ynagai/agui/a2ui/A2uiCarrier {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/ynagai/agui/a2ui/A2uiCarrier$Activity;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiCarrier$Activity;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiCarrier$Activity;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessageId ()Ljava/lang/String;
+	public fun getPrecedence ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCarrier$ToolArguments : dev/ynagai/agui/a2ui/A2uiCarrier {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolArguments;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolArguments;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolArguments;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPrecedence ()I
+	public final fun getToolCallId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCarrier$ToolResult : dev/ynagai/agui/a2ui/A2uiCarrier {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolResult;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolResult;Ljava/lang/String;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiCarrier$ToolResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPrecedence ()I
+	public final fun getToolCallId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCarrierKt {
+	public static final fun a2uiPayloads (Ldev/ynagai/agui/model/UiTranscript;Ldev/ynagai/agui/a2ui/A2uiTranslation;Ljava/util/Set;)Ljava/util/List;
+	public static synthetic fun a2uiPayloads$default (Ldev/ynagai/agui/model/UiTranscript;Ldev/ynagai/agui/a2ui/A2uiTranslation;Ljava/util/Set;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiCatalogContextKt {
+	public static final fun catalogContext (Ldev/ynagai/a2ui/core/protocol/CatalogDefinition;)Lcom/agui/core/types/Context;
+}
+
+public abstract interface class dev/ynagai/agui/a2ui/A2uiPayload {
+	public static final field Companion Ldev/ynagai/agui/a2ui/A2uiPayload$Companion;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Building : dev/ynagai/agui/a2ui/A2uiPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Ldev/ynagai/agui/a2ui/A2uiPayload$Building;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Building;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Building;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProgressTokens ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Companion {
+	public final fun of (Ldev/ynagai/agui/model/ActivityPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public static synthetic fun of$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Companion;Ldev/ynagai/agui/model/ActivityPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public final fun ofArguments (Ldev/ynagai/agui/model/ToolCallPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;Ljava/util/Set;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public static synthetic fun ofArguments$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Companion;Ldev/ynagai/agui/model/ToolCallPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;Ljava/util/Set;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public final fun ofResult (Ldev/ynagai/agui/model/ToolCallPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public static synthetic fun ofResult$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Companion;Ldev/ynagai/agui/model/ToolCallPart;Ldev/ynagai/agui/a2ui/A2uiTranslation;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Failed : dev/ynagai/agui/a2ui/A2uiPayload {
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Integer;)Ldev/ynagai/agui/a2ui/A2uiPayload$Failed;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Failed;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempts ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getError ()Ljava/lang/String;
+	public final fun getMaxAttempts ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Malformed : dev/ynagai/agui/a2ui/A2uiPayload {
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)Ldev/ynagai/agui/a2ui/A2uiPayload$Malformed;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Malformed;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Malformed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContent ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Retrying : dev/ynagai/agui/a2ui/A2uiPayload {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Lkotlinx/serialization/json/JsonElement;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Lkotlinx/serialization/json/JsonElement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;Lkotlinx/serialization/json/JsonElement;)Ldev/ynagai/agui/a2ui/A2uiPayload$Retrying;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Retrying;Ljava/lang/Integer;Ljava/lang/Integer;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Retrying;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()Ljava/lang/Integer;
+	public final fun getErrors ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getMaxAttempts ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayload$Surfaces : dev/ynagai/agui/a2ui/A2uiPayload {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;Ljava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCreatedSurfaceIds ()Ljava/util/List;
+	public final fun getMessages ()Ljava/util/List;
+	public final fun getSurfaceIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiPayloadKt {
+	public static final fun surfaceIdOrNull (Ldev/ynagai/a2ui/core/protocol/AgentToRendererMessage;)Ljava/lang/String;
+}
+
+public abstract interface class dev/ynagai/agui/a2ui/A2uiSlot {
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSlot$Pending : dev/ynagai/agui/a2ui/A2uiSlot {
+	public fun <init> (Ldev/ynagai/agui/a2ui/A2uiPayload;)V
+	public final fun component1 ()Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public final fun copy (Ldev/ynagai/agui/a2ui/A2uiPayload;)Ldev/ynagai/agui/a2ui/A2uiSlot$Pending;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiSlot$Pending;Ldev/ynagai/agui/a2ui/A2uiPayload;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiSlot$Pending;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Ldev/ynagai/agui/a2ui/A2uiPayload;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSlot$Shadowed : dev/ynagai/agui/a2ui/A2uiSlot {
+	public fun <init> (Ldev/ynagai/agui/a2ui/A2uiCarrier;)V
+	public final fun component1 ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public final fun copy (Ldev/ynagai/agui/a2ui/A2uiCarrier;)Ldev/ynagai/agui/a2ui/A2uiSlot$Shadowed;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiSlot$Shadowed;Ldev/ynagai/agui/a2ui/A2uiCarrier;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiSlot$Shadowed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBy ()Ldev/ynagai/agui/a2ui/A2uiCarrier;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSlot$Surfaces : dev/ynagai/agui/a2ui/A2uiSlot {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/ynagai/agui/a2ui/A2uiSlot$Surfaces;
+	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiSlot$Surfaces;Ljava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiSlot$Surfaces;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSurfaceIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSurfaces {
+	public static final field Companion Ldev/ynagai/agui/a2ui/A2uiSurfaces$Companion;
+	public final fun accept (Ljava/util/List;)Ldev/ynagai/agui/a2ui/A2uiSurfaces$Step;
+	public final fun getSurfaceIds ()Ljava/util/Set;
+	public final fun rejected (Ldev/ynagai/agui/a2ui/A2uiBatch;)Ldev/ynagai/agui/a2ui/A2uiSurfaces;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSurfaces$Companion {
+	public final fun getEmpty ()Ldev/ynagai/agui/a2ui/A2uiSurfaces;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiSurfaces$Step {
+	public final fun getBatches ()Ljava/util/List;
+	public final fun getDeletes ()Ljava/util/List;
+	public final fun getNext ()Ldev/ynagai/agui/a2ui/A2uiSurfaces;
+	public final fun getSlots ()Ljava/util/Map;
+	public final fun isEmpty ()Z
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiTranslation {
+	public static final field Companion Ldev/ynagai/agui/a2ui/A2uiTranslation$Companion;
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCatalogIds ()Lkotlin/jvm/functions/Function1;
+	public final fun getDefaultCatalogId ()Ljava/lang/String;
+	public final fun message (Lkotlinx/serialization/json/JsonObject;)Ldev/ynagai/a2ui/core/protocol/AgentToRendererMessage;
+	public final fun operations (Lkotlinx/serialization/json/JsonArray;)Ljava/util/List;
+	public final fun rendered (Lkotlinx/serialization/json/JsonObject;)Ldev/ynagai/a2ui/core/protocol/AgentToRendererMessage;
+}
+
+public final class dev/ynagai/agui/a2ui/A2uiTranslation$Companion {
+	public final fun getDefault ()Ldev/ynagai/agui/a2ui/A2uiTranslation;
+	public final fun upstreamCatalogIds (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/AguiA2ui {
+	public static final field ACTIVITY_TYPE Ljava/lang/String;
+	public static final field INSTANCE Ldev/ynagai/agui/a2ui/AguiA2ui;
+	public static final field OPERATIONS_KEY Ljava/lang/String;
+	public static final field RENDER_TOOL_NAME Ljava/lang/String;
+	public static final field SCHEMA_CONTEXT_DESCRIPTION Ljava/lang/String;
+	public static final field UPSTREAM_BASIC_CATALOG_ID Ljava/lang/String;
+	public static final field UPSTREAM_VERSION Ljava/lang/String;
+	public static final field V09_BASIC_CATALOG_ID Ljava/lang/String;
+	public static final field V10_BASIC_CATALOG_ID Ljava/lang/String;
+}
+
+public final class dev/ynagai/agui/a2ui/RenderA2UiTool : com/agui/tools/AbstractToolExecutor {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ldev/ynagai/agui/a2ui/A2uiTranslation;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/ynagai/agui/a2ui/A2uiTranslation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
