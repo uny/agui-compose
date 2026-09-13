@@ -38,7 +38,9 @@ import kotlin.time.Duration.Companion.minutes
  * `ag_ui_strands` 0.4.0 and `gemini-2.5-flash`, and the raw traffic is in the pull request.
  */
 class LiveApprovalTest {
-    private val url = System.getenv("AGUI_LIVE_APPROVAL_URL")
+    // Blank is unset: `env: X: ${{ secrets.MISSING }}` hands a test an empty string, and an empty
+    // string is not an endpoint to measure.
+    private val url = System.getenv("AGUI_LIVE_APPROVAL_URL")?.takeIf { it.isNotBlank() }
 
     @Test
     fun approving_a_transfer_runs_the_tool() = live { session ->
@@ -60,10 +62,11 @@ class LiveApprovalTest {
         assertTrue(answered.interrupts.isEmpty())
         assertTrue(session.pendingInterrupts.value.isEmpty())
 
-        // The tool ran, and said so through the call the interrupt named.
+        // The tool ran, and said so through the call the interrupt named. `Transferred` is the
+        // server's own tool's word; the recipient is the model's, and not asserted on.
         val ran = session.toolCall(call)
         assertEquals(ToolCallStatus.COMPLETE, ran.status)
-        assertTrue(assertNotNull(ran.result).contains("Alice"), ran.result)
+        assertTrue(assertNotNull(ran.result).contains("Transferred"), ran.result)
     }
 
     @Test
