@@ -138,7 +138,7 @@ public class AgentSession(
      * *failed* leaves it alone -- upstream's reference client keeps its pending list across a
      * `RUN_ERROR` for the same reason -- so a resume whose run failed is still owed.
      */
-    private var pending: List<UiInterrupt> = emptyList()
+    private val pending = MutableStateFlow<List<UiInterrupt>>(emptyList())
 
     /**
      * The answers the last [resume] put on the wire, kept until a run ends cleanly. A resume whose
@@ -168,11 +168,11 @@ public class AgentSession(
      *
      * The same list [RunState.Finished.interrupts] carries, held here because the transcript stops
      * carrying it the moment a run *fails* -- [RunState.Failed] names no interrupts -- while the
-     * thread is still waiting on them. A retry after a failed [resume] answers them through [run],
-     * which re-sends what the failed run carried; a UI that lost them from the transcript can
-     * still draw them from here.
+     * thread is still waiting on them. A `StateFlow` for the same reason [transcript] is: a UI
+     * that gates its composer on this, rather than on the transcript's run, keeps it closed
+     * through a failed [resume] and can still draw the questions to retry from.
      */
-    public val pendingInterrupts: List<UiInterrupt> get() = pending
+    public val pendingInterrupts: StateFlow<List<UiInterrupt>> = pending.asStateFlow()
 
     /**
      * Runs the agent once and folds its events into [transcript], suspending until the run ends.
@@ -213,11 +213,19 @@ public class AgentSession(
      * this returns the state the last of those ended in; see the class note. A tool result an
      * earlier run failed to carry goes out with this one, placed after the call it answers.
      *
+     * A thread that is *interrupted* -- the last run stopped to ask, and [pendingInterrupts] is
+     * not empty -- may not run this way, and this throws before anything is sent: the protocol
+     * lets no run start past an unanswered interrupt, so the run would be refused by the server
+     * or, worse, accepted and continued past the question. [resume] is the call that continues
+     * such a thread. The one exception is a retry: a [resume] whose run *failed* left its answers
+     * owed, and this carries them again.
+     *
      * @param parameters the run's id, tools, context and forwarded properties. The id is generated
      *   here when absent rather than by the agent, because a tool executed during the run is told
      *   which run called it; the rest are defaulted the way the agent defaults them, with the
      *   registry's tools declared after the caller's. The messages sent are the agent's own --
      *   what it was constructed with, plus what earlier runs through it produced.
+     * @throws IllegalStateException when the thread is interrupted and no failed [resume] is owed.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
         val resume = covering(unconsumed)
@@ -274,10 +282,16 @@ public class AgentSession(
      *   [UiTranscriptReducer.appendUserMessage]). A later `MESSAGES_SNAPSHOT` does not reconcile
      *   against it either -- a snapshot replaces the transcript whole, the server's copy of this
      *   turn included.
+     * A thread that is interrupted may not be sent to, as it may not be [run]: this throws before
+     * the message reaches the transcript, so a line the thread cannot carry is neither drawn nor
+     * failed. Answer the interrupts with [resume] first. As with [run], a failed [resume]'s
+     * answers are carried again rather than refused.
+     *
      * @param parameters the run's id, tools, context and forwarded properties. Defaulted here the
      *   way `AbstractAgent` defaults them: a generated run id, no tools, no context, and empty
      *   forwarded properties. The registry's tools, when there is one, are declared after the
      *   caller's.
+     * @throws IllegalStateException when the thread is interrupted and no failed [resume] is owed.
      */
     public suspend fun send(message: UserMessage, parameters: RunAgentParameters? = null): RunState =
         runs.withLock {
@@ -318,9 +332,10 @@ public class AgentSession(
      * The history sent is the agent's own, as [run] sends it, with any tool result an earlier run
      * failed to carry placed after its call: a client that executed a tool while the thread was
      * interrupted has a result to deliver, and this is the first run that can deliver it. A run
-     * that fails leaves the thread interrupted and the answers owed; **retry through [run]**, which
-     * carries them again, rather than through a second [resume], which would answer the same
-     * question twice.
+     * that fails leaves the thread interrupted and the answers owed. Either retry works: [run]
+     * carries the answers the failed run carried, and a second [resume] carries whatever it is
+     * given -- the questions are still open, so answering them again is not answering them
+     * twice, and a reader who clicks *Approve* a second time is doing the natural thing.
      *
      * With a [tools] registry, a run that calls one of its tools is answered by another run, and
      * this returns the state the last of those ended in; see the class note.
@@ -333,7 +348,7 @@ public class AgentSession(
      */
     public suspend fun resume(entries: List<UiResumeEntry>, parameters: RunAgentParameters? = null): RunState =
         runs.withLock {
-            check(pending.isNotEmpty()) { "Nothing to resume: the thread is not interrupted." }
+            check(pending.value.isNotEmpty()) { "Nothing to resume: the thread is not interrupted." }
             val resume = covering(entries.map { it.toWire() })!!
             val prepared = prepare(parameters)
             val messages = agent.messages.answered(takeUnsent())
@@ -349,6 +364,7 @@ public class AgentSession(
      * is unanswered, and an entry may not answer an interrupt the thread is not waiting on.
      */
     private fun covering(entries: List<ResumeEntry>): List<ResumeEntry>? {
+        val pending = pending.value
         if (pending.isEmpty()) {
             require(entries.isEmpty()) {
                 "Resume entries ${entries.map { it.interruptId }} answer nothing: the thread is not interrupted."
@@ -424,7 +440,7 @@ public class AgentSession(
                 }
                 mutableTranscript.value = reducer.accept(event)
                 if (event is RunFinishedEvent) {
-                    pending = (transcript.value.run as? RunState.Finished)?.interrupts.orEmpty()
+                    pending.value = (transcript.value.run as? RunState.Finished)?.interrupts.orEmpty()
                 }
             }
             if (!ended) fail(message = "Stream ended before RUN_FINISHED", code = CLIENT_ERROR_CODE)

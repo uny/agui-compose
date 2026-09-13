@@ -84,8 +84,9 @@ public val RunState.pendingInterrupts: List<UiInterrupt>
  * ([ToolCallStatus.AWAITING_APPROVAL]) rather than handed the interrupt itself.
  *
  * @property id unique within the run; the answer names it.
- * @property reason an open string the producer chose. `tool_call` is the one this library reads
- *   anything into, and only in `agui-material3`.
+ * @property reason an open string the producer chose -- `tool_call` for an approval, from the
+ *   producers that raise one. Nothing here reads anything into it; `agui-material3` draws it as
+ *   the prompt of last resort.
  * @property expiresAt when the producer will stop accepting an answer, in a format the protocol
  *   deliberately leaves to the producer -- conventionally ISO 8601. Carried, not judged: nothing
  *   here decides an interrupt has expired, so a client that wants to stop offering one after its

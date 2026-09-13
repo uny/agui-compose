@@ -17,6 +17,7 @@ import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
 import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.UiResumeEntry
+import dev.ynagai.agui.model.pendingInterrupts
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
@@ -59,7 +60,7 @@ class AgentSessionResumeTest {
             interrupt,
         )
         assertEquals(ToolCallStatus.AWAITING_APPROVAL, session.toolCall("c1").status)
-        assertEquals(listOf(interrupt), session.pendingInterrupts)
+        assertEquals(listOf(interrupt), session.pendingInterrupts.value)
     }
 
     @Test
@@ -79,7 +80,7 @@ class AgentSessionResumeTest {
         assertEquals("i1", entry.interruptId)
         assertEquals(ResumeStatus.RESOLVED, entry.status)
         assertEquals(buildJsonObject { put("approved", JsonPrimitive(true)) }, entry.payload)
-        assertEquals(emptyList(), session.pendingInterrupts)
+        assertEquals(emptyList(), session.pendingInterrupts.value)
         // The next run started, so the call is no longer waiting on anyone here.
         assertEquals(ToolCallStatus.AWAITING_RESULT, session.toolCall("c1").status)
     }
@@ -91,7 +92,7 @@ class AgentSessionResumeTest {
         session.run()
         session.send("more")
         assertEquals(listOf(null, null), agent.inputs.map { it.resume })
-        assertEquals(emptyList(), session.pendingInterrupts)
+        assertEquals(emptyList(), session.pendingInterrupts.value)
     }
 
     @Test
@@ -128,7 +129,7 @@ class AgentSessionResumeTest {
         }
 
         assertEquals(1, agent.inputs.size)
-        assertEquals(listOf("i1", "i2"), session.pendingInterrupts.map { it.id })
+        assertEquals(listOf("i1", "i2"), session.pendingInterrupts.value.map { it.id })
 
         session.resume(listOf(UiResumeEntry.cancelled(i2), UiResumeEntry.cancelled(i1)))
         assertEquals(listOf("i2", "i1"), agent.inputs[1].resume?.map { it.interruptId })
@@ -167,11 +168,8 @@ class AgentSessionResumeTest {
         val failed = session.resume(listOf(UiResumeEntry.cancelled(asked.interrupts.single())))
 
         assertIs<RunState.Failed>(failed)
-        assertEquals(listOf("i1"), session.pendingInterrupts.map { it.id })
-        // A second answer to the same question is refused; the retry is `run`.
-        assertFailsWith<IllegalArgumentException> {
-            session.resume(listOf(UiResumeEntry.cancelled(asked.interrupts.single()), UiResumeEntry.cancelled(asked.interrupts.single())))
-        }
+        assertEquals(listOf("i1"), session.pendingInterrupts.value.map { it.id })
+        assertEquals(emptyList(), session.transcript.value.run.pendingInterrupts)
 
         fail = false
         val ended = session.run()
@@ -179,8 +177,34 @@ class AgentSessionResumeTest {
         assertIs<RunState.Finished>(ended)
         assertEquals(3, agent.inputs.size)
         assertEquals(listOf("i1"), agent.inputs[2].resume?.map { it.interruptId })
-        assertEquals(emptyList(), session.pendingInterrupts)
+        assertEquals(emptyList(), session.pendingInterrupts.value)
         assertNull(agent.inputs[0].resume)
+    }
+
+    /** The questions are still open after a failed resume, so answering them again is a retry too. */
+    @Test
+    fun a_second_resume_after_a_failed_one_is_a_retry() = runTest {
+        var fail = true
+        val agent = ScriptedAgent({ input ->
+            when {
+                input.resume == null -> ask(input.runId, listOf(interrupt("i1")))
+                fail -> flow {
+                    emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
+                    emit(RunErrorEvent(message = "upstream is down", code = "BOOM"))
+                }
+                else -> flow { answer(input.runId, "a-${input.runId}", "done").forEach { emit(it) } }
+            }
+        })
+        val session = AgentSession(agent)
+        val asked = session.run(RunAgentParameters(runId = "r1")) as RunState.Finished
+        val answer = UiResumeEntry.resolved(asked.interrupts.single(), JsonPrimitive("yes"))
+
+        assertIs<RunState.Failed>(session.resume(listOf(answer)))
+        fail = false
+        assertIs<RunState.Finished>(session.resume(listOf(answer)))
+
+        assertEquals(listOf("i1", "i1"), agent.inputs.drop(1).map { it.resume!!.single().interruptId })
+        assertEquals(emptyList(), session.pendingInterrupts.value)
     }
 
     private fun AgentSession.toolCall(id: String): ToolCallPart =

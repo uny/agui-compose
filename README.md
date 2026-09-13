@@ -117,7 +117,7 @@ val session = AgentSession(HttpAgent(HttpAgentConfig(url = "https://…/agui")))
 
 session.transcript                  // StateFlow<UiTranscript>, grows with every run
 session.send("What changed today?") // the user's turn, then the run it starts
-// or, with no new turn to send -- a retry, a resumed interrupt:
+// or, with no new turn to send -- a retry:
 session.run()                       // runs from the history the agent already holds
 ```
 
@@ -199,8 +199,9 @@ thread is not waiting on, or name one twice -- the reference client's rules, and
 interrupt is not abandoning it (`UiResumeEntry.cancelled` is). `send` and `run` throw while the
 thread is interrupted, for the same reason: a run the server would refuse is not a run to start. A
 resume whose run *fails* is still owed -- the thread keeps waiting, `session.pendingInterrupts`
-still names the questions after the transcript's `RunState.Failed` has stopped naming them, and
-`run()` retries with the answers the failed run carried. Whether an interrupt has *expired* is not
+(a `StateFlow`) still names the questions after the transcript's `RunState.Failed` has stopped
+naming them, and either `run()`, which carries the answers the failed run carried, or a second
+`resume` retries it. Whether an interrupt has *expired* is not
 judged here: `expiresAt` is carried for you to read, and a producer that will not take a late
 answer fails the run. The reasoning, and why a tool result is not an answer to an interrupt, is in
 [docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md).

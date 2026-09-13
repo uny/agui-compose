@@ -153,14 +153,14 @@ class AgentSessionToolsTest {
         assertEquals(1, agent.inputs.size)
         assertIs<RunState.Finished>(ended)
         assertEquals(true, ended.interrupted)
-        assertEquals(listOf("i1"), session.pendingInterrupts.map { it.id })
+        assertEquals(listOf("i1"), session.pendingInterrupts.value.map { it.id })
 
         session.resume(listOf(UiResumeEntry.cancelled(ended.interrupts.single())))
 
         assertEquals(2, agent.inputs.size)
         assertEquals(listOf("i1"), agent.inputs[1].resume?.map { it.interruptId })
         assertEquals(listOf("c1"), agent.inputs[1].messages.filterIsInstance<ToolMessage>().map { it.toolCallId })
-        assertEquals(emptyList(), session.pendingInterrupts)
+        assertEquals(emptyList(), session.pendingInterrupts.value)
     }
 
     /**

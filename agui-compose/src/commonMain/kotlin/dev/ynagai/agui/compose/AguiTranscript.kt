@@ -109,9 +109,9 @@ public fun AguiPart(part: UiPart, modifier: Modifier = Modifier) {
  * Separate from [AguiTranscript] because an interrupt is not a message: it is the thread's
  * status, and where a question waiting on the reader belongs -- under the transcript, above the
  * composer, in a sheet -- is the application's layout decision. Pass
- * [dev.ynagai.agui.model.pendingInterrupts] of the transcript's run, or whatever the application
- * holds them in once the transcript has stopped: a run that *fails* after asking drops them from
- * [dev.ynagai.agui.model.RunState], and `agui-agent`'s session keeps them.
+ * [dev.ynagai.agui.model.pendingInterrupts] of the transcript's run, or better the list
+ * `agui-agent`'s session observes: a run that *fails* after asking drops them from
+ * [dev.ynagai.agui.model.RunState], and the session keeps them for the retry.
  *
  * Nothing when [interrupts] is empty, and nothing is measured either -- an empty [Column] takes
  * no space -- so this can sit in a layout unconditionally.

@@ -49,7 +49,6 @@ import dev.ynagai.agui.material3.Material3AguiComponents
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiResumeEntry
-import dev.ynagai.agui.model.pendingInterrupts
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -76,6 +75,7 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     val connection by chat.connection.collectAsState()
     val background by chat.background.collectAsState()
     val transcript by (connection?.transcript?.collectAsState() ?: remember { mutableStateOf(UiTranscript()) })
+    val pending by (connection?.pendingInterrupts?.collectAsState() ?: remember { mutableStateOf(emptyList()) })
     val scope = rememberCoroutineScope()
 
     var endpoint by remember { mutableStateOf("") }
@@ -205,12 +205,10 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 // What the run stopped to ask for, when it did. A run asks with a list and the
                 // protocol takes the answers as a list -- every interrupt answered or abandoned
                 // before any run starts -- while the card answers one at a time, so the answers
-                // collect here until the last one lands. The interrupts are read from the
-                // transcript's run and not from the session's own list, which is the shorter
-                // path for a sample: a resume whose run *failed* drops them from the transcript
-                // (`RunState.Failed` names none) and the status line says so; the session still
-                // owes them, and `run()` retries with what it kept.
-                val pending = transcript.run.pendingInterrupts
+                // collect here until the last one lands. Read from the session rather than the
+                // transcript's run: a resume whose run *failed* drops the questions from the
+                // transcript (`RunState.Failed` names none) while the thread still waits on them,
+                // and the cards have to come back for the reader to retry from.
                 val answers = remember(pending) { mutableStateMapOf<String, UiResumeEntry>() }
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
                     ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {

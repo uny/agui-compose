@@ -9,6 +9,7 @@ import com.agui.tools.toolRegistry
 import dev.ynagai.agui.a2ui.catalogContext
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.UiResumeEntry
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -142,6 +143,9 @@ public class SampleChat(
         public val agent: AbstractAgent,
         public val session: AgentSession,
     ) {
+        /** What the thread is waiting on; the composer stays closed while this is not empty. */
+        public val pendingInterrupts: StateFlow<List<UiInterrupt>> get() = session.pendingInterrupts
+
         /** The transcript of this thread, growing with every run. */
         public val transcript: StateFlow<UiTranscript> get() = session.transcript
     }

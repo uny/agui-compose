@@ -75,7 +75,8 @@ run's is, and goes out with the resume, placed after its call.
 
 **A failed resume is still owed.** The session keeps the pending list across a `RUN_ERROR`, as the
 reference client does, and keeps the entries the failed run carried: `run` -- the retry for any
-failed run -- sends them again. `pendingInterrupts` on the session is where a UI reads them once
+failed run -- sends them again, and a second `resume` is a retry too, since the questions are
+still open. `pendingInterrupts` on the session, a `StateFlow`, is where a UI observes them once
 the transcript has stopped naming them, since `RunState.Failed` names none.
 
 **`expiresAt` is carried, not judged.** The protocol leaves its format to the producer and the

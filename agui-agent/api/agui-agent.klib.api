@@ -12,7 +12,7 @@ final class dev.ynagai.agui.agent/AgentSession { // dev.ynagai.agui.agent/AgentS
     final val agent // dev.ynagai.agui.agent/AgentSession.agent|{}agent[0]
         final fun <get-agent>(): com.agui.client.agent/AbstractAgent // dev.ynagai.agui.agent/AgentSession.agent.<get-agent>|<get-agent>(){}[0]
     final val pendingInterrupts // dev.ynagai.agui.agent/AgentSession.pendingInterrupts|{}pendingInterrupts[0]
-        final fun <get-pendingInterrupts>(): kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> // dev.ynagai.agui.agent/AgentSession.pendingInterrupts.<get-pendingInterrupts>|<get-pendingInterrupts>(){}[0]
+        final fun <get-pendingInterrupts>(): kotlinx.coroutines.flow/StateFlow<kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt>> // dev.ynagai.agui.agent/AgentSession.pendingInterrupts.<get-pendingInterrupts>|<get-pendingInterrupts>(){}[0]
     final val tools // dev.ynagai.agui.agent/AgentSession.tools|{}tools[0]
         final fun <get-tools>(): com.agui.tools/ToolRegistry? // dev.ynagai.agui.agent/AgentSession.tools.<get-tools>|<get-tools>(){}[0]
     final val transcript // dev.ynagai.agui.agent/AgentSession.transcript|{}transcript[0]
