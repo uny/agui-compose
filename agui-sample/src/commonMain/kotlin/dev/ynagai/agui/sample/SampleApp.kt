@@ -50,6 +50,7 @@ import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiResumeEntry
 import dev.ynagai.agui.model.UiTranscript
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -97,6 +98,10 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
         runs += scope.launch {
             try {
                 block()
+            } catch (e: CancellationException) {
+                // A subclass of IllegalStateException, and not a refusal: reconnecting cancels
+                // the run in flight, and a cancelled coroutine has to stay cancelled.
+                throw e
             } catch (e: IllegalStateException) {
                 println("agui-sample: ${e.message}")
             } catch (e: IllegalArgumentException) {
@@ -226,8 +231,9 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 // transcript (`RunState.Failed` names none) while the thread still waits on them,
                 // and the cards have to come back for the reader to retry from. `pending` is the
                 // same list after such a failure, so the map is cleared when the resume ends,
-                // whatever it ended in -- keying it on the list would not do that.
-                val answers = remember { mutableStateMapOf<String, UiResumeEntry>() }
+                // whatever it ended in -- keying it on the list would not do that. Keyed on the
+                // connection, so a reconnect with a question half answered starts clean.
+                val answers = remember(connection) { mutableStateMapOf<String, UiResumeEntry>() }
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
                     ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {
                         AguiTranscript(
