@@ -400,6 +400,9 @@ agent, which nothing does here. `A2uiRequest` builds both, plus the render tool'
 middleware sends beside the schema, for the catalog the renderer holds; send it on every run:
 
 ```kotlin
+import com.agui.client.agent.RunAgentParameters
+import dev.ynagai.agui.a2ui.A2uiRequest
+
 val request = A2uiRequest(BasicCatalog.definition)
 val parameters = RunAgentParameters(context = request.context(), forwardedProps = request.forwardedProps())
 session.send("Show me the hotels", parameters)
