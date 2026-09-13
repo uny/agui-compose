@@ -93,9 +93,13 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     }
 
     // One renderer per connection: the surfaces are the thread's, and a new endpoint is a new
-    // thread. The two catalogs are the basic one and the dojo's -- what this window can draw.
+    // thread. The catalogs are the basic one and the dojo's two -- what this window can draw.
     val renderer = remember(connection) {
-        A2uiRenderer(A2uiRendererConfig.Default.withCatalogs(listOf(BasicCatalog.definition, DojoCatalog.definition)))
+        A2uiRenderer(
+            A2uiRendererConfig.Default.withCatalogs(
+                listOf(BasicCatalog.definition, DojoCatalog.definition, DojoCatalog.fixedDefinition),
+            ),
+        )
     }
     // A `render_a2ui` call names no catalog, and the default would bind it to the basic one --
     // which the middleware's own activity does not, since it stamps the catalog this window

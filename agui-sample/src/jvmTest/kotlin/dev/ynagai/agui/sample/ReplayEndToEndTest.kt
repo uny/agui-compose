@@ -62,4 +62,29 @@ class ReplayEndToEndTest {
             server.stop()
         }
     }
+
+    @Test
+    fun the_recorded_fixed_schema_run_draws_its_flights() = runComposeUiTest {
+        // The fixed-schema agent names a second catalog, and its surface is a tool result first
+        // and an activity second -- the carrier order the hotel comparison does not exercise.
+        val trace = ReplayTrace.resource("fixed-flight-search")
+        val server = ReplayServer(traces = listOf(trace), port = 0, delayMillis = 5).start()
+        try {
+            val port = server.boundPort
+            setContent { SampleApp(chat = SampleChat()) }
+
+            onNodeWithText("AG-UI endpoint").performTextInput("http://localhost:$port/${trace.name}")
+            onNodeWithText("Connect").performClick()
+            onNodeWithText("Message").performTextInput("Find me a flight")
+            onNodeWithText("Send").performClick()
+
+            waitUntil(timeoutMillis = 30_000) {
+                onAllNodesWithText("United Airlines", substring = true).fetchSemanticsNodes().isNotEmpty()
+            }
+            onNodeWithText("Delta DL 456").assertExists()
+            onAllNodesWithText("United Airlines", substring = true).fetchSemanticsNodes().size.let { check(it == 1) { "$it copies" } }
+        } finally {
+            server.stop()
+        }
+    }
 }

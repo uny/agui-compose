@@ -106,11 +106,12 @@ never puts a result on the wire. A client that registered the executor against t
 answer a call it was not asked to run. So the executor is in `agui-a2ui`, and the decision to
 register it is made per agent by whoever builds the `ToolRegistry`.
 
-**The sample draws the dojo's catalog against the recordings.** `DojoCatalog` is the dynamic
-catalog's four components as a v1.0 `CatalogDefinition` -- `Row` declared in it, because v1.0 has
-no fallback to the other catalogs a renderer holds -- with three card renderers. The sample's
-end-to-end test starts `agui-replay` on a free port, connects `HttpAgent` to it, sends a turn, and
-asserts the three hotels are on screen once. That is what "verified against a real server" means
+**The sample draws the dojo's catalogs against the recordings.** `DojoCatalog` is the dynamic
+catalog's four components and the fixed catalog's three as v1.0 `CatalogDefinition`s -- `Row`
+declared in each, because v1.0 has no fallback to the other catalogs a renderer holds -- with four
+card renderers. The sample's end-to-end tests start `agui-replay` on a free port, connect
+`HttpAgent` to it, send a turn, and assert the three hotels (and, for the fixed-schema recording,
+the flights) are on screen once. That is what "verified against a real server" means
 here: what a real server said, over a real socket, minus the model that said it.
 
 ## Consequences
