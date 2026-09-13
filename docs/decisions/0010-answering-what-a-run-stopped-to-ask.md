@@ -112,12 +112,24 @@ resumes when the last one lands.
   pending interrupt -- where before they promised not to throw for a run that failed in an ordinary
   way. That promise stands: a thread that may not run is not a run that failed, it is a
   programming error, and it is reported the way one is. A UI closes its composer on
-  `RunState.pendingInterrupts` being non-empty and never sees it.
+  `RunState.pendingInterrupts` being non-empty and mostly never sees it -- *mostly*, because the
+  check is made under the session's lock, and a `send` that queued behind a run which then
+  stopped to ask is refused when it acquires it, however carefully the caller looked first. A
+  UI that launches runs catches the refusal and leaves the thread waiting; the sample does.
 - `an_interrupted_run_whose_tool_ran_here_is_answered` is inverted:
   `an_interrupted_run_is_not_answered_by_the_tool_that_ran_here`, and the result goes out with
   the resume. The old behaviour was wrong under the spec draft and would have been wrong under any
   producer that emits the interrupt outcome, because none of them reads a tool message as a
   resume entry.
+- A tool of the registry's that an approval interrupt names has already run by the time the
+  question is drawn: `ToolRunner` executes on `TOOL_CALL_END` (decision 8), and the interrupt
+  arrives with `RUN_FINISHED`, after. Its result goes out with the resume whatever the answer
+  was -- beside a `cancelled` entry, when the reader declined a call that had already happened.
+  Nothing here holds a frontend tool back for an approval that may or may not follow; a producer
+  that wants the client to *ask before running* a client-side tool has to stop the run before
+  the call, not after it, and none of the producers measured does both. Known, and not decided
+  here: deferring a registry tool's execution until the run has ended would change decision 8's
+  flow for every run, for a case no recording shows.
 - No recorded traffic exercises this. Upstream's recordings (decision 9) carry no interrupt
   outcome, and the replay fixtures are upstream's verbatim -- fabricating one would put words in a
   producer's mouth under upstream's provenance. `ScriptedAgent` emits the outcome and the session
