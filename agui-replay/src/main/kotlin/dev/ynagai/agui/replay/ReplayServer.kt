@@ -41,6 +41,7 @@ import kotlin.concurrent.atomics.incrementAndFetch
 @OptIn(ExperimentalAtomicApi::class)
 public class ReplayServer(
     public val traces: List<ReplayTrace> = ReplayTrace.RESOURCES.map(ReplayTrace::resource),
+    public val host: String = DEFAULT_HOST,
     public val port: Int = DEFAULT_PORT,
     public val delayMillis: Long = DEFAULT_DELAY_MILLIS,
 ) {
@@ -70,7 +71,7 @@ public class ReplayServer(
 
     // Ktor's types stay out of the public signatures, so a consumer of this module -- the
     // sample's tests -- needs no Ktor of its own to start and stop it.
-    private fun build(): EmbeddedServer<*, *> = embeddedServer(CIO, port = port) {
+    private fun build(): EmbeddedServer<*, *> = embeddedServer(CIO, host = host, port = port) {
         install(SSE)
         routing {
             get("/") {
@@ -107,6 +108,8 @@ public class ReplayServer(
         this?.get(key)?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { p -> p.isString }?.content }
 
     public companion object {
+        /** Loopback, not every interface: the recordings are public, but a dev server is not a service. */
+        public const val DEFAULT_HOST: String = "127.0.0.1"
         public const val DEFAULT_PORT: Int = 8000
         public const val DEFAULT_DELAY_MILLIS: Long = 40
 

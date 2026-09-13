@@ -36,4 +36,19 @@ class ReplayTraceTest {
         val trace = ReplayTrace.resource("fixed-flight-search")
         assertEquals(trace.run(0, "t", "r"), trace.run(7, "t", "r"))
     }
+
+    @Test
+    fun `a prelude before the first RUN_STARTED belongs to the first run`() {
+        val trace = ReplayTrace.parse(
+            "p",
+            """[{"type":"CUSTOM"},{"type":"RUN_STARTED"},{"type":"RUN_FINISHED"},{"type":"RUN_STARTED"},{"type":"RUN_FINISHED"}]""",
+        )
+        assertEquals(listOf(3, 2), trace.runs.map { it.size })
+        assertEquals("CUSTOM", trace.run(0, "t", "r").first()["type"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `an empty recording plays as nothing rather than throwing`() {
+        assertEquals(emptyList(), ReplayTrace.parse("e", "[]").run(0, "t", "r"))
+    }
 }

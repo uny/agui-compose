@@ -20,10 +20,16 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
     /** The events grouped by run. Anything before the first `RUN_STARTED` belongs to the first run. */
     public val runs: List<List<JsonObject>> = buildList {
         var current = mutableListOf<JsonObject>()
+        var started = false
         for (event in events) {
-            if (event.type == "RUN_STARTED" && current.isNotEmpty()) {
-                add(current)
-                current = mutableListOf()
+            if (event.type == "RUN_STARTED") {
+                // Only a run already under way is closed by the next `RUN_STARTED`: a prelude
+                // before the first one belongs to the first run, as the summary says.
+                if (started) {
+                    add(current)
+                    current = mutableListOf()
+                }
+                started = true
             }
             current += event
         }
@@ -36,7 +42,7 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
      * a conversation that goes on past the recording has nothing truer to say.
      */
     public fun run(index: Int, threadId: String, runId: String): List<JsonObject> =
-        runs[index.coerceIn(0, runs.lastIndex)].map { event ->
+        runs.getOrNull(index.coerceAtMost(runs.lastIndex)).orEmpty().map { event ->
             when (event.type) {
                 "RUN_STARTED", "RUN_FINISHED", "RUN_ERROR" -> JsonObject(
                     event + mapOf("threadId" to JsonPrimitive(threadId), "runId" to JsonPrimitive(runId)),
