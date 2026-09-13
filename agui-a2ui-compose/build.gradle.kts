@@ -33,8 +33,9 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
-        // Wired as `agui-compose` wires it, and with the same caveat: every test here needs a
-        // composition, so on Android this runs nothing. See that module's build file.
+        // Wired as `agui-compose` wires it, with a smaller caveat: the composition tests live in
+        // `composeUiTest`, which Android does not run, so what runs here is `commonTest` alone --
+        // the one catalog-id check. See that module's build file.
         withHostTest {}
     }
 

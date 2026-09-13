@@ -47,8 +47,7 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-replay` | A Ktor server that replays upstream's recorded A2UI traffic over SSE — the sample's server, and the trace-driven tests' fixtures. JVM only. See [Replaying upstream](#replaying-upstream). | never |
 | `agui-sample` | A desktop window that talks to a real AG-UI server: the whole stack above, assembled the way an application would. See [The sample](#the-sample). | never |
 
-`agui-a2ui` (the [A2UI](https://github.com/uny/a2ui-compose) bridge, as an optional dependency) and
-the `agui-provider-*` adapters come next.
+The `agui-provider-*` adapters come next.
 
 ## Targets
 

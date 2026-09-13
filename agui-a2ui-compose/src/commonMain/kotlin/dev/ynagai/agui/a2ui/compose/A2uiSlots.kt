@@ -50,9 +50,9 @@ public val BasicPending: A2uiPendingRenderer = A2uiPendingRenderer { payload, mo
  * one that does not -- an activity of some other type -- falls through to the slot it replaced,
  * so a table that already drew activities keeps drawing the ones this module does not read.
  *
- * A tool-call slot is the same with two carriers to look up, the arguments and the result, in
- * that order of preference when both hold surfaces... which they do not: the reconciler gives
- * a surface to one carrier, so at most one of the two is [A2uiSlot.Surfaces]. A render call
+ * A tool-call slot is the same with two carriers to look up, the arguments and the result. When
+ * both hold surfaces -- a render call whose result also carries `a2ui_operations` for a second
+ * surface, which nothing upstream does but nothing forbids -- both draw, result first. A render call
  * whose surface an activity owns is [A2uiSlot.Shadowed] and draws *nothing* -- not the tool call
  * either, because "render_a2ui (awaiting result)" under a surface that is on screen would be a
  * status line for the thing above it. Any other tool call whose result an activity shadows keeps
@@ -92,6 +92,10 @@ public fun AguiComponents.withA2ui(
             val argumentsSlot = host.slot(arguments)
             val resultSlot = host.slot(result)
             when {
+                resultSlot is A2uiSlot.Surfaces && argumentsSlot is A2uiSlot.Surfaces -> Column(modifier) {
+                    A2uiSlotContent(host, result, resultSlot, registry, onMessage, pending, placeholder, Modifier)
+                    A2uiSlotContent(host, arguments, argumentsSlot, registry, onMessage, pending, placeholder, Modifier)
+                }
                 resultSlot is A2uiSlot.Surfaces ->
                     A2uiSlotContent(host, result, resultSlot, registry, onMessage, pending, placeholder, modifier)
                 argumentsSlot is A2uiSlot.Surfaces ->
