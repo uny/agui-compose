@@ -99,7 +99,7 @@ public class A2uiTranslation(
         val components = arguments["components"] as? JsonArray
             ?: throw A2uiFormatException("render_a2ui: `components` is required.")
         val catalogId = arguments["catalogId"]?.asString()
-            ?.takeIf { it.isNotEmpty() && it != "basic" }
+            ?.takeIf { it.isNotEmpty() }
             ?.let(catalogIds)
             ?: defaultCatalogId
         val envelope = buildJsonObject {
@@ -155,11 +155,12 @@ public class A2uiTranslation(
         public val Default: A2uiTranslation = A2uiTranslation()
 
         /**
-         * Upstream's two spellings of the basic catalog become the v1.0 basic catalog's id; any
-         * other id is returned as it came.
+         * Upstream's spellings of the basic catalog -- the two URLs, and the bare `basic` the
+         * middleware falls back to when no context named one -- become the v1.0 basic catalog's
+         * id; any other id is returned as it came.
          */
         public fun upstreamCatalogIds(catalogId: String): String = when (catalogId) {
-            AguiA2ui.UPSTREAM_BASIC_CATALOG_ID, AguiA2ui.V09_BASIC_CATALOG_ID -> AguiA2ui.V10_BASIC_CATALOG_ID
+            AguiA2ui.UPSTREAM_BASIC_CATALOG_ID, AguiA2ui.V09_BASIC_CATALOG_ID, "basic" -> AguiA2ui.V10_BASIC_CATALOG_ID
             else -> catalogId
         }
     }
