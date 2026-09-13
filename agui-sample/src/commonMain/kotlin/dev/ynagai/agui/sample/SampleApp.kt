@@ -86,6 +86,25 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
     // one -- there is nothing else here that could. Held so that reconnecting can.
     val runs = remember { mutableListOf<Job>() }
 
+    // Every run the screen starts goes through here. `send` and `resume` throw for a turn the
+    // thread cannot carry -- a send that queued behind a run which then stopped to ask, or a
+    // surface button pressed while the composer is closed -- and a throw inside a launched
+    // coroutine would take the window down. The refusal is reported the way the host's warnings
+    // are, and the thread is left as it was: still waiting on its answer. Pruning completed runs
+    // on the way in keeps the list bounded without a completion callback on another thread.
+    fun start(block: suspend () -> Unit) {
+        runs.removeAll { it.isCompleted }
+        runs += scope.launch {
+            try {
+                block()
+            } catch (e: IllegalStateException) {
+                println("agui-sample: ${e.message}")
+            } catch (e: IllegalArgumentException) {
+                println("agui-sample: ${e.message}")
+            }
+        }
+    }
+
     // `remember` with no keys, as the README insists. The local it is provided through is static,
     // so a renderer rebuilt on recomposition would re-render every visible message on every frame
     // of a streaming answer. The lambdas are `@Composable`, so the theme is still followed.
@@ -123,10 +142,7 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 // A button on a surface: sent as a user turn in the text form upstream's own
                 // Kotlin example settled on, so a backend that cannot read `forwardedProps`
                 // still hears it. The replay server hears it as "next recorded run".
-                if (message is ActionMessage) {
-                    runs.removeAll { it.isCompleted }
-                    runs += scope.launch { chat.send(message.toUserText()) }
-                }
+                if (message is ActionMessage) start { chat.send(message.toUserText()) }
             },
         )
     }
@@ -208,8 +224,10 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 // collect here until the last one lands. Read from the session rather than the
                 // transcript's run: a resume whose run *failed* drops the questions from the
                 // transcript (`RunState.Failed` names none) while the thread still waits on them,
-                // and the cards have to come back for the reader to retry from.
-                val answers = remember(pending) { mutableStateMapOf<String, UiResumeEntry>() }
+                // and the cards have to come back for the reader to retry from. `pending` is the
+                // same list after such a failure, so the map is cleared when the resume ends,
+                // whatever it ended in -- keying it on the list would not do that.
+                val answers = remember { mutableStateMapOf<String, UiResumeEntry>() }
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
                     ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {
                         AguiTranscript(
@@ -222,8 +240,13 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                                 answers[entry.interruptId] = entry
                                 if (pending.all { it.id in answers }) {
                                     val entries = pending.map { answers.getValue(it.id) }
-                                    runs.removeAll { it.isCompleted }
-                                    runs += scope.launch { chat.resume(entries) }
+                                    start {
+                                        try {
+                                            chat.resume(entries)
+                                        } finally {
+                                            answers.clear()
+                                        }
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -248,10 +271,9 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                             // costs, because it is the library's behaviour and not a bug to fix
                             // here: a queued turn reaches the transcript when it acquires the lock,
                             // so between the click and the first run ending it is on screen
-                            // nowhere. Pruning completed runs on the way in keeps this bounded
-                            // without a completion callback on another thread.
-                            runs.removeAll { it.isCompleted }
-                            runs += scope.launch { chat.send(text) }
+                            // nowhere -- and if that first run stops to ask, the queued turn is
+                            // refused, which `start` reports.
+                            start { chat.send(text) }
                         }
                     },
                 )

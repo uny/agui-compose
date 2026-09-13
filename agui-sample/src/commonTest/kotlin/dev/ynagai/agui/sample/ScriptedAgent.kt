@@ -3,9 +3,11 @@ package dev.ynagai.agui.sample
 import com.agui.client.agent.AbstractAgent
 import com.agui.client.agent.AgentConfig
 import com.agui.core.types.BaseEvent
+import com.agui.core.types.Interrupt
 import com.agui.core.types.RunAgentInput
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
+import com.agui.core.types.RunFinishedInterruptOutcome
 import com.agui.core.types.RunStartedEvent
 import com.agui.core.types.TextMessageContentEvent
 import com.agui.core.types.TextMessageEndEvent
@@ -35,8 +37,12 @@ internal class ScriptedAgent(
     val url: String,
     private val failing: Boolean = false,
     private val callsTool: Boolean = false,
+    private val asks: Boolean = false,
 ) : AbstractAgent(AgentConfig(threadId = THREAD)) {
     val inputs: MutableList<RunAgentInput> = mutableListOf()
+
+    /** How many runs carrying a `resume` still fail before one is answered; counts down. */
+    var resumesToFail: Int = 0
 
     val disposed: Boolean get() = !agentScope.isActive
 
@@ -45,6 +51,31 @@ internal class ScriptedAgent(
         return flow {
             emit(RunStartedEvent(threadId = THREAD, runId = input.runId))
             if (failing) {
+                emit(RunErrorEvent(message = "no", code = "NOPE"))
+                return@flow
+            }
+            // A run that stops to ask: it calls a tool and ends with an interrupt naming the
+            // call. The run that carries the answer is the ordinary one below -- unless it is
+            // one of those scripted to fail, in which case the thread is still waiting.
+            if (asks && input.resume == null) {
+                emit(ToolCallStartEvent(toolCallId = "call-${input.runId}", toolCallName = "transfer"))
+                emit(ToolCallArgsEvent(toolCallId = "call-${input.runId}", delta = "{}"))
+                emit(ToolCallEndEvent(toolCallId = "call-${input.runId}"))
+                emit(
+                    RunFinishedEvent(
+                        threadId = THREAD,
+                        runId = input.runId,
+                        outcome = RunFinishedInterruptOutcome(
+                            interrupts = listOf(
+                                Interrupt(id = INTERRUPT, reason = "tool_call", message = PROMPT, toolCallId = "call-${input.runId}"),
+                            ),
+                        ),
+                    ),
+                )
+                return@flow
+            }
+            if (input.resume != null && resumesToFail > 0) {
+                resumesToFail--
                 emit(RunErrorEvent(message = "no", code = "NOPE"))
                 return@flow
             }
@@ -74,6 +105,12 @@ internal const val ANSWER: String = "**ok**"
 
 /** The same answer once a Markdown renderer has drawn it. */
 internal const val ANSWER_DRAWN: String = "ok"
+
+/** The one interrupt a scripted run that asks stops on. */
+internal const val INTERRUPT: String = "i1"
+
+/** What that interrupt asks, on screen verbatim. */
+internal const val PROMPT: String = "Approve call to transfer?"
 
 /** What the scripted tool call asks for: the gradient upstream's server sends, verbatim. */
 internal const val BACKGROUND: String = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
