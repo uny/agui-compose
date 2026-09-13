@@ -44,6 +44,7 @@ private val Material3Components = AguiComponents(
     toolCall = { part, modifier -> Material3ToolCall(part, modifier) },
     activity = { part, modifier -> Material3Activity(part, modifier) },
     file = { part, modifier -> Material3File(part, modifier) },
+    interrupt = { interrupt, onResume, modifier -> Material3Interrupt(interrupt, onResume, modifier) },
     message = { message, modifier, content -> Material3MessageFrame(message, modifier, content) },
 )
 

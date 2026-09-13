@@ -6,6 +6,8 @@ import com.agui.core.types.BaseEvent
 import com.agui.core.types.AssistantMessage
 import com.agui.core.types.Context
 import com.agui.core.types.Message
+import com.agui.core.types.ResumeEntry
+import com.agui.core.types.ResumeStatus
 import com.agui.core.types.RunAgentInput
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
@@ -17,6 +19,9 @@ import com.agui.core.types.UserMessage
 import com.agui.tools.ToolRegistry
 import dev.ynagai.agui.core.UiTranscriptReducer
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiInterrupt
+import dev.ynagai.agui.model.UiResumeEntry
+import dev.ynagai.agui.model.UiResumeStatus
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -79,12 +84,18 @@ import kotlin.uuid.Uuid
  * started the one it answers.
  *
  * A tool the agent calls that the registry does not hold is left alone, so a backend tool's
- * events fold exactly as they do with no registry at all. A run that stops to wait for a human
- * (`RUN_FINISHED` with an interrupt outcome) is answered only if it also called a tool of the
- * registry's, and then with that tool's result alone: the client that executed the tool the
- * agent stopped for has the answer the interrupt was waiting on. An interrupt that waits for
- * something else -- an approval no tool gives -- is the caller's to answer, as it is without a
- * registry.
+ * events fold exactly as they do with no registry at all.
+ *
+ * A run that stops to *ask* -- `RUN_FINISHED` with an interrupt outcome, an approval or a choice
+ * only a human can give -- is not answered by a tool result, and not by the next [run] or [send]
+ * either. The protocol lets no run start on the thread until every interrupt of the one that
+ * stopped has been answered or abandoned in the input's `resume` list, and this class holds that
+ * line: [resume] is the one call that starts a run while the thread is interrupted, and [run] and
+ * [send] throw rather than start one the server would refuse -- or worse, one it would accept and
+ * proceed past the question with. The interrupts to answer are on the transcript
+ * ([RunState.Finished.interrupts]) and, until a run has ended cleanly since, on
+ * [pendingInterrupts]. A tool result folded while the thread is interrupted is kept the way a
+ * failed run's is, and goes out with the [resume].
  *
  * A result whose run *failed* -- a `RUN_ERROR` from the agent, or a stream that threw or was
  * cancelled while the tool was executing -- is not sent then, because there is no finished run to
@@ -122,6 +133,20 @@ public class AgentSession(
     /** Results folded into the transcript that no run has yet carried to the server. */
     private val unsent = mutableListOf<ToolMessage>()
 
+    /**
+     * What the last run to end cleanly stopped to ask for; empty when it did not. A run that
+     * *failed* leaves it alone -- upstream's reference client keeps its pending list across a
+     * `RUN_ERROR` for the same reason -- so a resume whose run failed is still owed.
+     */
+    private var pending: List<UiInterrupt> = emptyList()
+
+    /**
+     * The answers the last [resume] put on the wire, kept until a run ends cleanly. A resume whose
+     * run failed was not consumed, so the retry -- [run], as for any failed run -- carries them
+     * again, exactly as it carries a tool result the failed run did not deliver.
+     */
+    private var unconsumed: List<ResumeEntry> = emptyList()
+
     private val runner: ToolRunner? = tools?.let { ToolRunner(it, results) }
 
     private val mutableTranscript = MutableStateFlow(reducer.transcript)
@@ -136,6 +161,18 @@ public class AgentSession(
      * hooks are for.
      */
     public val transcript: StateFlow<UiTranscript> = mutableTranscript.asStateFlow()
+
+    /**
+     * The interrupts the thread is waiting on: those of the last run that ended cleanly, when it
+     * stopped to ask. Empty on a thread that may [run] or [send].
+     *
+     * The same list [RunState.Finished.interrupts] carries, held here because the transcript stops
+     * carrying it the moment a run *fails* -- [RunState.Failed] names no interrupts -- while the
+     * thread is still waiting on them. A retry after a failed [resume] answers them through [run],
+     * which re-sends what the failed run carried; a UI that lost them from the transcript can
+     * still draw them from here.
+     */
+    public val pendingInterrupts: List<UiInterrupt> get() = pending
 
     /**
      * Runs the agent once and folds its events into [transcript], suspending until the run ends.
@@ -183,12 +220,13 @@ public class AgentSession(
      *   what it was constructed with, plus what earlier runs through it produced.
      */
     public suspend fun run(parameters: RunAgentParameters? = null): RunState = runs.withLock {
+        val resume = covering(unconsumed)
         val prepared = prepare(parameters)
-        val ended = if (unsent.isEmpty()) {
+        val ended = if (unsent.isEmpty() && resume == null) {
             foldRun(prepared.runId) { agent.runAgentObservable(prepared.parameters()) }
         } else {
             val messages = agent.messages.answered(takeUnsent())
-            foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages)) }
+            foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages, resume)) }
         }
         answerTools(ended, prepared)
     }
@@ -243,10 +281,13 @@ public class AgentSession(
      */
     public suspend fun send(message: UserMessage, parameters: RunAgentParameters? = null): RunState =
         runs.withLock {
+            // Checked before the message is on screen: a line the thread cannot carry yet is a
+            // programming error to report, not a turn to draw and then fail.
+            val resume = covering(unconsumed)
             mutableTranscript.value = reducer.appendUserMessage(message)
             val prepared = prepare(parameters)
             val messages = agent.messages.answered(takeUnsent()) + message
-            val ended = foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages)) }
+            val ended = foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages, resume)) }
             answerTools(ended, prepared)
         }
 
@@ -259,6 +300,81 @@ public class AgentSession(
      */
     public suspend fun send(text: String, parameters: RunAgentParameters? = null): RunState =
         send(UserMessage(id = Uuid.random().toString(), content = text), parameters)
+
+    /**
+     * Answers what the last run stopped to ask for, and runs the agent.
+     *
+     * This is how a client continues an interrupted thread. [entries] must cover every interrupt
+     * in [pendingInterrupts] -- each answered, or explicitly abandoned -- and name nothing else;
+     * the protocol rejects a resuming input that leaves one uncovered rather than letting a run
+     * proceed past a question nobody answered, and this throws before the run starts for the
+     * same reason. Omitting an interrupt is not abandoning it: abandon with
+     * [UiResumeEntry.cancelled].
+     *
+     * Whether an interrupt has *expired* is not judged here. The protocol leaves the format of
+     * `expiresAt` to the producer and the judgment to the consumer; a producer that will not take
+     * a late answer says so by failing the run, which this returns as a [RunState.Failed].
+     *
+     * The history sent is the agent's own, as [run] sends it, with any tool result an earlier run
+     * failed to carry placed after its call: a client that executed a tool while the thread was
+     * interrupted has a result to deliver, and this is the first run that can deliver it. A run
+     * that fails leaves the thread interrupted and the answers owed; **retry through [run]**, which
+     * carries them again, rather than through a second [resume], which would answer the same
+     * question twice.
+     *
+     * With a [tools] registry, a run that calls one of its tools is answered by another run, and
+     * this returns the state the last of those ended in; see the class note.
+     *
+     * @param entries one answer per pending interrupt.
+     * @param parameters as for [run].
+     * @throws IllegalStateException when the thread is not interrupted.
+     * @throws IllegalArgumentException when [entries] leaves a pending interrupt uncovered, names
+     *   one that is not pending, or names one twice.
+     */
+    public suspend fun resume(entries: List<UiResumeEntry>, parameters: RunAgentParameters? = null): RunState =
+        runs.withLock {
+            check(pending.isNotEmpty()) { "Nothing to resume: the thread is not interrupted." }
+            val resume = covering(entries.map { it.toWire() })!!
+            val prepared = prepare(parameters)
+            val messages = agent.messages.answered(takeUnsent())
+            val ended = foldRun(prepared.runId) { agent.runAgentObservable(input(prepared, messages, resume)) }
+            answerTools(ended, prepared)
+        }
+
+    /**
+     * [entries], once they are known to answer exactly what is [pending]; null when nothing is
+     * pending and there is nothing to answer.
+     *
+     * The rule is the protocol's, and it cuts both ways: a run may not start while an interrupt
+     * is unanswered, and an entry may not answer an interrupt the thread is not waiting on.
+     */
+    private fun covering(entries: List<ResumeEntry>): List<ResumeEntry>? {
+        if (pending.isEmpty()) {
+            require(entries.isEmpty()) {
+                "Resume entries ${entries.map { it.interruptId }} answer nothing: the thread is not interrupted."
+            }
+            return null
+        }
+        val ids = entries.map { it.interruptId }
+        require(ids.size == ids.toSet().size) { "Resume entries name an interrupt twice: $ids" }
+        val waiting = pending.map { it.id }.toSet()
+        val unknown = ids.filterNot { it in waiting }
+        require(unknown.isEmpty()) { "Resume entries name interrupts the thread is not waiting on: $unknown" }
+        val uncovered = waiting - ids.toSet()
+        check(uncovered.isEmpty()) {
+            "Thread has ${uncovered.size} pending interrupt(s) not addressed by resume: ${uncovered.joinToString()}"
+        }
+        return entries
+    }
+
+    private fun UiResumeEntry.toWire(): ResumeEntry = ResumeEntry(
+        interruptId = interruptId,
+        status = when (status) {
+            UiResumeStatus.RESOLVED -> ResumeStatus.RESOLVED
+            UiResumeStatus.CANCELLED -> ResumeStatus.CANCELLED
+        },
+        payload = payload,
+    )
 
     /**
      * Folds one run's events into the transcript and reports the state it ended in.
@@ -286,7 +402,14 @@ public class AgentSession(
                 foldResults()
                 when (event) {
                     is RunStartedEvent -> ended = false
-                    is RunFinishedEvent -> ended = true
+                    is RunFinishedEvent -> {
+                        ended = true
+                        // The run ended cleanly, so whatever this run carried was consumed, and
+                        // what the thread waits on now is what this run says -- nothing, when it
+                        // was done. Read off the event rather than the transcript so a stream
+                        // upstream's verifier stops after this event still leaves it right.
+                        unconsumed = emptyList()
+                    }
                     // The verifier permits RUN_ERROR after RUN_FINISHED, and upstream's `HttpAgent`
                     // sends one when the connection fails *after* the server has said the run is
                     // done. A run that finished did not then fail; the answer stands, and the
@@ -300,6 +423,9 @@ public class AgentSession(
                     else -> Unit
                 }
                 mutableTranscript.value = reducer.accept(event)
+                if (event is RunFinishedEvent) {
+                    pending = (transcript.value.run as? RunState.Finished)?.interrupts.orEmpty()
+                }
             }
             if (!ended) fail(message = "Stream ended before RUN_FINISHED", code = CLIENT_ERROR_CODE)
         } catch (e: CancellationException) {
@@ -341,14 +467,15 @@ public class AgentSession(
     /**
      * Sends the results of [ended] back, and the results of that run, until a run calls no tool.
      *
-     * Only a run that finished is answered: a failed one has no answer to continue, and an
-     * interrupted one is still a finished one -- a client that executed the tool the agent stopped
-     * for has the answer the interrupt was waiting on. What is left unsent when this returns is
-     * carried by the next [run] or [send].
+     * Only a run that finished, and finished *done*, is answered: a failed one has no answer to
+     * continue, and an interrupted one is waiting on something a tool result is not -- the
+     * protocol says a run that stopped for a frontend tool finishes as success, so an interrupt
+     * outcome is a question for a human, and the next run has to carry the answer to it. What is
+     * left unsent when this returns is carried by the next [run], [send] or [resume].
      */
     private suspend fun answerTools(ended: RunState, parameters: PreparedRun): RunState {
         var current = ended
-        while (current is RunState.Finished && unsent.isNotEmpty()) {
+        while (current is RunState.Finished && !current.interrupted && unsent.isNotEmpty()) {
             val next = parameters.copy(runId = Uuid.random().toString())
             val messages = agent.messages.answered(takeUnsent())
             current = foldRun(next.runId) { agent.runAgentObservable(input(next, messages)) }
@@ -406,16 +533,25 @@ public class AgentSession(
         given = parameters,
     )
 
-    /** The input `prepareRunAgentInput` would build from [parameters], carrying [messages] instead of the agent's own. */
-    private fun input(parameters: PreparedRun, messages: List<Message>): RunAgentInput = RunAgentInput(
-        threadId = agent.threadId,
-        runId = parameters.runId,
-        state = agent.state,
-        messages = messages,
-        tools = parameters.tools,
-        context = parameters.context,
-        forwardedProps = parameters.forwardedProps,
-    )
+    /**
+     * The input `prepareRunAgentInput` would build from [parameters], carrying [messages] instead
+     * of the agent's own, and [resume] -- which that method cannot carry at all: upstream's
+     * `RunAgentParameters` has no field for it, and the input it builds leaves `resume` null.
+     * Recorded as owed the moment it is on the wire, and cleared when a run ends cleanly.
+     */
+    private fun input(parameters: PreparedRun, messages: List<Message>, resume: List<ResumeEntry>? = null): RunAgentInput {
+        if (resume != null) unconsumed = resume
+        return RunAgentInput(
+            threadId = agent.threadId,
+            runId = parameters.runId,
+            state = agent.state,
+            messages = messages,
+            tools = parameters.tools,
+            context = parameters.context,
+            forwardedProps = parameters.forwardedProps,
+            resume = resume,
+        )
+    }
 
     /**
      * `RunAgentParameters` with nothing left null. Upstream's carries every field nullable and

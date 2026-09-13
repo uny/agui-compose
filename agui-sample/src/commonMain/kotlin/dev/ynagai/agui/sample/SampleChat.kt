@@ -9,6 +9,7 @@ import com.agui.tools.toolRegistry
 import dev.ynagai.agui.a2ui.catalogContext
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiResumeEntry
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,6 +103,13 @@ public class SampleChat(
      * should exercise rather than hide behind a disabled button.
      */
     public suspend fun send(text: String): RunState? = mutableConnection.value?.session?.send(text, parameters)
+
+    /**
+     * Answers what the last run stopped to ask for, and suspends until the run that carries the
+     * answers has ended. `null` when there is nothing to answer it to, as for [send].
+     */
+    public suspend fun resume(entries: List<UiResumeEntry>): RunState? =
+        mutableConnection.value?.session?.resume(entries, parameters)
 
     /**
      * What every run carries besides the messages: the catalog this window draws, as the

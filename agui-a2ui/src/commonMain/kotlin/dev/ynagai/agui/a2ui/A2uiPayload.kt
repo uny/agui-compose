@@ -103,7 +103,9 @@ public sealed interface A2uiPayload {
             return when (part.status) {
                 ToolCallStatus.STREAMING_ARGUMENTS -> Building()
                 ToolCallStatus.FAILED -> null
-                ToolCallStatus.AWAITING_RESULT, ToolCallStatus.COMPLETE -> {
+                // A render call the run stopped to ask about is drawn like one it did not: the
+                // arguments are whole, and a surface is what is being approved.
+                ToolCallStatus.AWAITING_RESULT, ToolCallStatus.AWAITING_APPROVAL, ToolCallStatus.COMPLETE -> {
                     val arguments = part.parsedArguments as? JsonObject
                         ?: return Malformed(
                             "render_a2ui arguments did not parse",

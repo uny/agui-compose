@@ -19,6 +19,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +40,7 @@ import dev.ynagai.agui.a2ui.compose.rememberA2uiHost
 import dev.ynagai.agui.a2ui.material3.withMaterial3A2ui
 import dev.ynagai.agui.a2ui.A2uiTranslation
 import dev.ynagai.agui.a2ui.toUserText
+import dev.ynagai.agui.compose.AguiInterrupts
 import dev.ynagai.agui.compose.AguiTranscript
 import dev.ynagai.agui.markdown.MarkdownAguiTextRenderer
 import dev.ynagai.agui.markdown.markdownAguiColors
@@ -46,6 +48,8 @@ import dev.ynagai.agui.markdown.markdownAguiTypography
 import dev.ynagai.agui.material3.Material3AguiComponents
 import dev.ynagai.agui.material3.ProvideMaterial3Agui
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiResumeEntry
+import dev.ynagai.agui.model.pendingInterrupts
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -198,11 +202,33 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.labelMedium,
                 )
 
+                // What the run stopped to ask for, when it did. A run asks with a list and the
+                // protocol takes the answers as a list -- every interrupt answered or abandoned
+                // before any run starts -- while the card answers one at a time, so the answers
+                // collect here until the last one lands. The interrupts are read from the
+                // transcript's run and not from the session's own list, which is the shorter
+                // path for a sample: a resume whose run *failed* drops them from the transcript
+                // (`RunState.Failed` names none) and the status line says so; the session still
+                // owes them, and `run()` retries with what it kept.
+                val pending = transcript.run.pendingInterrupts
+                val answers = remember(pending) { mutableStateMapOf<String, UiResumeEntry>() }
                 CompositionLocalProvider(LocalUriHandler provides uriHandler) {
                     ProvideMaterial3Agui(textRenderer = textRenderer, components = components) {
                         AguiTranscript(
                             transcript = transcript,
                             modifier = Modifier.fillMaxWidth().weight(1f),
+                        )
+                        AguiInterrupts(
+                            interrupts = pending.filterNot { it.id in answers },
+                            onResume = { entry ->
+                                answers[entry.interruptId] = entry
+                                if (pending.all { it.id in answers }) {
+                                    val entries = pending.map { answers.getValue(it.id) }
+                                    runs.removeAll { it.isCompleted }
+                                    runs += scope.launch { chat.resume(entries) }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -210,7 +236,10 @@ public fun SampleApp(chat: SampleChat, modifier: Modifier = Modifier) {
                 Composer(
                     draft = draft,
                     onDraftChange = { draft = it },
-                    enabled = connection != null,
+                    // Closed while the thread waits on an answer: `send` would throw, because the
+                    // protocol lets no run start past an unanswered interrupt, and a sample that
+                    // let the reader type into that would be demonstrating the exception.
+                    enabled = connection != null && pending.isEmpty(),
                     onSend = {
                         val text = draft.trim()
                         if (text.isNotEmpty()) {
@@ -302,7 +331,7 @@ internal fun statusLine(threadId: String?, run: RunState): String {
     val state = when (run) {
         is RunState.Idle -> "idle"
         is RunState.Running -> "running ${run.runId}"
-        is RunState.Finished -> if (run.interrupted) "interrupted" else "finished"
+        is RunState.Finished -> if (run.interrupted) "waiting on ${run.interrupts.size} answer(s)" else "finished"
         is RunState.Failed -> "failed: ${run.message}" + (run.code?.let { " ($it)" } ?: "")
     }
     return "$thread — $state"

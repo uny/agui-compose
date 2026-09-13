@@ -23,7 +23,9 @@ that no module's own tests could — a dependency neither of two modules names, 
 disagree — is
 [docs/decisions/0007](docs/decisions/0007-pinning-a-dependency-neither-module-names.md). How a
 tool the agent calls gets executed here and answered, and why upstream's own handler for that is
-not used, is [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md).
+not used, is [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md). What a
+run that stopped to ask a human looks like, and why a tool result is not an answer to it, is
+[docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -38,7 +40,7 @@ multimodal input and steering — this library is aimed at all of it.
 | `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | not yet |
 | `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | not yet |
 | `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | not yet |
-| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces. The first layer that is meant to be looked at. | not yet |
+| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | not yet |
 | `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
 | `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | not yet |
 | `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | not yet |
@@ -168,8 +170,7 @@ thread's history with the result placed after its call — and `send` or `run` s
 ends without calling one. The call is drawn `AWAITING_RESULT` while the tool executes and `COMPLETE` once it has
 a result, in the transcript, before the answering run starts. A tool the registry does not hold is
 left alone: a backend tool's events fold exactly as they do with no registry, and a run that stops
-for a human (`RunState.Finished.interrupted`) is answered only if it also called one of these
-tools, and then with that result alone; an approval no tool gives is yours to send.
+to *ask* -- an interrupt outcome -- is not answered by a tool result at all; see the next section.
 
 `RunState.Finished` is the run's verdict, not the turn's — a transcript reads it while a tool is
 still executing and again between a run and the run that answers it. Gate "the agent is done" on
@@ -177,6 +178,38 @@ the suspend call returning. A result whose run failed, or was cancelled, is kept
 the next turn rather than dropped; the reasoning, and why upstream's own `ClientToolResponseHandler`
 is not what sends it, is in
 [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md).
+
+### Answering what a run stopped to ask
+
+A run that needs something only a human can give -- an approval, a choice -- ends with
+`RUN_FINISHED` whose outcome is an interrupt, and the protocol lets no run start on the thread until
+every interrupt of that run has been answered or abandoned in the next input's `resume` list. The
+transcript carries the questions on the run, and the session answers them:
+
+```kotlin
+val ended = session.send("Transfer 100 to Alice") as RunState.Finished
+ended.interrupts                // what the run stopped to ask: prompt, schema, the call it concerns
+session.resume(
+    ended.interrupts.map { UiResumeEntry.resolved(it, buildJsonObject { put("approved", JsonPrimitive(true)) }) },
+)                               // one entry per interrupt; the run that carries them, then its answer
+```
+
+`resume` throws before the run starts if the entries leave an interrupt uncovered, name one the
+thread is not waiting on, or name one twice -- the reference client's rules, and omitting an
+interrupt is not abandoning it (`UiResumeEntry.cancelled` is). `send` and `run` throw while the
+thread is interrupted, for the same reason: a run the server would refuse is not a run to start. A
+resume whose run *fails* is still owed -- the thread keeps waiting, `session.pendingInterrupts`
+still names the questions after the transcript's `RunState.Failed` has stopped naming them, and
+`run()` retries with the answers the failed run carried. Whether an interrupt has *expired* is not
+judged here: `expiresAt` is carried for you to read, and a producer that will not take a late
+answer fails the run. The reasoning, and why a tool result is not an answer to an interrupt, is in
+[docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md).
+
+A tool call the interrupt names is drawn `AWAITING_APPROVAL` until the next run starts. The
+question itself is drawn by `AguiInterrupts(interrupts, onResume)`, placed wherever the
+application wants it -- it is the thread's status, not a message, so `AguiTranscript` does not
+draw it -- and `agui-material3` fills the slot with a card whose *Approve* resolves with
+`{"approved": true}` when the schema names that property and *Decline* abandons.
 
 ### Drawing it
 
