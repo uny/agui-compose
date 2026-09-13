@@ -352,8 +352,8 @@ string, a dropped `theme`, a renamed `attachDataModel`, a `value` that became re
 `agui-a2ui` rewrites the JSON before a2ui-core parses it, checked against upstream's recorded
 traffic rather than against the evolution guide's word. One thing is not mechanical: upstream's
 basic catalog id is `…/v0_9/basic_catalog.json`, which is not even the v0.9 specification's, and
-`A2uiTranslation` maps both of upstream's spellings to the v1.0 basic catalog and passes any other
-id through. The reasoning is in
+`A2uiTranslation` maps upstream's spellings -- that URL, the v0.9 specification's, and a bare
+`basic` -- to the v1.0 basic catalog and passes any other id through. The reasoning is in
 [docs/decisions/0009](docs/decisions/0009-drawing-a2ui-from-three-carriers.md).
 
 `RenderA2UiTool` is the `render_a2ui` tool as a frontend tool, for an agent that calls it directly

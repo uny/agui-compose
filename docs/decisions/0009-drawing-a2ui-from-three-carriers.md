@@ -74,9 +74,11 @@ a2ui*.event-trace.ts`, MIT -- and they contain every carrier.
   plays one per route over SSE, rewriting only the thread and run ids to the client's.
 
 **Ownership, not deduplication.** One surface, three carriers: the reconciler gives each surface
-to one owner -- activity over tool result over streamed arguments, and among equals the later in
-the transcript -- and recomputes that on every step, so the order the carriers arrived in decides
-nothing. The activity is the middleware's own cumulative, validated form, which is why it
+to one owner -- among the carriers that *create* it, activity over tool result over streamed
+arguments, and among equals the later in the transcript -- and recomputes that on every step, so
+the order the carriers arrived in decides nothing. A carrier that only updates or deletes a
+surface never owns it: it has nothing to draw in the creator's place, and taking the surface from
+the creator would take it off the screen for nobody. The activity is the middleware's own cumulative, validated form, which is why it
 outranks the result it was built from. A carrier whose every surface is owned elsewhere is
 `Shadowed` and draws nothing; a `render_a2ui` call shadowed by its activity draws *not even the
 tool call*, since "render_a2ui (awaiting result)" under a surface already on screen would be a
@@ -91,8 +93,8 @@ Per-carrier batches, applied atomically, so a payload one carrier got wrong cost
 surfaces and nobody else's; `A2uiRenderer.applyAll` leaves its state untouched when it throws,
 which is what makes that atomicity real.
 
-**The catalog is mapped, not chosen.** `A2uiTranslation.catalogIds` turns both upstream spellings
-of "basic" into the v1.0 basic catalog and passes every other id through: a custom catalog's id
+**The catalog is mapped, not chosen.** `A2uiTranslation.catalogIds` turns upstream's spellings
+of "basic" -- two URLs and the bare word -- into the v1.0 basic catalog and passes every other id through: a custom catalog's id
 is the host's, and the host that registered it is the one that can draw it. The client also sends
 its catalog as the `Context` entry the middleware reads the id from (`catalogContext`), so a
 middleware in front of the agent stamps a catalog the client holds on the surfaces it streams.
