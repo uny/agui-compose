@@ -52,6 +52,12 @@ public class A2uiRequest(
     private val renderToolName: String = AguiA2ui.RENDER_TOOL_NAME,
     private val guidelines: Boolean = true,
 ) {
+    init {
+        // An empty name would go out as `injectA2UITool: ""`, which the adapters read as an explicit
+        // off -- the one value this class promises never to send.
+        require(renderToolName.isNotEmpty()) { "renderToolName must not be empty" }
+    }
+
     /** [existing] with the schema entry, and the guidelines entry when on, replacing any of the same description. */
     public fun context(existing: List<Context> = emptyList()): List<Context> {
         val guide = AguiA2ui.guidelinesContextDescription(renderToolName)

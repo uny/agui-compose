@@ -12,6 +12,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -112,4 +113,8 @@ class A2uiRequestTest {
         assertEquals(catalogContext(catalog), A2uiRequest(catalog).context().first())
     }
 
+    @Test
+    fun `an empty render tool name is refused rather than sent as an opt-out`() {
+        assertFailsWith<IllegalArgumentException> { A2uiRequest(catalog, renderToolName = "") }
+    }
 }
