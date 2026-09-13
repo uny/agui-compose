@@ -32,8 +32,8 @@ import kotlinx.serialization.json.jsonPrimitive
  * What is *not* mechanical is the catalog id. Upstream names `v0_9/basic_catalog.json` -- a string
  * that is not even the v0.9 specification's id for that catalog -- and `a2ui-compose` registers the
  * v1.0 one, so a surface that named the upstream id would resolve to no catalog and draw its root
- * alone. [catalogIds] is where that mapping lives, and [upstreamCatalogIds] is the default: the two
- * upstream spellings of "basic" become the v1.0 basic catalog and everything else passes through,
+ * alone. [catalogIds] is where that mapping lives, and [upstreamCatalogIds] is the default: the
+ * three upstream spellings of "basic" become the v1.0 basic catalog and everything else passes through,
  * because a custom catalog's id is the host's own and this module has no business renaming it.
  *
  * The rewrite is JSON to JSON and happens before parsing, on purpose: `a2ui-core`'s parser is the
@@ -89,7 +89,8 @@ public class A2uiTranslation(
      * v1.0 lets `createSurface` carry the opening components and data model inline, which is
      * exactly the shape of the call: `surfaceId`, `components`, an optional `data`. The catalog is
      * [defaultCatalogId] -- the call has none, and a `catalogId` an older adapter streamed anyway
-     * is honoured through [catalogIds] because that is what upstream's middleware does with it.
+     * is honoured through [catalogIds] because that is what upstream's middleware does with it;
+     * a bare `basic` is the default too, since that is the host's choice by another name.
      *
      * @throws A2uiFormatException when `surfaceId` or `components` is missing or mis-typed.
      */
@@ -99,7 +100,7 @@ public class A2uiTranslation(
         val components = arguments["components"] as? JsonArray
             ?: throw A2uiFormatException("render_a2ui: `components` is required.")
         val catalogId = arguments["catalogId"]?.asString()
-            ?.takeIf { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() && it != "basic" }
             ?.let(catalogIds)
             ?: defaultCatalogId
         val envelope = buildJsonObject {

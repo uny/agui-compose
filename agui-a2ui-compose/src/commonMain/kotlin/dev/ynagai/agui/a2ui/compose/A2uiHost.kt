@@ -87,7 +87,7 @@ public class A2uiHost(
         // payload moved on to something that is not a batch -- the middleware's `retrying` after
         // a paint the renderer refused, or a surface another carrier took over -- since the slot
         // now has its own thing to say and the old error would be said over it.
-        failures.keys.retainAll { step.slots[it] is A2uiSlot.Surfaces }
+        failures.keys.retainAll { (step.slots[it] as? A2uiSlot.Surfaces)?.surfaceIds?.isNotEmpty() == true }
         surfaces = next
         rejected = failures
         slots = step.slots

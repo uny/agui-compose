@@ -162,6 +162,13 @@ class A2uiSlotsTest {
         transcript = UiTranscript(messages = listOf(activity(operations("s", "painted"))))
         onNodeWithText("painted").assertIsDisplayed()
         assertEquals(1, warnings.size, "the refused batch was not replayed: $warnings")
+
+        // A refusal, then a payload that names no surface: the surface goes, and so does the error.
+        transcript = UiTranscript(messages = listOf(activity(refused)))
+        onNodeWithText("malformed", substring = true).assertIsDisplayed()
+        transcript = UiTranscript(messages = listOf(activity(Json.parseToJsonElement("""{"a2ui_operations":[]}"""))))
+        onNodeWithText("malformed", substring = true).assertDoesNotExist()
+        onNodeWithText("painted").assertDoesNotExist()
     }
 
     @Test

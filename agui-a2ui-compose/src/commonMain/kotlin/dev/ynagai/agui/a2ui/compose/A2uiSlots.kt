@@ -91,15 +91,17 @@ public fun AguiComponents.withA2ui(
             val result = A2uiCarrier.ToolResult(part.toolCallId)
             val argumentsSlot = host.slot(arguments)
             val resultSlot = host.slot(result)
+            val resultSurfaces = resultSlot?.takeIf { it.drawsSurfaces }
+            val argumentSurfaces = argumentsSlot?.takeIf { it.drawsSurfaces }
             when {
-                resultSlot is A2uiSlot.Surfaces && argumentsSlot is A2uiSlot.Surfaces -> Column(modifier) {
-                    A2uiSlotContent(host, result, resultSlot, registry, onMessage, pending, placeholder, Modifier)
-                    A2uiSlotContent(host, arguments, argumentsSlot, registry, onMessage, pending, placeholder, Modifier)
+                resultSurfaces != null && argumentSurfaces != null -> Column(modifier) {
+                    A2uiSlotContent(host, result, resultSurfaces, registry, onMessage, pending, placeholder, Modifier)
+                    A2uiSlotContent(host, arguments, argumentSurfaces, registry, onMessage, pending, placeholder, Modifier)
                 }
-                resultSlot is A2uiSlot.Surfaces ->
-                    A2uiSlotContent(host, result, resultSlot, registry, onMessage, pending, placeholder, modifier)
-                argumentsSlot is A2uiSlot.Surfaces ->
-                    A2uiSlotContent(host, arguments, argumentsSlot, registry, onMessage, pending, placeholder, modifier)
+                resultSurfaces != null ->
+                    A2uiSlotContent(host, result, resultSurfaces, registry, onMessage, pending, placeholder, modifier)
+                argumentSurfaces != null ->
+                    A2uiSlotContent(host, arguments, argumentSurfaces, registry, onMessage, pending, placeholder, modifier)
                 argumentsSlot is A2uiSlot.Pending ->
                     A2uiSlotContent(host, arguments, argumentsSlot, registry, onMessage, pending, placeholder, modifier)
                 argumentsSlot is A2uiSlot.Shadowed && part.name in toolNames -> Unit
@@ -113,6 +115,9 @@ public fun AguiComponents.withA2ui(
 
 /** A result that is malformed is worth showing only once the call is over and it is final. */
 private val ToolCallPart.isDone: Boolean get() = result != null
+
+/** A surface slot with a surface in it. One with none -- deletes alone -- has nothing to show. */
+private val A2uiSlot.drawsSurfaces: Boolean get() = this is A2uiSlot.Surfaces && surfaceIds.isNotEmpty()
 
 @Composable
 private fun A2uiSlotContent(
