@@ -54,6 +54,10 @@ public sealed interface A2uiPayload {
     public data class Surfaces(public val messages: List<AgentToRendererMessage>) : A2uiPayload {
         /** Every surface the messages name, in first-mention order. */
         public val surfaceIds: List<String> = messages.mapNotNull { it.surfaceIdOrNull() }.distinct()
+
+        /** The surfaces the messages create -- the ones this payload can stand on its own for. */
+        public val createdSurfaceIds: List<String> =
+            messages.filterIsInstance<CreateSurfaceMessage>().map { it.surfaceId }.distinct()
     }
 
     /**

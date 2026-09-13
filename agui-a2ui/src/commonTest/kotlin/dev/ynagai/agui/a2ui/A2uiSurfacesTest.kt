@@ -158,6 +158,49 @@ class A2uiSurfacesTest {
     }
 
     @Test
+    fun `a later carrier that only updates a surface does not take it from the one that created it`() {
+        val created = A2uiSurfaces.Empty.accept(transcript(toolCall("t1", result = operations("s", "x"))).a2uiPayloads())
+        val update = """{"a2ui_operations":[{"version":"v0.9","updateDataModel":{"surfaceId":"s","path":"/","value":{}}}]}"""
+        val step = created.next.accept(
+            transcript(toolCall("t1", result = operations("s", "x")), toolCall("t2", result = update)).a2uiPayloads(),
+        )
+        assertTrue(step.isEmpty, "the surface on screen stays: $step")
+        assertEquals(A2uiSlot.Surfaces(listOf("s")), step.slots[A2uiCarrier.ToolResult("t1")])
+        assertEquals(A2uiSlot.Shadowed(A2uiCarrier.ToolResult("t1")), step.slots[A2uiCarrier.ToolResult("t2")])
+        assertEquals(setOf("s"), step.next.surfaceIds)
+    }
+
+    @Test
+    fun `a payload that deletes what it created earlier takes the surface down without a batch that would throw`() {
+        val created = A2uiSurfaces.Empty.accept(transcript(activity("a", operations("s", "x"))).a2uiPayloads())
+        val delete = """{"a2ui_operations":[{"version":"v0.9","deleteSurface":{"surfaceId":"s"}}]}"""
+        val step = created.next.accept(transcript(activity("a", delete)).a2uiPayloads())
+        assertEquals(listOf(DeleteSurfaceMessage("s")), step.deletes)
+        assertEquals(emptyList(), step.batches, "the delete already happened; replaying it would throw")
+        assertEquals(A2uiSlot.Surfaces(emptyList()), step.slots[A2uiCarrier.Activity("a")])
+        assertEquals(emptySet(), step.next.surfaceIds)
+    }
+
+    @Test
+    fun `a delete before its create within one payload is dropped from the batch`() {
+        val content = """{"a2ui_operations":[
+            {"version":"v0.9","deleteSurface":{"surfaceId":"s"}},
+            {"version":"v0.9","createSurface":{"surfaceId":"s","catalogId":"c"}}
+        ]}"""
+        val step = A2uiSurfaces.Empty.accept(transcript(activity("a", content)).a2uiPayloads())
+        val batch = step.batches.single()
+        assertIs<CreateSurfaceMessage>(batch.messages.single())
+        assertEquals(setOf("s"), step.next.surfaceIds)
+    }
+
+    @Test
+    fun `an empty operations array is a surface slot that draws nothing rather than a pending one`() {
+        val step = A2uiSurfaces.Empty.accept(transcript(activity("a", """{"a2ui_operations":[]}""")).a2uiPayloads())
+        assertTrue(step.isEmpty)
+        assertEquals(A2uiSlot.Surfaces(emptyList()), step.slots[A2uiCarrier.Activity("a")])
+    }
+
+    @Test
     fun `a tool result encoded twice is still read`() {
         val once = operations("s", "x")
         val twice = kotlinx.serialization.json.JsonPrimitive(once).toString()

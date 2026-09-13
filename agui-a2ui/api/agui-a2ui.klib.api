@@ -127,6 +127,8 @@ sealed interface dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2ui
     final class Surfaces : dev.ynagai.agui.a2ui/A2uiPayload { // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces|null[0]
         constructor <init>(kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage>) // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.<init>|<init>(kotlin.collections.List<dev.ynagai.a2ui.core.protocol.AgentToRendererMessage>){}[0]
 
+        final val createdSurfaceIds // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.createdSurfaceIds|{}createdSurfaceIds[0]
+            final fun <get-createdSurfaceIds>(): kotlin.collections/List<kotlin/String> // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.createdSurfaceIds.<get-createdSurfaceIds>|<get-createdSurfaceIds>(){}[0]
         final val messages // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.messages|{}messages[0]
             final fun <get-messages>(): kotlin.collections/List<dev.ynagai.a2ui.core.protocol/AgentToRendererMessage> // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.messages.<get-messages>|<get-messages>(){}[0]
         final val surfaceIds // dev.ynagai.agui.a2ui/A2uiPayload.Surfaces.surfaceIds|{}surfaceIds[0]

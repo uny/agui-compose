@@ -156,6 +156,7 @@ public final class dev/ynagai/agui/a2ui/A2uiPayload$Surfaces : dev/ynagai/agui/a
 	public final fun copy (Ljava/util/List;)Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;
 	public static synthetic fun copy$default (Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;Ljava/util/List;ILjava/lang/Object;)Ldev/ynagai/agui/a2ui/A2uiPayload$Surfaces;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCreatedSurfaceIds ()Ljava/util/List;
 	public final fun getMessages ()Ljava/util/List;
 	public final fun getSurfaceIds ()Ljava/util/List;
 	public fun hashCode ()I

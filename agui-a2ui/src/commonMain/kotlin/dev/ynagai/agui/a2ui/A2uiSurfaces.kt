@@ -80,11 +80,13 @@ public class A2uiSurfaces private constructor(
         // One owner per surface: the carrier of highest precedence, and among equals the latest
         // in the transcript. Recomputed from scratch on every step so that the order the carriers
         // arrived in does not decide who owns what -- with the middleware, the activity's first
-        // paint and the outer tool's result land in either order.
+        // paint and the outer tool's result land in either order. Only a carrier that *creates*
+        // the surface can own it: one that merely updates or deletes it has nothing to draw in
+        // its place, and letting it win would take the surface off the screen for nobody.
         val owner = mutableMapOf<String, A2uiCarrier>()
         for ((carrier, payload) in carried) {
             if (payload !is A2uiPayload.Surfaces) continue
-            for (surfaceId in payload.surfaceIds) {
+            for (surfaceId in payload.createdSurfaceIds) {
                 val current = owner[surfaceId]
                 if (current == null || carrier.precedence >= current.precedence) owner[surfaceId] = carrier
             }
@@ -98,10 +100,23 @@ public class A2uiSurfaces private constructor(
                 slots[carrier] = A2uiSlot.Pending(payload)
                 continue
             }
-            val owned = payload.surfaceIds.filter { owner[it] == carrier }
+            val owned = payload.createdSurfaceIds.filter { owner[it] == carrier }
             if (owned.isEmpty()) {
                 val by = payload.surfaceIds.firstNotNullOfOrNull { owner[it] }
-                slots[carrier] = if (by != null) A2uiSlot.Shadowed(by) else A2uiSlot.Pending(payload)
+                val orphan = payload.messages.firstOrNull { it.surfaceIdOrNull() != null && it !is DeleteSurfaceMessage }
+                slots[carrier] = when {
+                    by != null -> A2uiSlot.Shadowed(by)
+                    // An update to a surface no carrier holds: nothing to apply it to.
+                    orphan != null -> A2uiSlot.Pending(
+                        A2uiPayload.Malformed(
+                            "surface `${orphan.surfaceIdOrNull()}` is updated before it is created",
+                            JsonNull,
+                        ),
+                    )
+                    // Deletes alone, or nothing addressed to a surface: a payload that draws nothing,
+                    // and the deletes take effect through this carrier giving up what it had.
+                    else -> A2uiSlot.Surfaces(emptyList())
+                }
                 continue
             }
             val messages = payload.messages.filter { it.surfaceIdOrNull() in owned }
@@ -137,7 +152,18 @@ public class A2uiSurfaces private constructor(
             for (message in messages) if (message is CreateSurfaceMessage) {
                 if (message.surfaceId in nextLive) deletes += message.surfaceId
             }
-            batches += A2uiBatch(carrier, messages)
+            // A delete the payload carries for a surface the renderer will not hold by then --
+            // the step's own deletes took it, or the payload deletes before it creates -- would
+            // throw, and the payload is not wrong for saying it: drop the message, keep the rest.
+            val held = (live.keys - deletes).toMutableSet()
+            val applicable = messages.filter { message ->
+                when (message) {
+                    is CreateSurfaceMessage -> { held += message.surfaceId; true }
+                    is DeleteSurfaceMessage -> held.remove(message.surfaceId)
+                    else -> true
+                }
+            }
+            batches += A2uiBatch(carrier, applicable)
             nextApplied[carrier] = messages
         }
         for (surfaceId in deletes) nextLive -= surfaceId
