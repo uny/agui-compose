@@ -32,7 +32,11 @@ import dev.ynagai.agui.model.UiTranscript
  *
  * One host per transcript, and one renderer per host: [A2uiSurfaces] assumes it is the only thing
  * creating surfaces in the renderer it plans for, and a second host sharing the renderer would
- * delete the first one's surfaces as strangers.
+ * delete the first one's surfaces as strangers. Which is why the three settings are `var`s and
+ * not construction-time: a host rebuilt for a new [translation] would start with empty books
+ * against a renderer that still holds every surface, and its first step would try to create
+ * what exists. Change the setting instead and [accept] again; the reconciler sees the payloads
+ * that changed and redraws those.
  *
  * @param renderer where the surfaces live. Its catalogs decide which catalog ids resolve.
  * @param translation how upstream's envelopes become v1.0; the default remaps the basic catalog.
@@ -42,9 +46,9 @@ import dev.ynagai.agui.model.UiTranscript
 @Stable
 public class A2uiHost(
     public val renderer: A2uiRenderer,
-    private val translation: A2uiTranslation = A2uiTranslation.Default,
-    private val toolNames: Set<String> = setOf(AguiA2ui.RENDER_TOOL_NAME),
-    private val onWarning: (String) -> Unit = {},
+    public var translation: A2uiTranslation = A2uiTranslation.Default,
+    public var toolNames: Set<String> = setOf(AguiA2ui.RENDER_TOOL_NAME),
+    public var onWarning: (String) -> Unit = {},
 ) {
     private var surfaces: A2uiSurfaces = A2uiSurfaces.Empty
 
@@ -78,8 +82,12 @@ public class A2uiHost(
                 onWarning("A2UI ${batch.carrier}: $failure")
             }
         }
-        // A carrier that left the transcript takes its failure with it.
-        failures.keys.retainAll(step.slots.keys)
+        // A failure stands only while the carrier still claims surfaces with the same payload. A
+        // carrier that left the transcript takes its failure with it, and so does one whose
+        // payload moved on to something that is not a batch -- the middleware's `retrying` after
+        // a paint the renderer refused, or a surface another carrier took over -- since the slot
+        // now has its own thing to say and the old error would be said over it.
+        failures.keys.retainAll { step.slots[it] is A2uiSlot.Surfaces }
         surfaces = next
         rejected = failures
         slots = step.slots
@@ -100,10 +108,12 @@ public class A2uiHost(
 /**
  * An [A2uiHost] for [renderer], kept up to date with [transcript].
  *
- * The host is remembered against the renderer, so a new transcript value is a new [A2uiHost.accept]
- * and not a new host. The update runs in a [LaunchedEffect], one frame after the transcript
- * changed: the renderer's state is snapshot state, and writing it during composition is what the
- * effect exists to avoid.
+ * The host is remembered against the renderer alone, so a new transcript value -- or a new
+ * [translation], [toolNames] or [onWarning], which a caller commonly builds inline -- is a new
+ * [A2uiHost.accept] on the same host and not a new host with empty books against a renderer that
+ * still holds every surface. The update runs in a [LaunchedEffect], one frame after the
+ * transcript changed: the renderer's state is snapshot state, and writing it during composition
+ * is what the effect exists to avoid.
  */
 @Composable
 public fun rememberA2uiHost(
@@ -113,7 +123,10 @@ public fun rememberA2uiHost(
     toolNames: Set<String> = setOf(AguiA2ui.RENDER_TOOL_NAME),
     onWarning: (String) -> Unit = {},
 ): A2uiHost {
-    val host = remember(renderer, translation, toolNames) { A2uiHost(renderer, translation, toolNames, onWarning) }
-    LaunchedEffect(host, transcript) { host.accept(transcript) }
+    val host = remember(renderer) { A2uiHost(renderer, translation, toolNames, onWarning) }
+    host.translation = translation
+    host.toolNames = toolNames
+    host.onWarning = onWarning
+    LaunchedEffect(host, transcript, translation, toolNames) { host.accept(transcript) }
     return host
 }

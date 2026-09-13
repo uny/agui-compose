@@ -15,6 +15,7 @@ import dev.ynagai.a2ui.compose.A2uiRenderer
 import dev.ynagai.a2ui.compose.ComponentRegistry
 import dev.ynagai.a2ui.compose.ComponentRenderer
 import dev.ynagai.a2ui.compose.rememberString
+import dev.ynagai.agui.a2ui.A2uiTranslation
 import dev.ynagai.agui.a2ui.AguiA2ui
 import dev.ynagai.agui.compose.AguiComponents
 import dev.ynagai.agui.compose.AguiTranscript
@@ -128,5 +129,58 @@ class A2uiSlotsTest {
         onNodeWithText("surface").assertIsDisplayed()
         onNodeWithText("generate_a2ui").assertIsDisplayed()
         assertEquals(emptyList(), drawnToolCalls.filter { it == AguiA2ui.RENDER_TOOL_NAME })
+    }
+
+    @Test
+    fun aBatchTheRendererRefusesDrawsAsMalformedUntilThePayloadMovesOn() = runComposeUiTest {
+        // A data-model path that is not a JSON Pointer: a2ui-core throws on it, atomically.
+        val refused = Json.parseToJsonElement(
+            """{"a2ui_operations":[
+                {"version":"v0.9","createSurface":{"surfaceId":"s","catalogId":"${AguiA2ui.UPSTREAM_BASIC_CATALOG_ID}"}},
+                {"version":"v0.9","updateDataModel":{"surfaceId":"s","path":"noslash","value":1}}
+            ]}""",
+        )
+        var transcript by mutableStateOf(UiTranscript(messages = listOf(activity(refused))))
+        val warnings = mutableListOf<String>()
+        setContent {
+            val renderer = remember { A2uiRenderer() }
+            // Built inline on purpose: a fresh lambda every recomposition must not mean a fresh host.
+            val host = rememberA2uiHost(transcript, renderer, onWarning = { warnings += it })
+            val components = remember(host) { AguiComponents().withA2ui(host, registry) }
+            CompositionLocalProvider(LocalAguiComponents provides components) {
+                AguiTranscript(transcript)
+            }
+        }
+        onNodeWithText("malformed", substring = true).assertIsDisplayed()
+        assertEquals(1, warnings.size, "$warnings")
+
+        // The middleware tries again under the same messageId: its state, not the stale error.
+        transcript = UiTranscript(messages = listOf(activity(Json.parseToJsonElement("""{"status":"retrying"}"""))))
+        onNodeWithText("retrying").assertIsDisplayed()
+
+        // And the retry lands: the surface, with nothing refused any more.
+        transcript = UiTranscript(messages = listOf(activity(operations("s", "painted"))))
+        onNodeWithText("painted").assertIsDisplayed()
+        assertEquals(1, warnings.size, "the refused batch was not replayed: $warnings")
+    }
+
+    @Test
+    fun aTranslationBuiltInlineKeepsTheHostAndItsSurfaces() = runComposeUiTest {
+        var transcript by mutableStateOf(UiTranscript(messages = listOf(activity(operations("s", "first")))))
+        val warnings = mutableListOf<String>()
+        setContent {
+            val renderer = remember { A2uiRenderer() }
+            // `A2uiTranslation` compares by identity; a new one per composition must not start
+            // the books over against a renderer that still holds the surface.
+            val host = rememberA2uiHost(transcript, renderer, translation = A2uiTranslation(), onWarning = { warnings += it })
+            val components = remember(host) { AguiComponents().withA2ui(host, registry) }
+            CompositionLocalProvider(LocalAguiComponents provides components) {
+                AguiTranscript(transcript)
+            }
+        }
+        onNodeWithText("first").assertIsDisplayed()
+        transcript = UiTranscript(messages = listOf(activity(operations("s", "second"))))
+        onNodeWithText("second").assertIsDisplayed()
+        assertEquals(emptyList(), warnings)
     }
 }
