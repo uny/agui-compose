@@ -164,7 +164,8 @@ public class AgentSession(
 
     /**
      * The interrupts the thread is waiting on: those of the last run that ended cleanly, when it
-     * stopped to ask. Empty on a thread that may [run] or [send].
+     * stopped to ask. Empty on a thread that is not waiting; while it is not empty, [run] and
+     * [send] throw unless a failed [resume] left its answers owed, in which case they retry it.
      *
      * The same list [RunState.Finished.interrupts] carries, held here because the transcript stops
      * carrying it the moment a run *fails* -- [RunState.Failed] names no interrupts -- while the
@@ -342,9 +343,10 @@ public class AgentSession(
      *
      * @param entries one answer per pending interrupt.
      * @param parameters as for [run].
-     * @throws IllegalStateException when the thread is not interrupted.
-     * @throws IllegalArgumentException when [entries] leaves a pending interrupt uncovered, names
-     *   one that is not pending, or names one twice.
+     * @throws IllegalStateException when the thread is not interrupted, or when [entries] leaves a
+     *   pending interrupt uncovered -- the thread's state is what the entries fail to match.
+     * @throws IllegalArgumentException when [entries] names an interrupt that is not pending, or
+     *   names one twice.
      */
     public suspend fun resume(entries: List<UiResumeEntry>, parameters: RunAgentParameters? = null): RunState =
         runs.withLock {
@@ -420,10 +422,10 @@ public class AgentSession(
                     is RunStartedEvent -> ended = false
                     is RunFinishedEvent -> {
                         ended = true
-                        // The run ended cleanly, so whatever this run carried was consumed, and
-                        // what the thread waits on now is what this run says -- nothing, when it
-                        // was done. Read off the event rather than the transcript so a stream
-                        // upstream's verifier stops after this event still leaves it right.
+                        // The run ended cleanly, so whatever this run carried was consumed.
+                        // Cleared here, on the event, so a stream upstream's verifier stops right
+                        // after it still leaves this right; what the thread waits on now is read
+                        // off the transcript once the event has folded, below.
                         unconsumed = emptyList()
                     }
                     // The verifier permits RUN_ERROR after RUN_FINISHED, and upstream's `HttpAgent`

@@ -20,8 +20,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
-
-
 /**
  * A question the run stopped to ask, with two answers: yes and no.
  *

@@ -63,6 +63,23 @@ class Material3InterruptTest {
         assertNull(answers.single().payload)
     }
 
+    /** A schema that asks for something other than `approved` is not answered with it. */
+    @Test
+    fun approvingASchemaWithoutApprovedResolvesWithNoPayload() = runComposeUiTest {
+        val answers = mutableListOf<UiResumeEntry>()
+        val schema = buildJsonObject {
+            put("type", JsonPrimitive("object"))
+            put("properties", buildJsonObject { put("slot", buildJsonObject { put("type", JsonPrimitive("string")) }) })
+        }
+        val other = UiInterrupt(id = "i3", reason = "schedule_meeting", message = "Pick a slot?", responseSchema = schema)
+        setContent { Material3TestSurface { AguiInterrupts(listOf(other), onResume = { answers += it }) } }
+
+        onNodeWithText(AguiStrings.APPROVE).performClick()
+
+        assertEquals(UiResumeStatus.RESOLVED, answers.single().status)
+        assertNull(answers.single().payload)
+    }
+
     @Test
     fun thePromptFallsBackToTheToolNameAndThenTheReason() = runComposeUiTest {
         val named = UiInterrupt(

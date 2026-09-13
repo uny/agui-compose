@@ -133,6 +133,23 @@ class AgentSessionResumeTest {
 
         session.resume(listOf(UiResumeEntry.cancelled(i2), UiResumeEntry.cancelled(i1)))
         assertEquals(listOf("i2", "i1"), agent.inputs[1].resume?.map { it.interruptId })
+        assertEquals(listOf(ResumeStatus.CANCELLED, ResumeStatus.CANCELLED), agent.inputs[1].resume?.map { it.status })
+    }
+
+    /** Once a resume's run has ended cleanly its answers are consumed: the next turn carries none. */
+    @Test
+    fun a_turn_after_a_clean_resume_carries_no_resume() = runTest {
+        val agent = ScriptedAgent(askThenAnswer())
+        val session = AgentSession(agent)
+        val asked = session.run(RunAgentParameters(runId = "r1")) as RunState.Finished
+        session.resume(listOf(UiResumeEntry.cancelled(asked.interrupts.single())))
+
+        // The script asks again on any run carrying no resume, which is fine: what matters is that
+        // this turn was not refused for answers already consumed, and carried none.
+        session.send("and then?")
+
+        assertEquals(3, agent.inputs.size)
+        assertNull(agent.inputs[2].resume)
     }
 
     @Test
