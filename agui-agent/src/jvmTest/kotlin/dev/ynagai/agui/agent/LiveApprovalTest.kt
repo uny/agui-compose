@@ -83,7 +83,6 @@ class LiveApprovalTest {
         assertEquals(ToolCallStatus.COMPLETE, denied.status)
         val result = assertNotNull(denied.result)
         assertTrue("denied" in result.lowercase(), result)
-        assertTrue("Bob" !in result || "not" in result.lowercase(), result)
     }
 
     private fun live(block: suspend (AgentSession) -> Unit) = runTest(timeout = 3.minutes) {

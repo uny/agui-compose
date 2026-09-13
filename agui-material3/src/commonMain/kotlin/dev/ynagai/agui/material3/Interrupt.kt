@@ -38,7 +38,7 @@ import kotlinx.serialization.json.buildJsonObject
  * `false`, because abandoning is the answer every producer has to accept, and a producer that
  * distinguishes the two has been told the honest thing, that the reader declined to answer
  * (Strands answers its own approval hook `{"approved": false}` for it, and the call gets a
- * denial for its result; a generic interrupt of its gets the `cancelled` envelope). A question
+ * denial for its result; a generic Strands interrupt gets the `cancelled` envelope). A question
  * whose schema wants more than a boolean gets these same two buttons, and an application with
  * such a producer replaces this slot with the form its schema deserves.
  *
