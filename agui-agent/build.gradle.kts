@@ -122,9 +122,16 @@ mavenPublishing {
 
 /**
  * `AGUI_LIVE_APPROVAL_URL` is the switch on `LiveApprovalTest`, and Gradle does not read the
- * environment when deciding whether a test task is up to date. Without this line the task after
- * setting the variable is skipped as unchanged, and the test measured nothing.
+ * environment when deciding whether a test task is up to date. Without the input the task after
+ * setting the variable is skipped as unchanged, and the test measured nothing. The input alone is
+ * not enough either: a second run against the same URL has the same inputs, and Gradle would
+ * report it up to date -- or restore it from the build cache -- without a request reaching the
+ * server. A live run is a measurement of something outside the build, so while the variable is
+ * set the task is never up to date and never cached. Blank counts as unset, as it does in the test.
  */
 tasks.withType<Test>().configureEach {
-    inputs.property("agui.live.approval.url", System.getenv("AGUI_LIVE_APPROVAL_URL") ?: "")
+    val live = System.getenv("AGUI_LIVE_APPROVAL_URL")?.takeIf { it.isNotBlank() }
+    inputs.property("agui.live.approval.url", live ?: "")
+    outputs.upToDateWhen { live == null }
+    outputs.cacheIf { live == null }
 }
