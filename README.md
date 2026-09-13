@@ -401,6 +401,7 @@ middleware sends beside the schema, for the catalog the renderer holds; send it 
 
 ```kotlin
 import com.agui.client.agent.RunAgentParameters
+import dev.ynagai.a2ui.compose.BasicCatalog
 import dev.ynagai.agui.a2ui.A2uiRequest
 
 val request = A2uiRequest(BasicCatalog.definition)
@@ -408,7 +409,9 @@ val parameters = RunAgentParameters(context = request.context(), forwardedProps 
 session.send("Show me the hotels", parameters)
 ```
 
-Without it an agent answers in text and the stream says nothing about why. The reasoning, and what
+Without it, upstream's adapters never inject their tool: the agent answers in text and the stream
+says nothing about why. An agent that calls `render_a2ui` itself, through a `RenderA2UiTool` the
+client registered, needs no flag to draw. The reasoning, and what
 was and was not measured against a live server, is in
 [docs/decisions/0011](docs/decisions/0011-asking-an-agent-to-draw.md).
 
