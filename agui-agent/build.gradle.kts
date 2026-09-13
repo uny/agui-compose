@@ -119,3 +119,12 @@ mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
 }
+
+/**
+ * `AGUI_LIVE_APPROVAL_URL` is the switch on `LiveApprovalTest`, and Gradle does not read the
+ * environment when deciding whether a test task is up to date. Without this line the task after
+ * setting the variable is skipped as unchanged, and the test measured nothing.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.property("agui.live.approval.url", System.getenv("AGUI_LIVE_APPROVAL_URL") ?: "")
+}

@@ -9,3 +9,7 @@ captures/
 *.iml
 .DS_Store
 xcuserdata/
+
+# The live-check server under docs/live/
+.venv/
+__pycache__/

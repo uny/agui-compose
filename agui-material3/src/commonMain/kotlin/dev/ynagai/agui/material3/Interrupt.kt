@@ -36,10 +36,11 @@ import kotlinx.serialization.json.buildJsonObject
  * property and with no payload otherwise, which is what a producer that asked for a bare
  * go-ahead reads as one; the negative *abandons* the interrupt rather than resolving it with
  * `false`, because abandoning is the answer every producer has to accept, and a producer that
- * distinguishes the two (Strands does: cancelled reaches the tool as an error) has been told
- * the honest thing, that the reader declined to answer. A question whose schema wants more than
- * a boolean gets these same two buttons, and an application with such a producer replaces this
- * slot with the form its schema deserves.
+ * distinguishes the two has been told the honest thing, that the reader declined to answer
+ * (Strands answers its own approval hook `{"approved": false}` for it, and the call gets a
+ * denial for its result; a generic interrupt of its gets the `cancelled` envelope). A question
+ * whose schema wants more than a boolean gets these same two buttons, and an application with
+ * such a producer replaces this slot with the form its schema deserves.
  *
  * The prompt is [UiInterrupt.message] when the producer wrote one; the tool's name from
  * [UiInterrupt.metadata] when it did not but named a tool the Strands way; and the bare

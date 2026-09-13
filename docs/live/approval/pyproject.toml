@@ -1,0 +1,15 @@
+# The server `agui-agent`'s `LiveApprovalTest` measures against. See README.md beside this file.
+[project]
+name = "agui-compose-live-approval"
+version = "0.0.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "ag_ui_strands",
+  "strands-agents[openai,anthropic,gemini]>=1.35.0",
+  "fastapi>=0.115.12",
+  "uvicorn>=0.34.3",
+]
+
+[tool.uv.sources]
+# The adapter as upstream ships it, at the commit these instructions were measured against.
+ag_ui_strands = { git = "https://github.com/ag-ui-protocol/ag-ui", subdirectory = "integrations/aws-strands/python", rev = "7479336" }
