@@ -11,11 +11,14 @@ final class dev.ynagai.agui.agent/AgentSession { // dev.ynagai.agui.agent/AgentS
 
     final val agent // dev.ynagai.agui.agent/AgentSession.agent|{}agent[0]
         final fun <get-agent>(): com.agui.client.agent/AbstractAgent // dev.ynagai.agui.agent/AgentSession.agent.<get-agent>|<get-agent>(){}[0]
+    final val pendingInterrupts // dev.ynagai.agui.agent/AgentSession.pendingInterrupts|{}pendingInterrupts[0]
+        final fun <get-pendingInterrupts>(): kotlinx.coroutines.flow/StateFlow<kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt>> // dev.ynagai.agui.agent/AgentSession.pendingInterrupts.<get-pendingInterrupts>|<get-pendingInterrupts>(){}[0]
     final val tools // dev.ynagai.agui.agent/AgentSession.tools|{}tools[0]
         final fun <get-tools>(): com.agui.tools/ToolRegistry? // dev.ynagai.agui.agent/AgentSession.tools.<get-tools>|<get-tools>(){}[0]
     final val transcript // dev.ynagai.agui.agent/AgentSession.transcript|{}transcript[0]
         final fun <get-transcript>(): kotlinx.coroutines.flow/StateFlow<dev.ynagai.agui.model/UiTranscript> // dev.ynagai.agui.agent/AgentSession.transcript.<get-transcript>|<get-transcript>(){}[0]
 
+    final suspend fun resume(kotlin.collections/List<dev.ynagai.agui.model/UiResumeEntry>, com.agui.client.agent/RunAgentParameters? = ...): dev.ynagai.agui.model/RunState // dev.ynagai.agui.agent/AgentSession.resume|resume(kotlin.collections.List<dev.ynagai.agui.model.UiResumeEntry>;com.agui.client.agent.RunAgentParameters?){}[0]
     final suspend fun run(com.agui.client.agent/RunAgentParameters? = ...): dev.ynagai.agui.model/RunState // dev.ynagai.agui.agent/AgentSession.run|run(com.agui.client.agent.RunAgentParameters?){}[0]
     final suspend fun send(com.agui.core.types/UserMessage, com.agui.client.agent/RunAgentParameters? = ...): dev.ynagai.agui.model/RunState // dev.ynagai.agui.agent/AgentSession.send|send(com.agui.core.types.UserMessage;com.agui.client.agent.RunAgentParameters?){}[0]
     final suspend fun send(kotlin/String, com.agui.client.agent/RunAgentParameters? = ...): dev.ynagai.agui.model/RunState // dev.ynagai.agui.agent/AgentSession.send|send(kotlin.String;com.agui.client.agent.RunAgentParameters?){}[0]

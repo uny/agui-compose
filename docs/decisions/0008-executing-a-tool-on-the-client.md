@@ -91,7 +91,8 @@ Two facts about the surrounding pieces bear on the shape:
    adjacent refuse -- the same `tools`, `context` and `forwardedProps`, a new run id. That run may call a tool too, and is answered the
    same way, until one does not. `run` and `send` suspend for the whole exchange and return the
    state the *last* run ended in. An interrupted run is a finished run: a tool this client executed
-   is the answer the interrupt was waiting on. A tool the registry does not hold is left where the
+   is the answer the interrupt was waiting on *(superseded by decision 10: it is not, and an
+   interrupted run is not continued this way)*. A tool the registry does not hold is left where the
    protocol leaves it, which is also where a human-in-the-loop approval sits.
 5. **A result whose run did not finish is kept, not dropped.** A `RUN_ERROR`, a throw, or a
    cancellation while a tool was executing leaves the result folded on screen and held by the
@@ -132,4 +133,7 @@ Verified against `server-starter-all-features`' `/agentic_chat`, which calls tha
   "awaiting a human" state, and adding one is an `agui-model` ABI change that should follow a
   measurement of what upstream's interrupt outcome actually carries. Human-in-the-loop is
   reachable today -- the run stops interrupted, the client `send`s or `run`s when it is ready --
-  but not drawn as such.
+  but not drawn as such. *Superseded by decision 10: the measurement found that a run which
+  stopped to ask may not be continued by `send` or `run` at all, and that a tool result is not an
+  answer to it. The "interrupted run whose tool ran here is answered" behaviour described above is
+  gone.*

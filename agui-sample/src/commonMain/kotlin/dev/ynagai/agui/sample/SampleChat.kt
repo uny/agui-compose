@@ -9,6 +9,8 @@ import com.agui.tools.toolRegistry
 import dev.ynagai.agui.a2ui.catalogContext
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiInterrupt
+import dev.ynagai.agui.model.UiResumeEntry
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -104,6 +106,13 @@ public class SampleChat(
     public suspend fun send(text: String): RunState? = mutableConnection.value?.session?.send(text, parameters)
 
     /**
+     * Answers what the last run stopped to ask for, and suspends until the run that carries the
+     * answers has ended. `null` when there is nothing to answer it to, as for [send].
+     */
+    public suspend fun resume(entries: List<UiResumeEntry>): RunState? =
+        mutableConnection.value?.session?.resume(entries, parameters)
+
+    /**
      * What every run carries besides the messages: the catalog this window draws, as the
      * `Context` entry upstream's middleware reads the catalog id from. Against the replay server
      * it is ignored, as everything in the request is; against a live middleware it is what keeps
@@ -134,6 +143,9 @@ public class SampleChat(
         public val agent: AbstractAgent,
         public val session: AgentSession,
     ) {
+        /** What the thread is waiting on; the composer stays closed while this is not empty. */
+        public val pendingInterrupts: StateFlow<List<UiInterrupt>> get() = session.pendingInterrupts
+
         /** The transcript of this thread, growing with every run. */
         public val transcript: StateFlow<UiTranscript> get() = session.transcript
     }

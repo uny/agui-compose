@@ -25,6 +25,7 @@ import com.agui.tools.toolRegistry
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
+import dev.ynagai.agui.model.UiResumeEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.awaitCancellation
@@ -136,20 +137,30 @@ class AgentSessionToolsTest {
     }
 
     /**
-     * A tool the agent stopped for -- `RUN_FINISHED` with an interrupt outcome -- is a tool this
-     * client executed, and its result is what the interrupt was waiting on.
+     * A run that stopped to *ask* is not answered by a tool result. The protocol says a run that
+     * stopped for a frontend tool finishes as success, so an interrupt outcome is a question only
+     * the next run's `resume` can answer -- and the result the client has meanwhile is kept, and
+     * goes out with that resume, placed after its call.
      */
     @Test
-    fun an_interrupted_run_whose_tool_ran_here_is_answered() = runTest {
+    fun an_interrupted_run_is_not_answered_by_the_tool_that_ran_here() = runTest {
         val interrupt = RunFinishedInterruptOutcome(interrupts = listOf(Interrupt(id = "i1", reason = "approve")))
         val agent = ScriptedAgent(callThenAnswer(outcome = interrupt))
         val session = AgentSession(agent, tools = toolRegistry(Echo()))
 
         val ended = session.run(RunAgentParameters(runId = "r1"))
 
-        assertEquals(2, agent.inputs.size)
+        assertEquals(1, agent.inputs.size)
         assertIs<RunState.Finished>(ended)
-        assertEquals(false, ended.interrupted)
+        assertEquals(true, ended.interrupted)
+        assertEquals(listOf("i1"), session.pendingInterrupts.value.map { it.id })
+
+        session.resume(listOf(UiResumeEntry.cancelled(ended.interrupts.single())))
+
+        assertEquals(2, agent.inputs.size)
+        assertEquals(listOf("i1"), agent.inputs[1].resume?.map { it.interruptId })
+        assertEquals(listOf("c1"), agent.inputs[1].messages.filterIsInstance<ToolMessage>().map { it.toolCallId })
+        assertEquals(emptyList(), session.pendingInterrupts.value)
     }
 
     /**

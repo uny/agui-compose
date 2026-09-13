@@ -5,6 +5,7 @@ import com.agui.core.types.ToolCall
 import com.agui.core.types.ToolMessage
 import com.agui.tools.ToolExecutionContext
 import dev.ynagai.agui.model.RunState
+import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
 import dev.ynagai.agui.model.UiRole
@@ -173,8 +174,8 @@ class SampleChatTest {
         assertEquals("thread t — running r", statusLine("t", RunState.Running(threadId = "t", runId = "r")))
         assertEquals("thread t — finished", statusLine("t", RunState.Finished(threadId = "t", runId = "r")))
         assertEquals(
-            "thread t — interrupted",
-            statusLine("t", RunState.Finished(threadId = "t", runId = "r", interrupted = true)),
+            "thread t — waiting on 1 answer(s)",
+            statusLine("t", RunState.Finished(threadId = "t", runId = "r", interrupts = listOf(UiInterrupt(id = "i1", reason = "approve")))),
         )
         assertEquals("thread t — failed: boom", statusLine("t", RunState.Failed(message = "boom")))
     }

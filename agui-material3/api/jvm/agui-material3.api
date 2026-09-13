@@ -1,10 +1,18 @@
+public final class dev/ynagai/agui/material3/ComposableSingletons$InterruptKt {
+	public static final field INSTANCE Ldev/ynagai/agui/material3/ComposableSingletons$InterruptKt;
+	public fun <init> ()V
+	public final fun getLambda$1048565156$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$439967010$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function3;
+}
+
 public final class dev/ynagai/agui/material3/ComposableSingletons$Material3AguiKt {
 	public static final field INSTANCE Ldev/ynagai/agui/material3/ComposableSingletons$Material3AguiKt;
 	public fun <init> ()V
-	public final fun getLambda$-2053215658$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function5;
 	public final fun getLambda$-489416674$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function4;
 	public final fun getLambda$1183915535$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$1237461086$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function5;
 	public final fun getLambda$1430160920$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$1856384855$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function5;
 	public final fun getLambda$303435014$dev_ynagai_agui_agui_material3 ()Lkotlin/jvm/functions/Function4;
 }
 

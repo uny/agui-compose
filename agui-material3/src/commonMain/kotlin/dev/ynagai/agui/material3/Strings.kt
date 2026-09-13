@@ -21,6 +21,10 @@ internal object AguiStrings {
     const val SYSTEM = "System"
     const val DEVELOPER = "Developer"
     const val FAILED = "failed"
+    const val APPROVE = "Approve"
+    const val DECLINE = "Decline"
+
+    fun approveCall(toolName: String): String = "Approve call to $toolName?"
 
     fun toolCallStatus(status: ToolCallStatus): String = when (status) {
         // The two in-flight states are drawn as one word. They differ in whether the arguments
@@ -29,6 +33,7 @@ internal object AguiStrings {
         // so already.
         ToolCallStatus.STREAMING_ARGUMENTS -> "running"
         ToolCallStatus.AWAITING_RESULT -> "running"
+        ToolCallStatus.AWAITING_APPROVAL -> "awaiting approval"
         ToolCallStatus.COMPLETE -> "done"
         ToolCallStatus.FAILED -> FAILED
     }

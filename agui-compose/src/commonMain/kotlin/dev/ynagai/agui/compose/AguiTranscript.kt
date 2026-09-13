@@ -1,5 +1,6 @@
 package dev.ynagai.agui.compose
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -11,8 +12,10 @@ import dev.ynagai.agui.model.FilePart
 import dev.ynagai.agui.model.ReasoningPart
 import dev.ynagai.agui.model.TextPart
 import dev.ynagai.agui.model.ToolCallPart
+import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.UiMessage
 import dev.ynagai.agui.model.UiPart
+import dev.ynagai.agui.model.UiResumeEntry
 import dev.ynagai.agui.model.UiTranscript
 
 /**
@@ -22,7 +25,8 @@ import dev.ynagai.agui.model.UiTranscript
  * drawn and are not silently dropped either -- they are the transcript's *status*, and where a
  * status belongs on screen (a banner, a toolbar, an error sheet, nowhere) is an application's
  * layout decision that this composable would be guessing at. They stay on the transcript the caller
- * already holds.
+ * already holds. The one piece of status that has a drawing of its own is what a run stopped to
+ * ask for, and [AguiInterrupts] draws that where the application puts it.
  *
  * A [LazyColumn] rather than a scrolling [Column][androidx.compose.foundation.layout.Column]: a
  * transcript grows without bound and every *message* off screen would otherwise stay composed.
@@ -96,5 +100,36 @@ public fun AguiPart(part: UiPart, modifier: Modifier = Modifier) {
         is ToolCallPart -> components.toolCall(part, modifier)
         is ActivityPart -> components.activity(part, modifier)
         is FilePart -> components.file(part, modifier)
+    }
+}
+
+/**
+ * Draws what the run stopped to ask for, each through [AguiComponents.interrupt].
+ *
+ * Separate from [AguiTranscript] because an interrupt is not a message: it is the thread's
+ * status, and where a question waiting on the reader belongs -- under the transcript, above the
+ * composer, in a sheet -- is the application's layout decision. Pass
+ * [dev.ynagai.agui.model.pendingInterrupts] of the transcript's run, or better the list
+ * `agui-agent`'s session observes: a run that *fails* after asking drops them from
+ * [dev.ynagai.agui.model.RunState], and the session keeps them for the retry.
+ *
+ * Nothing when [interrupts] is empty, and nothing is measured either -- an empty [Column] takes
+ * no space -- so this can sit in a layout unconditionally.
+ *
+ * @param onResume what the reader answered, one entry per interrupt answered. Answering is the
+ *   caller's job from here: `agui-agent`'s `AgentSession.resume` takes every answer at once, since
+ *   the protocol lets no run start until every interrupt has one.
+ */
+@Composable
+public fun AguiInterrupts(
+    interrupts: List<UiInterrupt>,
+    onResume: (UiResumeEntry) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val components = LocalAguiComponents.current
+    Column(modifier) {
+        interrupts.forEach { interrupt ->
+            key(interrupt.id) { components.interrupt(interrupt, onResume, Modifier) }
+        }
     }
 }

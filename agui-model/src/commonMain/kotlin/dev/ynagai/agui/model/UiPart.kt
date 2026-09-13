@@ -103,6 +103,11 @@ public data class ToolCallPart(
  * [AWAITING_RESULT] is the state a *frontend* tool sits in while the client executes it, and is
  * also the state a backend tool sits in while the agent runs it. The protocol does not distinguish
  * the two -- both are "the call is complete and no result has arrived" -- so neither does this.
+ *
+ * [AWAITING_APPROVAL] is the one state the protocol *does* distinguish: the run ended with an
+ * interrupt naming this call, and nothing happens to it until the client answers. The interrupt
+ * itself -- the prompt, the answer's schema -- is on the run ([RunState.Finished.interrupts]), not
+ * here, because an interrupt need not name a call at all.
  */
 public enum class ToolCallStatus {
     /** Arguments are still arriving; `TOOL_CALL_END` has not been seen. */
@@ -110,6 +115,13 @@ public enum class ToolCallStatus {
 
     /** Arguments are complete. No `TOOL_CALL_RESULT` has named this call yet. */
     AWAITING_RESULT,
+
+    /**
+     * The run stopped to ask whether this call may go ahead. Back to [AWAITING_RESULT] when the
+     * next run starts, whatever the answer was: an approved call's result arrives in that run, and
+     * a declined one is the producer's to report, or not.
+     */
+    AWAITING_APPROVAL,
 
     /** A result arrived. */
     COMPLETE,

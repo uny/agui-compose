@@ -7,6 +7,7 @@
 
 // Library unique name: <dev.ynagai.agui:agui-model>
 final enum class dev.ynagai.agui.model/ToolCallStatus : kotlin/Enum<dev.ynagai.agui.model/ToolCallStatus> { // dev.ynagai.agui.model/ToolCallStatus|null[0]
+    enum entry AWAITING_APPROVAL // dev.ynagai.agui.model/ToolCallStatus.AWAITING_APPROVAL|null[0]
     enum entry AWAITING_RESULT // dev.ynagai.agui.model/ToolCallStatus.AWAITING_RESULT|null[0]
     enum entry COMPLETE // dev.ynagai.agui.model/ToolCallStatus.COMPLETE|null[0]
     enum entry FAILED // dev.ynagai.agui.model/ToolCallStatus.FAILED|null[0]
@@ -17,6 +18,17 @@ final enum class dev.ynagai.agui.model/ToolCallStatus : kotlin/Enum<dev.ynagai.a
 
     final fun valueOf(kotlin/String): dev.ynagai.agui.model/ToolCallStatus // dev.ynagai.agui.model/ToolCallStatus.valueOf|valueOf#static(kotlin.String){}[0]
     final fun values(): kotlin/Array<dev.ynagai.agui.model/ToolCallStatus> // dev.ynagai.agui.model/ToolCallStatus.values|values#static(){}[0]
+}
+
+final enum class dev.ynagai.agui.model/UiResumeStatus : kotlin/Enum<dev.ynagai.agui.model/UiResumeStatus> { // dev.ynagai.agui.model/UiResumeStatus|null[0]
+    enum entry CANCELLED // dev.ynagai.agui.model/UiResumeStatus.CANCELLED|null[0]
+    enum entry RESOLVED // dev.ynagai.agui.model/UiResumeStatus.RESOLVED|null[0]
+
+    final val entries // dev.ynagai.agui.model/UiResumeStatus.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.ynagai.agui.model/UiResumeStatus> // dev.ynagai.agui.model/UiResumeStatus.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.ynagai.agui.model/UiResumeStatus // dev.ynagai.agui.model/UiResumeStatus.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.ynagai.agui.model/UiResumeStatus> // dev.ynagai.agui.model/UiResumeStatus.values|values#static(){}[0]
 }
 
 final enum class dev.ynagai.agui.model/UiRole : kotlin/Enum<dev.ynagai.agui.model/UiRole> { // dev.ynagai.agui.model/UiRole|null[0]
@@ -51,10 +63,12 @@ sealed interface dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunSt
     }
 
     final class Finished : dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunState.Finished|null[0]
-        constructor <init>(kotlin/String, kotlin/String, kotlinx.serialization.json/JsonElement? = ..., kotlin/Boolean = ...) // dev.ynagai.agui.model/RunState.Finished.<init>|<init>(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Boolean){}[0]
+        constructor <init>(kotlin/String, kotlin/String, kotlinx.serialization.json/JsonElement? = ..., kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> = ...) // dev.ynagai.agui.model/RunState.Finished.<init>|<init>(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.collections.List<dev.ynagai.agui.model.UiInterrupt>){}[0]
 
         final val interrupted // dev.ynagai.agui.model/RunState.Finished.interrupted|{}interrupted[0]
             final fun <get-interrupted>(): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.interrupted.<get-interrupted>|<get-interrupted>(){}[0]
+        final val interrupts // dev.ynagai.agui.model/RunState.Finished.interrupts|{}interrupts[0]
+            final fun <get-interrupts>(): kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> // dev.ynagai.agui.model/RunState.Finished.interrupts.<get-interrupts>|<get-interrupts>(){}[0]
         final val result // dev.ynagai.agui.model/RunState.Finished.result|{}result[0]
             final fun <get-result>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/RunState.Finished.result.<get-result>|<get-result>(){}[0]
         final val runId // dev.ynagai.agui.model/RunState.Finished.runId|{}runId[0]
@@ -65,8 +79,8 @@ sealed interface dev.ynagai.agui.model/RunState { // dev.ynagai.agui.model/RunSt
         final fun component1(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.component1|component1(){}[0]
         final fun component2(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.component2|component2(){}[0]
         final fun component3(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/RunState.Finished.component3|component3(){}[0]
-        final fun component4(): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.component4|component4(){}[0]
-        final fun copy(kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/Boolean = ...): dev.ynagai.agui.model/RunState.Finished // dev.ynagai.agui.model/RunState.Finished.copy|copy(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.Boolean){}[0]
+        final fun component4(): kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> // dev.ynagai.agui.model/RunState.Finished.component4|component4(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> = ...): dev.ynagai.agui.model/RunState.Finished // dev.ynagai.agui.model/RunState.Finished.copy|copy(kotlin.String;kotlin.String;kotlinx.serialization.json.JsonElement?;kotlin.collections.List<dev.ynagai.agui.model.UiInterrupt>){}[0]
         final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/RunState.Finished.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/RunState.Finished.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // dev.ynagai.agui.model/RunState.Finished.toString|toString(){}[0]
@@ -259,6 +273,37 @@ final class dev.ynagai.agui.model/ToolCallPart : dev.ynagai.agui.model/UiPart { 
     final fun toString(): kotlin/String // dev.ynagai.agui.model/ToolCallPart.toString|toString(){}[0]
 }
 
+final class dev.ynagai.agui.model/UiInterrupt { // dev.ynagai.agui.model/UiInterrupt|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/String? = ..., kotlinx.serialization.json/JsonElement? = ...) // dev.ynagai.agui.model/UiInterrupt.<init>|<init>(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlinx.serialization.json.JsonElement?;kotlin.String?;kotlinx.serialization.json.JsonElement?){}[0]
+
+    final val expiresAt // dev.ynagai.agui.model/UiInterrupt.expiresAt|{}expiresAt[0]
+        final fun <get-expiresAt>(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.expiresAt.<get-expiresAt>|<get-expiresAt>(){}[0]
+    final val id // dev.ynagai.agui.model/UiInterrupt.id|{}id[0]
+        final fun <get-id>(): kotlin/String // dev.ynagai.agui.model/UiInterrupt.id.<get-id>|<get-id>(){}[0]
+    final val message // dev.ynagai.agui.model/UiInterrupt.message|{}message[0]
+        final fun <get-message>(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.message.<get-message>|<get-message>(){}[0]
+    final val metadata // dev.ynagai.agui.model/UiInterrupt.metadata|{}metadata[0]
+        final fun <get-metadata>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiInterrupt.metadata.<get-metadata>|<get-metadata>(){}[0]
+    final val reason // dev.ynagai.agui.model/UiInterrupt.reason|{}reason[0]
+        final fun <get-reason>(): kotlin/String // dev.ynagai.agui.model/UiInterrupt.reason.<get-reason>|<get-reason>(){}[0]
+    final val responseSchema // dev.ynagai.agui.model/UiInterrupt.responseSchema|{}responseSchema[0]
+        final fun <get-responseSchema>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiInterrupt.responseSchema.<get-responseSchema>|<get-responseSchema>(){}[0]
+    final val toolCallId // dev.ynagai.agui.model/UiInterrupt.toolCallId|{}toolCallId[0]
+        final fun <get-toolCallId>(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.toolCallId.<get-toolCallId>|<get-toolCallId>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/UiInterrupt.component1|component1(){}[0]
+    final fun component2(): kotlin/String // dev.ynagai.agui.model/UiInterrupt.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.component4|component4(){}[0]
+    final fun component5(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiInterrupt.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // dev.ynagai.agui.model/UiInterrupt.component6|component6(){}[0]
+    final fun component7(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiInterrupt.component7|component7(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlinx.serialization.json/JsonElement? = ..., kotlin/String? = ..., kotlinx.serialization.json/JsonElement? = ...): dev.ynagai.agui.model/UiInterrupt // dev.ynagai.agui.model/UiInterrupt.copy|copy(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlinx.serialization.json.JsonElement?;kotlin.String?;kotlinx.serialization.json.JsonElement?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/UiInterrupt.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/UiInterrupt.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/UiInterrupt.toString|toString(){}[0]
+}
+
 final class dev.ynagai.agui.model/UiMessage { // dev.ynagai.agui.model/UiMessage|null[0]
     constructor <init>(kotlin/String, dev.ynagai.agui.model/UiRole, kotlin.collections/List<dev.ynagai.agui.model/UiPart> = ..., kotlin/String? = ...) // dev.ynagai.agui.model/UiMessage.<init>|<init>(kotlin.String;dev.ynagai.agui.model.UiRole;kotlin.collections.List<dev.ynagai.agui.model.UiPart>;kotlin.String?){}[0]
 
@@ -285,6 +330,30 @@ final class dev.ynagai.agui.model/UiMessage { // dev.ynagai.agui.model/UiMessage
     final fun toString(): kotlin/String // dev.ynagai.agui.model/UiMessage.toString|toString(){}[0]
 }
 
+final class dev.ynagai.agui.model/UiResumeEntry { // dev.ynagai.agui.model/UiResumeEntry|null[0]
+    constructor <init>(kotlin/String, dev.ynagai.agui.model/UiResumeStatus, kotlinx.serialization.json/JsonElement? = ...) // dev.ynagai.agui.model/UiResumeEntry.<init>|<init>(kotlin.String;dev.ynagai.agui.model.UiResumeStatus;kotlinx.serialization.json.JsonElement?){}[0]
+
+    final val interruptId // dev.ynagai.agui.model/UiResumeEntry.interruptId|{}interruptId[0]
+        final fun <get-interruptId>(): kotlin/String // dev.ynagai.agui.model/UiResumeEntry.interruptId.<get-interruptId>|<get-interruptId>(){}[0]
+    final val payload // dev.ynagai.agui.model/UiResumeEntry.payload|{}payload[0]
+        final fun <get-payload>(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiResumeEntry.payload.<get-payload>|<get-payload>(){}[0]
+    final val status // dev.ynagai.agui.model/UiResumeEntry.status|{}status[0]
+        final fun <get-status>(): dev.ynagai.agui.model/UiResumeStatus // dev.ynagai.agui.model/UiResumeEntry.status.<get-status>|<get-status>(){}[0]
+
+    final fun component1(): kotlin/String // dev.ynagai.agui.model/UiResumeEntry.component1|component1(){}[0]
+    final fun component2(): dev.ynagai.agui.model/UiResumeStatus // dev.ynagai.agui.model/UiResumeEntry.component2|component2(){}[0]
+    final fun component3(): kotlinx.serialization.json/JsonElement? // dev.ynagai.agui.model/UiResumeEntry.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., dev.ynagai.agui.model/UiResumeStatus = ..., kotlinx.serialization.json/JsonElement? = ...): dev.ynagai.agui.model/UiResumeEntry // dev.ynagai.agui.model/UiResumeEntry.copy|copy(kotlin.String;dev.ynagai.agui.model.UiResumeStatus;kotlinx.serialization.json.JsonElement?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.model/UiResumeEntry.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/UiResumeEntry.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // dev.ynagai.agui.model/UiResumeEntry.toString|toString(){}[0]
+
+    final object Companion { // dev.ynagai.agui.model/UiResumeEntry.Companion|null[0]
+        final fun cancelled(dev.ynagai.agui.model/UiInterrupt): dev.ynagai.agui.model/UiResumeEntry // dev.ynagai.agui.model/UiResumeEntry.Companion.cancelled|cancelled(dev.ynagai.agui.model.UiInterrupt){}[0]
+        final fun resolved(dev.ynagai.agui.model/UiInterrupt, kotlinx.serialization.json/JsonElement? = ...): dev.ynagai.agui.model/UiResumeEntry // dev.ynagai.agui.model/UiResumeEntry.Companion.resolved|resolved(dev.ynagai.agui.model.UiInterrupt;kotlinx.serialization.json.JsonElement?){}[0]
+    }
+}
+
 final class dev.ynagai.agui.model/UiTranscript { // dev.ynagai.agui.model/UiTranscript|null[0]
     constructor <init>(kotlin.collections/List<dev.ynagai.agui.model/UiMessage> = ..., dev.ynagai.agui.model/RunState = ..., kotlinx.serialization.json/JsonElement = ..., kotlin.collections/List<kotlin/String> = ...) // dev.ynagai.agui.model/UiTranscript.<init>|<init>(kotlin.collections.List<dev.ynagai.agui.model.UiMessage>;dev.ynagai.agui.model.RunState;kotlinx.serialization.json.JsonElement;kotlin.collections.List<kotlin.String>){}[0]
 
@@ -306,3 +375,6 @@ final class dev.ynagai.agui.model/UiTranscript { // dev.ynagai.agui.model/UiTran
     final fun hashCode(): kotlin/Int // dev.ynagai.agui.model/UiTranscript.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // dev.ynagai.agui.model/UiTranscript.toString|toString(){}[0]
 }
+
+final val dev.ynagai.agui.model/pendingInterrupts // dev.ynagai.agui.model/pendingInterrupts|@dev.ynagai.agui.model.RunState{}pendingInterrupts[0]
+    final fun (dev.ynagai.agui.model/RunState).<get-pendingInterrupts>(): kotlin.collections/List<dev.ynagai.agui.model/UiInterrupt> // dev.ynagai.agui.model/pendingInterrupts.<get-pendingInterrupts>|<get-pendingInterrupts>@dev.ynagai.agui.model.RunState(){}[0]

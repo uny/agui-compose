@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
@@ -11,7 +12,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
+import com.agui.core.types.ResumeStatus
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -62,6 +65,65 @@ class SampleAppTest {
         // The transcript's own report, which `AguiTranscript` deliberately does not draw -- so if
         // the sample stopped drawing it, nothing else here would notice.
         onNodeWithText("thread $THREAD — finished").assertExists()
+    }
+
+    /**
+     * A run that stops to ask closes the composer and puts the question on screen; the answer
+     * goes out as the next input's `resume`, and the composer opens again once it has.
+     */
+    @Test
+    fun a_run_that_stops_to_ask_is_answered_from_the_card() = runComposeUiTest {
+        val agents = mutableListOf<ScriptedAgent>()
+        setContent { SampleApp(chat = SampleChat { ScriptedAgent(it, asks = true).also { agents += it } }) }
+
+        onNodeWithText("AG-UI endpoint").performTextInput("http://localhost:8000/")
+        onNodeWithText("Connect").performClick()
+        onNodeWithText("Message").performTextInput("transfer")
+        onNodeWithText("Send").performClick()
+
+        waitUntil { onAllNodesWithText(PROMPT).fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Message").assertIsNotEnabled()
+        onNodeWithText("thread $THREAD — waiting on 1 answer(s)").assertExists()
+
+        onNodeWithText("Approve").performClick()
+
+        waitUntil { onAllNodesWithText(ANSWER_DRAWN).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText(PROMPT).assertCountEquals(0)
+        onNodeWithText("Message").assertIsEnabled()
+        val entry = agents.single().inputs[1].resume!!.single()
+        assertEquals(INTERRUPT, entry.interruptId)
+        assertEquals(ResumeStatus.RESOLVED, entry.status)
+    }
+
+    /**
+     * A resume whose run fails leaves the thread waiting, and the card has to come back for the
+     * reader to answer again -- the composer stays closed, because `send` would be refused.
+     */
+    @Test
+    fun a_failed_resume_brings_the_card_back() = runComposeUiTest {
+        val agents = mutableListOf<ScriptedAgent>()
+        setContent {
+            SampleApp(chat = SampleChat { ScriptedAgent(it, asks = true).also { a -> a.resumesToFail = 1; agents += a } })
+        }
+
+        onNodeWithText("AG-UI endpoint").performTextInput("http://localhost:8000/")
+        onNodeWithText("Connect").performClick()
+        onNodeWithText("Message").performTextInput("transfer")
+        onNodeWithText("Send").performClick()
+        waitUntil { onAllNodesWithText(PROMPT).fetchSemanticsNodes().isNotEmpty() }
+
+        onNodeWithText("Decline").performClick()
+        waitUntil { onAllNodesWithText("thread $THREAD — failed: no (NOPE)").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText(PROMPT).assertExists()
+        onNodeWithText("Message").assertIsNotEnabled()
+
+        onNodeWithText("Decline").performClick()
+        waitUntil { onAllNodesWithText(ANSWER_DRAWN).fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Message").assertIsEnabled()
+        assertEquals(
+            listOf(ResumeStatus.CANCELLED, ResumeStatus.CANCELLED),
+            agents.single().inputs.drop(1).map { it.resume!!.single().status },
+        )
     }
 
     @Test

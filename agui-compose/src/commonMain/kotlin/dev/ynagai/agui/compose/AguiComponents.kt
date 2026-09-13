@@ -12,8 +12,10 @@ import dev.ynagai.agui.model.FilePart
 import dev.ynagai.agui.model.ReasoningPart
 import dev.ynagai.agui.model.TextPart
 import dev.ynagai.agui.model.ToolCallPart
+import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.UiMessage
 import dev.ynagai.agui.model.UiPart
+import dev.ynagai.agui.model.UiResumeEntry
 
 /**
  * One drawing function per kind of [UiPart], plus the frame a whole [UiMessage] sits in.
@@ -101,6 +103,29 @@ public data class AguiComponents(
     public val file: @Composable (part: FilePart, modifier: Modifier) -> Unit = { part, modifier ->
         BasicText(text = part.filename ?: part.mimeType, modifier = modifier)
     },
+
+    /**
+     * A question the run stopped to ask -- an approval, a choice -- and the way to answer it.
+     *
+     * Not a part: an interrupt belongs to the run, not to a message, and it is drawn by
+     * [AguiInterrupts] wherever the application puts that, not by [AguiTranscript]. The slot is
+     * here so that it is replaced the way every other surface is.
+     *
+     * The default draws the prompt and no way to answer it. That is the same honesty as the other
+     * defaults, and it costs more here: a question nobody can answer leaves the thread waiting.
+     * What an answer looks like -- a button, a form built from [UiInterrupt.responseSchema] -- is
+     * a design-system decision, and `agui-material3` makes it; an application below that layer
+     * replaces this slot and calls [onResume] with what its control produced.
+     */
+    public val interrupt:
+        @Composable (
+            interrupt: UiInterrupt,
+            onResume: (UiResumeEntry) -> Unit,
+            modifier: Modifier,
+        ) -> Unit =
+        { interrupt, _, modifier ->
+            BasicText(text = interrupt.message ?: interrupt.reason, modifier = modifier)
+        },
 
     /**
      * The frame one message's parts are laid out in.

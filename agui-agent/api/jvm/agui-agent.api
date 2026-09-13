@@ -5,8 +5,11 @@ public final class dev/ynagai/agui/agent/AgentSession {
 	public fun <init> (Lcom/agui/client/agent/AbstractAgent;Lcom/agui/tools/ToolRegistry;Lkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lcom/agui/client/agent/AbstractAgent;Lcom/agui/tools/ToolRegistry;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAgent ()Lcom/agui/client/agent/AbstractAgent;
+	public final fun getPendingInterrupts ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getTools ()Lcom/agui/tools/ToolRegistry;
 	public final fun getTranscript ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun resume (Ljava/util/List;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun resume$default (Ldev/ynagai/agui/agent/AgentSession;Ljava/util/List;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun run (Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun run$default (Ldev/ynagai/agui/agent/AgentSession;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun send (Lcom/agui/core/types/UserMessage;Lcom/agui/client/agent/RunAgentParameters;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

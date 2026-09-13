@@ -393,6 +393,32 @@ class Material3AguiComponentsTest {
         onNodeWithText("finished_tool").assertIsDisplayed()
         onNodeWithText("done").assertIsDisplayed()
     }
+
+    /** A call the run stopped to ask about is not "running": it is waiting on the reader. */
+    @Test
+    fun aHeldToolCallSaysItIsAwaitingApproval() = runComposeUiTest {
+        val transcript = UiTranscript(
+            messages = listOf(
+                UiMessage(
+                    id = "m1",
+                    role = UiRole.ASSISTANT,
+                    parts = listOf(
+                        ToolCallPart(
+                            id = "c1",
+                            toolCallId = "c1",
+                            name = "held_tool",
+                            status = ToolCallStatus.AWAITING_APPROVAL,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        setContent { Material3TestSurface { AguiTranscript(transcript) } }
+
+        onNodeWithText("held_tool").assertIsDisplayed()
+        onNodeWithText("awaiting approval").assertIsDisplayed()
+    }
 }
 
 /**

@@ -21,6 +21,7 @@ import com.agui.core.types.ReasoningStartEvent
 import com.agui.core.types.Role
 import com.agui.core.types.RunErrorEvent
 import com.agui.core.types.RunFinishedEvent
+import com.agui.core.types.Interrupt
 import com.agui.core.types.RunFinishedInterruptOutcome
 import com.agui.core.types.RunStartedEvent
 import com.agui.core.types.StateDeltaEvent
@@ -53,6 +54,7 @@ import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.TextPart
 import dev.ynagai.agui.model.ToolCallPart
 import dev.ynagai.agui.model.ToolCallStatus
+import dev.ynagai.agui.model.UiInterrupt
 import dev.ynagai.agui.model.UiRole
 import dev.ynagai.agui.model.UiTranscript
 import kotlinx.serialization.json.JsonElement
@@ -109,6 +111,14 @@ public class UiTranscriptReducer(
     private val reasoningParts = mutableMapOf<String, PartRef>()
     private val toolParts = mutableMapOf<String, PartRef>()
     private val activityMessages = mutableMapOf<String, MessageBuilder>()
+
+    /**
+     * The calls held [ToolCallStatus.AWAITING_APPROVAL], by id. Kept here rather than read back
+     * off [run] when the next run starts, because a `RUN_ERROR` in between -- a resume that could
+     * not reach the server -- replaces the finished run with a failed one that names no
+     * interrupts, while the calls it held are still waiting.
+     */
+    private val heldForApproval = mutableSetOf<String>()
 
     private var lastTextMessageId: String? = null
     private var lastToolCallId: String? = null
@@ -211,17 +221,20 @@ public class UiTranscriptReducer(
 
             is RunStartedEvent -> {
                 finalizeTurn()
+                releaseApprovals()
                 startNewRun()
                 run = RunState.Running(threadId = event.threadId, runId = event.runId)
             }
 
             is RunFinishedEvent -> {
                 finalizeTurn()
+                val interrupts = (event.outcome as? RunFinishedInterruptOutcome)?.interrupts.orEmpty()
+                interrupts.forEach { holdForApproval(it) }
                 run = RunState.Finished(
                     threadId = event.threadId,
                     runId = event.runId,
                     result = event.result,
-                    interrupted = event.outcome is RunFinishedInterruptOutcome,
+                    interrupts = interrupts.map { it.toUi() },
                 )
             }
 
@@ -502,11 +515,11 @@ public class UiTranscriptReducer(
      * message -- already settled, so the caret never returns -- because [openText] treats a known
      * id as a stream already open.
      *
-     * `toolParts` deliberately survives. A run that stops to let the client execute a tool
-     * (`RUN_FINISHED` with an interrupt outcome) is answered by the *next* run, whose
-     * `TOOL_CALL_RESULT` names a call id from the run before it; clearing the map here would leave
-     * that result with nothing to land on. `activityMessages` survives for the same reason: an
-     * activity outlives the run that opened it.
+     * `toolParts` deliberately survives. A run that stops for a tool -- one the client executes,
+     * or one the client is asked to approve (`RUN_FINISHED` with an interrupt outcome) -- is
+     * answered by the *next* run, whose `TOOL_CALL_RESULT` names a call id from the run before it;
+     * clearing the map here would leave that result with nothing to land on. `activityMessages`
+     * survives for the same reason: an activity outlives the run that opened it.
      */
     private fun startNewRun() {
         steps.clear()
@@ -607,6 +620,47 @@ public class UiTranscriptReducer(
         val part = ref.part<ToolCallPart>()
         ref.message.replace(ref.index, part.copy(arguments = part.arguments + delta))
     }
+
+    /**
+     * Marks the call an interrupt names as waiting on the client. A call the interrupt names and
+     * this transcript does not hold is not an error: an interrupt need not concern a call at all,
+     * and one that concerns a call the producer never streamed is that producer's business.
+     */
+    private fun holdForApproval(interrupt: Interrupt) {
+        val ref = toolParts[interrupt.toolCallId ?: return] ?: return
+        val part = ref.part<ToolCallPart>()
+        // Only a call still waiting. One that already has its result is not waiting on anyone,
+        // whatever the producer says about it.
+        if (part.status != ToolCallStatus.AWAITING_RESULT) return
+        ref.message.replace(ref.index, part.copy(status = ToolCallStatus.AWAITING_APPROVAL))
+        heldForApproval += part.toolCallId
+    }
+
+    /**
+     * The next run has started, so every approval is answered or abandoned: the protocol lets no
+     * run start on the thread otherwise. An approved call's result arrives in this run; a declined
+     * one may never hear anything again, and a status that said "waiting on the client" would then
+     * be a lie for ever. Back to [ToolCallStatus.AWAITING_RESULT], which is what the protocol knows.
+     */
+    private fun releaseApprovals() {
+        for (toolCallId in heldForApproval) {
+            val ref = toolParts[toolCallId] ?: continue
+            val part = ref.part<ToolCallPart>()
+            if (part.status != ToolCallStatus.AWAITING_APPROVAL) continue
+            ref.message.replace(ref.index, part.copy(status = ToolCallStatus.AWAITING_RESULT))
+        }
+        heldForApproval.clear()
+    }
+
+    private fun Interrupt.toUi(): UiInterrupt = UiInterrupt(
+        id = id,
+        reason = reason,
+        message = message,
+        toolCallId = toolCallId,
+        responseSchema = responseSchema,
+        expiresAt = expiresAt,
+        metadata = metadata,
+    )
 
     private fun endToolCall(toolCallId: String) {
         if (lastToolCallId == toolCallId) lastToolCallId = null
