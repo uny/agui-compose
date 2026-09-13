@@ -94,10 +94,13 @@ prompt and no way to answer it, which is the same honesty as the other defaults 
 here; `agui-material3` draws a card with two buttons. The affirmative resolves with
 `{"approved": true}` when `responseSchema` names an `approved` property and with no payload
 otherwise; the negative *abandons* the interrupt rather than resolving it with `false`, because
-abandoning is the answer every producer must accept, and Strands -- the one producer with a schema
-on the wire -- distinguishes the two and reaches the tool with an error for a cancellation, which
-is the honest report of a reader who declined. A form built from an arbitrary `responseSchema` is a
-library of its own, and an application with a producer that wants one replaces the slot.
+abandoning is the answer every producer must accept, and it is the honest report of a reader who
+declined. Strands -- the one producer with a schema on the wire -- reads a cancelled entry on its
+own approval hook as `{"approved": false}` and answers the call with a denial (`User denied approval
+for 'transfer'.`, measured below); a cancelled *generic* interrupt reaches the tool as its
+`cancelled` envelope instead. Either way the tool does not run. A form built from an arbitrary
+`responseSchema` is a library of its own, and an application with a producer that wants one
+replaces the slot.
 
 **The sample closes the composer** while the thread waits, collects one answer per card, and
 resumes when the last one lands.
@@ -134,6 +137,18 @@ resumes when the last one lands.
   outcome, and the replay fixtures are upstream's verbatim -- fabricating one would put words in a
   producer's mouth under upstream's provenance. `ScriptedAgent` emits the outcome and the session
   and reducer are tested against it; a recording is the tripwire to add when upstream records one.
+- Measured live, after the fact (2026-09-13, pull request 11): AWS Strands `ag_ui_strands` 0.4.0
+  with `ToolBehavior(interrupt_on_call=True)` on a server-executed `transfer` tool, `gemini-2.5-flash`
+  behind it, the server under `docs/live/approval`. `RUN_FINISHED` carried one interrupt with
+  `reason: "tool_call"`, a `message`, the `toolCallId` of the `TOOL_CALL_START` that preceded it,
+  `responseSchema` `{approved: boolean}` required, and `metadata.tool_name` / `tool_input` /
+  `strandsName`. The card's Approve -- `resolved` with `{"approved": true}` -- ran the tool and the
+  next run opened with `TOOL_CALL_RESULT` on that id; Decline -- `cancelled` -- produced
+  `TOOL_CALL_RESULT` `"User denied approval for 'transfer'."` on the same id and no tool ran. Both
+  runs ended `success` with no interrupt. `agui-agent`'s `LiveApprovalTest` asserts exactly that
+  and skips without `AGUI_LIVE_APPROVAL_URL`, so CI measures nothing it cannot reach. One thing the
+  live run settled that the scripts could not: this producer *does* set `toolCallId`, so
+  `AWAITING_APPROVAL` projects onto the call as drawn.
 - Not decided here: how an interrupt raised inside a *subagent* is attributed. The spec draft's
   `subagentRunId` on `Interrupt` is not in `kotlin-core` 0.4.1's type, so there is nothing to
   carry yet. Nor a form for an arbitrary `responseSchema`, nor expiry -- each is the slot's or the

@@ -440,6 +440,13 @@ For an agent that actually thinks, any of the other
 protocol on the same shape of endpoint; those are LLM-backed and want a provider key of their own.
 The sample does not care which — it is a URL.
 
+To see a run stop and ask, the server has to be one that raises an approval, and none of upstream's
+examples turns that on: [`docs/live/approval`](docs/live/approval/README.md) is a Strands server
+with one gated `transfer` tool, and wants a key for the model behind it. Point the sample at it and
+type `Transfer 100 to Alice`: the call is drawn as awaiting approval, the card asks, and Approve
+runs the tool in the next run. The same server is what `agui-agent`'s `LiveApprovalTest` measures
+when `AGUI_LIVE_APPROVAL_URL` names it; without the variable the test is skipped, and CI skips it.
+
 **One dependency clash you do not have to resolve.** Upstream's `kotlin-client` and `kotlin-tools`
 0.4.1 are compiled against kotlinx-datetime 0.6.2; Compose Material 3 1.9.0 brings 0.7.1, where
 `Clock` and `Instant` moved to `kotlin.time` and the old classes are gone. Taking `agui-material3`
