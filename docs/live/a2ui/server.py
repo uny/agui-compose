@@ -2,15 +2,18 @@
 
 This is what `A2uiRequest` is measured against: AWS Strands with a plain agent and no ``a2ui``
 config. The adapter injects ``generate_a2ui`` only when a run's ``forwardedProps`` carry
-``injectA2UITool`` (or the server opts in, which this one does not), and it takes the catalog and
-the composition guide from the ``A2UI catalog`` context entry the same run carries -- exactly the
-two pieces ``A2uiRequest`` produces. A surface here is therefore the client's doing; a plain text
-answer is the client's failure, or the model's.
+``injectA2UITool`` (or the server opts in, which this one does not), and it lifts the ``A2UI
+Component Schema`` context entry the same run carries into run state, where the catalog id is read
+off it and the sub-agent's prompt lists it as ``## Available Components`` -- exactly the two pieces
+``A2uiRequest`` produces. A surface here is therefore the client's doing; a plain text answer is
+the client's failure, or the model's. The system prompt is upstream's, verbatim, and names the
+tool; a plain prompt has not been measured.
 
-Upstream's own ``a2ui_dynamic_schema`` example additionally hands the sub-agent a hand-written
-composition guide from the server side, which the adapter prefers over the one resolved from the
-client. ``A2UI_SERVER_GUIDE=1`` turns that on, verbatim, so a model that does not draw from the
-catalog alone can be told apart from one that does not draw at all.
+Upstream's own ``a2ui_dynamic_schema`` example also injects only on the client's flag, but stamps
+its own catalog id and hands the sub-agent a hand-written composition guide from the server side,
+which the sub-agent reads alongside the client's component list. ``A2UI_SERVER_GUIDE=1`` turns
+that on, verbatim, so a model that does not draw from the catalog alone can be told apart from one
+that does not draw at all.
 
 The model is whichever ``MODEL_PROVIDER`` / ``*_API_KEY`` names -- ``openai`` (``OPENAI_API_KEY``),
 ``anthropic`` (``ANTHROPIC_API_KEY``) or ``gemini`` (``GOOGLE_API_KEY``). OpenAI is driven through
@@ -37,8 +40,8 @@ def model():
         return OpenAIModel(client_args={"api_key": os.environ["OPENAI_API_KEY"]}, model_id=os.getenv("MODEL_ID", "gpt-5.4"))
     if provider == "anthropic":
         from strands.models.anthropic import AnthropicModel
-        # A surface of three or four cards is a long tool call; 2048 tokens can cut it off, and a
-        # cut-off call looks like a refusal to draw.
+        # Strands makes the caller choose max_tokens. A surface of three or four cards is a long tool
+        # call, and a cut-off call would look like a refusal to draw, so give it room.
         return AnthropicModel(client_args={"api_key": os.environ["ANTHROPIC_API_KEY"]}, model_id=os.getenv("MODEL_ID", "claude-sonnet-4-6"), max_tokens=8192)
     if provider == "gemini":
         from strands.models.gemini import GeminiModel
@@ -85,7 +88,7 @@ A2UI surface.
 IMPORTANT: After calling the tool, do NOT repeat the data in your text response.
 The tool renders UI automatically. Just confirm what was rendered."""
 
-server_guide = os.getenv("A2UI_SERVER_GUIDE", "").strip() not in ("", "0", "false")
+server_guide = os.getenv("A2UI_SERVER_GUIDE", "").strip().lower() not in ("", "0", "false", "no", "off")
 
 agent = StrandsAgent(
     agent=Agent(model=model(), system_prompt=SYSTEM_PROMPT),
@@ -116,10 +119,18 @@ class Trace:
         with open(self.path, "ab") as out:
             out.write(f"\n=== {scope['method']} {scope['path']} ===\n".encode())
 
+            headed = False
+
             async def receive_traced():
+                nonlocal headed
                 message = await receive()
                 if message["type"] == "http.request" and message.get("body"):
-                    out.write(b"--- request ---\n" + message["body"] + b"\n")
+                    if not headed:
+                        out.write(b"--- request ---\n")
+                        headed = True
+                    out.write(message["body"])
+                    if not message.get("more_body"):
+                        out.write(b"\n")
                 return message
 
             async def send_traced(message):

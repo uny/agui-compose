@@ -95,9 +95,11 @@ agreement, not a specification's, and the day one changes the change here is one
   `render_a2ui` arguments streamed in 341 deltas, and a result carrying `a2ui_operations` (v0.9,
   the dojo catalog id, a `Row` of three `HotelCard`s and one `ProductCard` used as a heading);
   replayed through the sample, the transcript drew the four cards once. So the client's two pieces
-  are enough for that model with nothing on the server; `gemini-2.5-flash`, measured earlier, still
-  answered with empty components. Anthropic has not been measured. The recording is attached to
-  [#15](https://github.com/uny/agui-compose/pull/15); no fixture was made of it: the replay fixtures are upstream's recordings, verbatim (0010).
+  are enough for that model with no A2UI config on the server -- though the agent's system prompt
+  was upstream's, which names the tool; a plain prompt has not been measured. `gemini-2.5-flash`,
+  measured earlier, still answered with empty components. Anthropic has not been measured. The
+  recording is attached to [#15](https://github.com/uny/agui-compose/pull/15); no fixture was made
+  of it: the replay fixtures are upstream's recordings, verbatim (0010).
 - **A client behind upstream's middleware sends these twice.** The middleware replaces its own
   entries and its own key and adds nothing, which is the behaviour this code copies from it, so
   the duplication is harmless. A client behind a middleware configured *not* to inject would now

@@ -472,11 +472,12 @@ type `Transfer 100 to Alice`: the call is drawn as awaiting approval, the card a
 runs the tool in the next run. The same server is what `agui-agent`'s `LiveApprovalTest` measures
 when `AGUI_LIVE_APPROVAL_URL` names it; without the variable the test is skipped, and CI skips it.
 
-To see an agent draw because the client asked, the server has to be one that does not opt in on its
-own, and upstream's A2UI examples all do: [`docs/live/a2ui`](docs/live/a2ui/README.md) is a Strands
-server with a plain agent and no A2UI wiring, so the `A2uiRequest` the sample sends is the only
-reason a surface arrives. Point the sample at it and type `Compare three hotels in Kyoto`; the
-README beside it says what should come back, and what each other outcome means.
+To see an agent draw because the client asked, the server has to be one that supplies nothing of
+its own, and upstream's A2UI examples all stamp a catalog id and hand the sub-agent a guide from the
+server side: [`docs/live/a2ui`](docs/live/a2ui/README.md) is a Strands server with a plain agent and
+no A2UI config, so the `A2uiRequest` the sample sends is the only reason a surface arrives. Point
+the sample at it and type `Compare three hotels in Kyoto`; the README beside it says what should
+come back, and what each other outcome means.
 
 **One dependency clash you do not have to resolve.** Upstream's `kotlin-client` and `kotlin-tools`
 0.4.1 are compiled against kotlinx-datetime 0.6.2; Compose Material 3 1.9.0 brings 0.7.1, where
