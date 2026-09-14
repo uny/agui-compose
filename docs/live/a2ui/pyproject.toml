@@ -1,0 +1,17 @@
+# The server the sample is pointed at to see whether an agent draws when the client asks it to.
+# See README.md beside this file.
+[project]
+name = "agui-compose-live-a2ui"
+version = "0.0.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "ag_ui_strands",
+  "ag-ui-a2ui-toolkit>=0.0.4",
+  "strands-agents[openai,anthropic,gemini]>=1.35.0",
+  "fastapi>=0.115.12",
+  "uvicorn>=0.34.3",
+]
+
+[tool.uv.sources]
+# The adapter as upstream ships it, at the commit these instructions were measured against.
+ag_ui_strands = { git = "https://github.com/ag-ui-protocol/ag-ui", subdirectory = "integrations/aws-strands/python", rev = "7479336" }
