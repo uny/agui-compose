@@ -11,13 +11,14 @@ name: Release dry run
 #
 # What it proves: the version is a usable coordinate, every module's publication assembles, signs,
 # and lands in a repository; a consumer resolves all nine artifacts from that repository on each
-# target the consumer build names; and every deployed file carries a detached signature.
+# target the consumer build names; every deployed file carries a detached signature; and every
+# POM carries the name and description a module has to opt into.
 #
 # What it cannot prove:
 #
 #  - That Central accepts the result. Nothing is uploaded, so Central's own validation -- the
-#    required POM fields, the staging bundle, whether the signing key's public half is on a
-#    keyserver -- never runs. `publishToMavenCentral` additionally runs
+#    rest of the required POM fields, the staging bundle, whether the signing key's public half
+#    is on a keyserver -- never runs. `publishToMavenCentral` additionally runs
 #    `prepareMavenCentralPublishing` and the `...ToMavenCentralRepository` tasks, none of which
 #    this exercises.
 #  - That `cd.yml`'s "Check the release credentials are present" step works. It reads five
@@ -112,6 +113,13 @@ jobs:
               # across every later line of the run. `cd.yml` has no equivalent exposure, because a
               # tag name cannot contain a newline; free text from a dispatch can.
               echo "::error::Refusing '$(printf '%s' "$VERSION" | tr -d '\r\n')': a version must be non-empty [0-9A-Za-z.-]" >&2
+              exit 1
+              ;;
+            *-SNAPSHOT )
+              # Refused where `cd.yml` refuses it. Rehearsed anyway, a snapshot would skip every
+              # `sign*` task and fail the signing check below with a message about signatures
+              # rather than about the version.
+              echo "::error::Refusing '$version': a -SNAPSHOT version is not a release, and cd.yml would refuse the tag" >&2
               exit 1
               ;;
           esac
@@ -242,6 +250,30 @@ jobs:
           fi
           echo "Every published file carries a .asc."
 
+      # The two POM fields a module has to *opt into*. The plugin fills `url`, `licenses`,
+      # `developers` and `scm` from the root `gradle.properties`, but `name` and `description`
+      # come from `POM_NAME` / `POM_DESCRIPTION` in the module's own `gradle.properties`, and a
+      # module without that file publishes a POM with neither -- which Central's validation
+      # refuses. Found by this check on 2026-09-15: four of the nine modules had no such file and
+      # their 20 POMs carried no `<name>` and no `<description>`, after a green consumer step and a
+      # green signing check. A grep over the tree the step above already enumerated is what turns
+      # "Central will tell you" into a failure here.
+      #
+      # Anchored to the two-space indent of a child of `<project>`, because a bare `<name>` also
+      # matches the licence's and the developer's, which every POM here carries -- and a check that
+      # matched those would have passed the twenty POMs it exists to catch.
+      - name: Check every POM carries a name and a description
+        run: |
+          repo="${RUNNER_TEMP}/dry-run-m2"
+          incomplete=$(find "$repo" -name '*.pom' \
+            -exec sh -c 'grep -q "^  <name>" "$1" && grep -q "^  <description>" "$1" || echo "$1"' _ {} \;)
+          if [ -n "$incomplete" ]; then
+            echo "::error::POMs without <name> or <description>; add POM_NAME and POM_DESCRIPTION to that module's gradle.properties" >&2
+            echo "$incomplete"
+            exit 1
+          fi
+          echo "Every POM carries a name and a description."
+
       - name: Summarise
         if: always()
         env:
@@ -266,9 +298,9 @@ jobs:
             echo '  half is nowhere — a signature Central could not verify even if something'
             echo '  uploaded it.'
             echo
-            echo 'Not covered: Central'"'"'s own validation. The required POM fields, the staging'
-            echo 'bundle, and whether the release key is on a keyserver are only exercised by a'
-            echo 'real upload.'
+            echo 'Not covered: Central'"'"'s own validation. Beyond name and description, the'
+            echo 'required POM fields, the staging bundle, and whether the release key is on a'
+            echo 'keyserver are only exercised by a real upload.'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload reports
