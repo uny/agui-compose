@@ -48,6 +48,9 @@ copy of `gradle-wrapper.jar` is a second thing to keep pinned:
 
 Needs an Android SDK (`ANDROID_HOME`, or `sdk.dir` in `smoke-test/local.properties` -- the root
 `local.properties` is not read across the build boundary) and, for the three Apple targets, macOS.
+On Linux those three compilations are skipped rather than failed
+(`kotlin.native.ignoreDisabledTargets=true` in `gradle.properties`, as in the producer), so a green
+run there says nothing about the Apple variants -- which is why both workflows run on macOS.
 
 `-PaguiVersion=<version>` selects what to resolve; with no property it reads `VERSION_NAME` from
 the producer's `../gradle.properties`, so it cannot go on naming a version the producer has left

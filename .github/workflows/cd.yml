@@ -94,6 +94,11 @@ jobs:
       # Every use below quotes the value as well -- this is the belt to that pair of braces --
       # and the charset is also what a Central coordinate may contain, so a tag that fails here
       # would not have produced a usable version anyway.
+      #
+      # `-SNAPSHOT` is refused on its own line because the charset admits it and the plugin treats
+      # it specially: at a snapshot version every `sign*Publication` task is SKIPPED and
+      # `publishToMavenCentral` uploads to the snapshot repository instead -- so `v0.1.0-SNAPSHOT`
+      # would sail through every step below and land an unsigned snapshot under a tag.
       - name: Read the version from the tag
         id: version
         run: |
@@ -101,6 +106,10 @@ jobs:
           case "$version" in
             "" | *[!0-9A-Za-z.-]* )
               echo "Refusing tag '$GITHUB_REF_NAME': a version must be non-empty [0-9A-Za-z.-]" >&2
+              exit 1
+              ;;
+            *-SNAPSHOT )
+              echo "Refusing tag '$GITHUB_REF_NAME': a tag releases, and a -SNAPSHOT version would be published unsigned to the snapshot repository" >&2
               exit 1
               ;;
           esac
