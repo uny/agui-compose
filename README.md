@@ -27,7 +27,9 @@ not used, is [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-c
 run that stopped to ask a human looks like, and why a tool result is not an answer to it, is
 [docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md). What a run has
 to carry for an agent to draw at all is
-[docs/decisions/0011](docs/decisions/0011-asking-an-agent-to-draw.md).
+[docs/decisions/0011](docs/decisions/0011-asking-an-agent-to-draw.md). How a version gets from a
+tag to Maven Central, and what stands between the two, is
+[docs/decisions/0012](docs/decisions/0012-releasing-to-maven-central.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -529,6 +531,16 @@ bytecode, so a JDK 17 build cannot load the types this library is built on.
 
 The Apple targets need macOS. On Linux they are skipped rather than failed, so a green Linux build
 says less than it appears to -- which is why CI runs on macOS.
+
+### Releasing
+
+A `v*` tag is a release: `.github/workflows/cd.yml` reads the version from it, publishes every
+module locally and signs it, resolves that publish from a separate consumer build
+([`smoke-test/`](smoke-test/README.md)) on every target, and uploads to Maven Central without
+releasing -- the last step is a button in the portal. The run waits on the `release`
+environment's reviewer before it touches a secret. `release-dry-run.yml` rehearses the same path
+from the Actions tab with a throwaway key and no upload; run it before the first tag, and after
+any change to a module's targets or publishing block.
 
 ## Licence
 
