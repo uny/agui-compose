@@ -85,11 +85,19 @@ agreement, not a specification's, and the day one changes the change here is one
   to send. It depends on `agui-core`'s `Context` and on kotlinx-serialization's `JsonObject`, both
   already in the module's API, and not on `RunAgentParameters`: that type is `kotlin-client`'s,
   which this module does not depend on, so the caller builds the parameters from the two pieces.
-- **The wire shape is tested; the effect is not.** `A2uiRequestTest` pins what the adapters match
-  on -- the descriptions byte for byte, the flag as a JSON boolean, the schema value's top-level
-  keys, the replace-not-append behaviour. Whether an agent then draws is a property of the model
-  behind it, and the one model measured could not. The one-shot check, for whoever has a key: the
-  dojo's `a2ui_dynamic_schema` Strands agent with an OpenAI or Anthropic model, and the sample.
+- **The wire shape is tested, and the effect has been measured once.** `A2uiRequestTest` pins
+  what the adapters match on -- the descriptions byte for byte, the flag as a JSON boolean, the
+  schema value's top-level keys, the replace-not-append behaviour. Whether an agent then draws is a
+  property of the model behind it. On 2026-09-14, against [`docs/live/a2ui`](../live/a2ui/README.md)
+  -- Strands `ag_ui_strands` 0.4.0 at upstream `7479336`, a plain agent with no A2UI config on the
+  server, `gpt-5.4` over Chat Completions -- the run the sample sends (`A2uiRequest(DojoCatalog.definition)`,
+  `Compare three hotels in Kyoto`) came back as one `generate_a2ui` call, its sub-agent's
+  `render_a2ui` arguments streamed in 341 deltas, and a result carrying `a2ui_operations` (v0.9,
+  the dojo catalog id, a `Row` of three `HotelCard`s and one `ProductCard` used as a heading);
+  replayed through the sample, the transcript drew the four cards once. So the client's two pieces
+  are enough for that model with nothing on the server; `gemini-2.5-flash`, measured earlier, still
+  answered with empty components. Anthropic has not been measured. The recording is attached to
+  [#15](https://github.com/uny/agui-compose/pull/15); no fixture was made of it: the replay fixtures are upstream's recordings, verbatim (0010).
 - **A client behind upstream's middleware sends these twice.** The middleware replaces its own
   entries and its own key and adds nothing, which is the behaviour this code copies from it, so
   the duplication is harmless. A client behind a middleware configured *not* to inject would now

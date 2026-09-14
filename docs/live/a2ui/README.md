@@ -40,5 +40,7 @@ Two switches for telling failures apart:
   that draws with this and not without it is a model that needs more than the catalog; a model
   that draws with neither is not drawing.
 
-What it was measured against: see the pull request that added this file, and the Consequences of
-0011.
+What it was measured against, on 2026-09-14: `ag_ui_strands` 0.4.0 at upstream `7479336`,
+`strands-agents` 1.55.1, `gpt-5.4`, without `A2UI_SERVER_GUIDE`. The surface arrived, in both
+carriers, and the sample drew it; the recording is attached to
+[#15](https://github.com/uny/agui-compose/pull/15). The Consequences of 0011 carry the result.
