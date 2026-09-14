@@ -25,7 +25,9 @@ disagree — is
 tool the agent calls gets executed here and answered, and why upstream's own handler for that is
 not used, is [docs/decisions/0008](docs/decisions/0008-executing-a-tool-on-the-client.md). What a
 run that stopped to ask a human looks like, and why a tool result is not an answer to it, is
-[docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md).
+[docs/decisions/0010](docs/decisions/0010-answering-what-a-run-stopped-to-ask.md). What a run has
+to carry for an agent to draw at all is
+[docs/decisions/0011](docs/decisions/0011-asking-an-agent-to-draw.md).
 
 Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming text, reasoning,
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
@@ -389,6 +391,29 @@ basic catalog id is `…/v0_9/basic_catalog.json`, which is not even the v0.9 sp
 `A2uiTranslation` maps upstream's spellings -- that URL, the v0.9 specification's, and a bare
 `basic` -- to the v1.0 basic catalog and passes any other id through. The reasoning is in
 [docs/decisions/0009](docs/decisions/0009-drawing-a2ui-from-three-carriers.md).
+
+**Asking for a surface.** None of the above arrives unless the run asks. Upstream's agents inject
+their `generate_a2ui` tool only when the run's `forwardedProps` carries `injectA2UITool`, and put
+the client's components in front of the model only when its `context` carries the component
+schema — both things `@ag-ui/a2ui-middleware` adds to every request when it sits in front of the
+agent, which nothing does here. `A2uiRequest` builds both, plus the render tool's usage guide the
+middleware sends beside the schema, for the catalog the renderer holds; send it on every run:
+
+```kotlin
+import com.agui.client.agent.RunAgentParameters
+import dev.ynagai.a2ui.compose.BasicCatalog
+import dev.ynagai.agui.a2ui.A2uiRequest
+
+val request = A2uiRequest(BasicCatalog.definition)
+val parameters = RunAgentParameters(context = request.context(), forwardedProps = request.forwardedProps())
+session.send("Show me the hotels", parameters)
+```
+
+Without it, upstream's adapters never inject their tool: the agent answers in text and the stream
+says nothing about why. An agent that calls `render_a2ui` itself, through a `RenderA2UiTool` the
+client registered, needs no flag to draw. The reasoning, and what
+was and was not measured against a live server, is in
+[docs/decisions/0011](docs/decisions/0011-asking-an-agent-to-draw.md).
 
 `RenderA2UiTool` is the `render_a2ui` tool as a frontend tool, for an agent that calls it directly
 and waits on the answer. It is not registered by anything here, on purpose: upstream's LangGraph

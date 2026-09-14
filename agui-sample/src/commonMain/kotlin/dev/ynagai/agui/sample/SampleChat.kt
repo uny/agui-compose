@@ -6,7 +6,7 @@ import com.agui.client.agent.HttpAgentConfig
 import com.agui.client.agent.RunAgentParameters
 import com.agui.tools.ToolRegistry
 import com.agui.tools.toolRegistry
-import dev.ynagai.agui.a2ui.catalogContext
+import dev.ynagai.agui.a2ui.A2uiRequest
 import dev.ynagai.agui.agent.AgentSession
 import dev.ynagai.agui.model.RunState
 import dev.ynagai.agui.model.UiInterrupt
@@ -113,14 +113,18 @@ public class SampleChat(
         mutableConnection.value?.session?.resume(entries, parameters)
 
     /**
-     * What every run carries besides the messages: the catalog this window draws, as the
-     * `Context` entry upstream's middleware reads the catalog id from. Against the replay server
-     * it is ignored, as everything in the request is; against a live middleware it is what keeps
-     * a streamed `render_a2ui` surface bound to a catalog this window holds -- together with the
-     * window's translation naming the same catalog, for the moment the run's closing snapshot
-     * leaves the call's arguments as the only carrier.
+     * What every run carries besides the messages: the A2UI request side, for the catalog this
+     * window draws -- the `injectA2UITool` flag without which upstream's agents never offer to
+     * draw, and the `Context` entries that tell them what with. Against the replay server it is
+     * ignored, as everything in the request is; against a live agent the flag is what makes a
+     * surface come at all, and the schema entry is what keeps a streamed `render_a2ui` surface
+     * bound to a catalog this window holds -- together with the window's translation naming the
+     * same catalog, for the moment the run's closing snapshot leaves the call's arguments as the
+     * only carrier.
      */
-    private val parameters = RunAgentParameters(context = listOf(catalogContext(DojoCatalog.definition)))
+    private val parameters = A2uiRequest(DojoCatalog.definition).let { request ->
+        RunAgentParameters(context = request.context(), forwardedProps = request.forwardedProps())
+    }
 
     /**
      * Disposes the agent and forgets the connection.
