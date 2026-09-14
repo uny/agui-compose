@@ -26,6 +26,7 @@
  */
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     // From the producer's own version catalog, read across the build boundary in
@@ -66,11 +67,19 @@ kotlin {
     // `dependsOn` edges, because KGP refuses to apply the default template alongside explicit
     // edges, and without the template there would be no `iosMain` and no `commonMain`-to-target
     // wiring to start from.
+    //
+    // Android by platform type, not `withAndroidTarget()`: that matcher covers the old
+    // `com.android.library` target only, and against the `com.android.kotlin.multiplatform.library`
+    // target this build uses it matches nothing -- `androidMain` then depends on `commonMain`
+    // alone, `compileAndroidMain` compiles `Smoke.kt` and not `SmokeNoIosX64.kt`, and the six
+    // modules' `-android` variants are never resolved, with nothing in the output to say so.
+    // Measured on 2026-09-15: with `withAndroidTarget()` the edge is absent; with the predicate
+    // below `androidMain -> [noIosX64Main]` and both files compile for Android.
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
         common {
             group("noIosX64") {
-                withAndroidTarget()
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
                 withJvm()
                 withIosArm64()
                 withIosSimulatorArm64()
