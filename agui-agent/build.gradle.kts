@@ -126,11 +126,11 @@ mavenPublishing {
  * something outside the build, so while the variable is set the task is never up to date and
  * never cached: otherwise a second run against the same URL would be reported up to date -- or
  * restored from the build cache -- without a request reaching the server. The input is for the
- * way back: once the variable is unset again the task runs once more, so the report on disk is
- * not the live run's. Only the presence is recorded, not the URL, which may carry a credential
- * that Gradle would otherwise write into its execution history. Blank counts as unset, as it does
- * in the test. `jvmTest` alone: it is the only task that runs the test, and the Android host
- * tests have nothing live to measure.
+ * way back: once the variable is unset again the task is no longer up to date, so it runs -- or
+ * comes back from the cache -- and the report on disk is not the live run's. Only the presence
+ * is recorded, not the URL, which may carry a credential that Gradle would otherwise write into
+ * its execution history. Blank counts as unset, as it does in the test. `jvmTest` alone: it is
+ * the only task that runs the test, and the Android host tests have nothing live to measure.
  */
 tasks.named<Test>("jvmTest") {
     val live = !System.getenv("AGUI_LIVE_APPROVAL_URL").isNullOrBlank()
