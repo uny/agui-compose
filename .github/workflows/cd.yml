@@ -222,9 +222,18 @@ jobs:
             compileAndroidMain \
             -PaguiVersion="$VERSION" --stacktrace
 
-      # Uploads and validates; it does not release. The last step is a button in the Central
-      # Portal, held by the person whose account it is -- which is the right place for it while
-      # `publishAndReleaseToMavenCentral` exists and this is the first version to go out.
+      # Uploads; it does not validate, and it does not release. The last step is a button in the
+      # Central Portal, held by the person whose account it is -- which is the right place for it
+      # while `publishAndReleaseToMavenCentral` exists and this is the first version to go out.
+      #
+      # "Does not validate" is the plugin's, not a choice made here: at 0.37.0 the deployment is
+      # uploaded as `USER_MANAGED` and the build ends with `Skipping deployment validation!` --
+      # the plugin only polls Central's validation when `automaticRelease = true`
+      # (`MavenCentralBuildService.close`, and the KDoc on `publishToMavenCentral`). So a green
+      # run here means the bundle was accepted for upload, not that it passed validation: a release
+      # key whose public half is on no keyserver, or a POM Central rejects, shows as FAILED in the
+      # portal and nowhere in this log. Read the deployment's status there before pressing the
+      # button; a failed deployment is dropped, not burnt, since nothing was released.
       - name: Upload to Maven Central
         env:
           VERSION: ${{ steps.version.outputs.value }}

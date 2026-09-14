@@ -50,8 +50,10 @@ does not. That is the first thing the gate found, before any release ran.
   the run against the tagged commit; the full suite runs; every module publishes locally and is
   signed there, at the release version, so a missing or malformed key fails before the upload;
   the consumer build resolves that publish on every target; and `publishToMavenCentral` uploads
-  and validates without releasing. The last step is a button in the Central Portal, held by the
-  account that owns the namespace.
+  without releasing. It does not validate either: at plugin 0.37.0 a `USER_MANAGED` deployment
+  is uploaded and the build ends with `Skipping deployment validation!`, since the plugin only
+  polls Central's validation when it is also releasing. The deployment's status, and the last
+  step, are in the Central Portal, held by the account that owns the namespace.
 - `.github/workflows/release-dry-run.yml` runs the same path on demand with the upload replaced
   by a publish to a directory under the runner's temp and the release key replaced by one
   generated inside the job -- passphrase-protected and passed by key id, because that is the
@@ -95,8 +97,9 @@ passed as `cd.yml` passes it lands 48 POMs with an `.asc` beside every file.
   them, and until they exist `cd.yml` names an environment that gates nothing.
 - The order of operations for the first release is: run `release-dry-run.yml` once from the
   Actions tab and read its summary; create the environment and secrets; push `v0.1.0`; approve
-  the run; press the button in the portal; then change the README's `Published` column and the
-  status line, in a PR, after the coordinates resolve from Central.
+  the run; read the deployment's status in the portal and press the button; then change the
+  README's `Published` column and the status line, in a PR, after the coordinates resolve from
+  Central.
 - A new target on any module is not covered by the gate until `smoke-test/build.gradle.kts` and
   both workflows' task lists name it. Removing one fails loudly; adding one is silent. That
   asymmetry is inherited and recorded, not fixed.
