@@ -76,12 +76,14 @@ cut it.
 **What is not copied.** `a2ui-compose`'s workflows run under JDK 17 and check `checkLegacyAbi`;
 these run under JDK 21 (the floor upstream's class-file 65 bytecode sets, as `agui-agent`'s build
 script records) and `checkKotlinAbi`. The
-consumer task list names this repository's targets and no web or macOS backend. And every
-measurement the copied comments cite was made in `a2ui-compose`, on the same plugin version and
-the same `mavenPublishing` shape; the comments say so rather than claiming it was measured here.
-What *was* measured here, on 2026-09-15, is in `smoke-test/README.md`: the consumer build
-resolves a `0.1.0-probe-SNAPSHOT` publish on all seven compilations, fails when one platform
-variant is removed, and fails when only the metadata jar is.
+consumer task list names this repository's targets and no web or macOS backend. Measurements the
+copied comments cite about the key id's form and a wrong passphrase were made in `a2ui-compose`,
+on the same plugin version and the same `mavenPublishing` shape, and the comments say so. What
+was measured here, on 2026-09-15: the consumer build resolves a `0.1.0-probe-SNAPSHOT` publish
+on all seven compilations, fails when one platform variant is removed, and fails when only the
+metadata jar is (`smoke-test/README.md`); a `0.1.0-probe` publish with no key fails at the first
+`sign*Publication` task with `No configured signatory`; and the same publish with a throwaway key
+passed as `cd.yml` passes it lands 48 POMs with an `.asc` beside every file.
 
 ## Consequences
 

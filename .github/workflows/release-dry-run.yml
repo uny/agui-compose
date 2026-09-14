@@ -48,9 +48,9 @@ name: Release dry run
 # repository secret to make the signing "more realistic"; that trades the whole safety argument for
 # nothing it does not already have.
 #
-# Why a key at all: `signAllPublications()` is unconditional, and a release version without a key
-# does not skip signing quietly -- `publishToMavenLocal` fails with `No configured signatory`
-# (measured in `uny/a2ui-compose`, which shares this repository's publishing plugin and block). The alternatives are making that call conditional, which puts a switch
+# Why a key at all: `signAllPublications()` is unconditional, and measured on this tree a release
+# version without a key does not skip signing quietly -- `publishToMavenLocal` fails with
+# `No configured signatory`. The alternatives are making that call conditional, which puts a switch
 # in the release path whose failure mode is publishing unsigned, or generating a key here.
 
 on:
@@ -218,9 +218,9 @@ jobs:
       # find's exit on a missing directory is discarded. Both ways of looking at nothing -- an
       # absent tree and a present but empty one -- are caught by the count.
       #
-      # Checked in both directions in `uny/a2ui-compose` before being copied here: as published,
-      # every file has a sibling `.asc`; with one `.asc` removed, this step names that file and
-      # exits 1. The check itself reads nothing repository-specific.
+      # Checked on this tree on 2026-09-15: a `0.1.0-probe` publish signed with a throwaway key
+      # lands 48 POMs and every file has a sibling `.asc`. The removed-`.asc` direction was
+      # checked in `uny/a2ui-compose`, from which this step is copied unchanged.
       - name: Check every published file is signed
         run: |
           repo="${RUNNER_TEMP}/dry-run-m2"

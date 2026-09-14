@@ -65,7 +65,8 @@ jobs:
     # deletes, so a bad `0.1.0` is not fixed, it is abandoned.
     #
     # Job-scoped rather than step-scoped because that is the only scope GitHub offers, and it is
-    # the one we want anyway: approval comes before the build, not after 35 minutes of it.
+    # the one we want anyway: approval comes before the build, not after the ten-plus minutes of
+    # it that `build.yml` already takes.
     #
     # The environment itself is a repository setting, not this file. Until `release` exists under
     # Settings -> Environments with at least one required reviewer, this line names an environment
@@ -170,10 +171,16 @@ jobs:
       # The signing key is needed *here*, not only at the upload. `signAllPublications()` is
       # exempt for a `-SNAPSHOT` version, not for a local publish: at a release version the
       # `sign*Publication` tasks run under `publishToMavenLocal` too, and without a signatory
-      # they fail with `No configured signatory` -- while the same command at a `-SNAPSHOT`
-      # version succeeds with every `sign*` task SKIPPED, which is why publishing snapshots by
-      # hand never shows this. (Measured in `uny/a2ui-compose`, whose plugin version and publishing
-      # block this repository shares.) Passing the key here is also what makes the KDoc on every
+      # they fail. Measured on 2026-09-15 on this tree, no key present:
+      #
+      #   $ ./gradlew :agui-model:publishToMavenLocal -PVERSION_NAME=0.1.0-probe
+      #   > Task :agui-model:signAndroidPublication FAILED
+      #   > No configured signatory
+      #
+      # and the same publish at `0.1.0-probe-SNAPSHOT` succeeds with every `sign*` task SKIPPED,
+      # which is why publishing snapshots by hand never shows this. With a throwaway key passed
+      # the way this step passes it, the full `0.1.0-probe` publish lands 48 POMs with an `.asc`
+      # beside every file. Passing the key here is also what makes the KDoc on every
       # module's `mavenPublishing` block true: a missing or malformed secret now fails before the
       # build's wall clock has been spent rather than at the upload.
       - name: Publish to the local repository
