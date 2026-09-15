@@ -4,8 +4,11 @@ Date: 2026-09-15
 
 ## Status
 
-Accepted. Prepared, not yet exercised: no version has been published under this decision, and
-the README's `Published` column stays `not yet` until one has.
+Accepted, and exercised once. `v0.1.0` went through this path on 2026-09-16: the dry run first
+(all steps green, 48 POMs signed, every POM named), then the tag, the environment's approval, the
+upload as deployment `160098bf`, the portal's Publish, and the consumer build resolving all nine
+coordinates from Central on every target within the hour. The README's version column reads
+`0.1.0`.
 
 ## Context
 

@@ -35,21 +35,40 @@ Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming t
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
 multimodal input and steering — this library is aimed at all of it.
 
-> **Status: pre-release.** Nothing is published yet and the API is not stable.
+> **Status: `0.1.0` is on Maven Central, and the API is not stable.** A `0.x` line: every public
+> signature is covered by a checked-in ABI dump, so a change to one is a visible diff rather than
+> a surprise, but nothing is promised across versions yet.
+
+## Installation
+
+```kotlin
+dependencies {
+    implementation("dev.ynagai.agui:agui-material3:0.1.0")
+    implementation("dev.ynagai.agui:agui-agent:0.1.0")
+}
+```
+
+That is the usual pair: `agui-material3` brings `agui-compose`, `agui-model` and the slots, and
+`agui-agent` brings `agui-core` and the upstream client. Add `agui-markdown` for prose as
+Markdown, and `agui-a2ui-material3` -- which brings `agui-a2ui-compose` and `agui-a2ui` -- when
+the agent draws. Each lower module is published on its own for a host that wants less: `agui-core`
+to fold events with no Compose at all, `agui-compose` to draw with a design system other than
+Material 3. Coordinates are `dev.ynagai.agui:<module>:0.1.0`; the [Modules](#modules) table says
+what each carries, and [Targets](#targets) which platforms.
 
 ## Modules
 
-| Module | What it is | Published |
+| Module | What it is | Version |
 | --- | --- | --- |
-| `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | not yet |
-| `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | not yet |
-| `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | not yet |
-| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | not yet |
-| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | not yet |
-| `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | not yet |
-| `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | not yet |
-| `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | not yet |
-| `agui-a2ui-material3` | The basic catalog's Material 3 renderers and a Material 3 "building UI" state, so a Material 3 transcript draws A2UI with one call. | not yet |
+| `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | `0.1.0` |
+| `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | `0.1.0` |
+| `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | `0.1.0` |
+| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | `0.1.0` |
+| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | `0.1.0` |
+| `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | `0.1.0` |
+| `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | `0.1.0` |
+| `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | `0.1.0` |
+| `agui-a2ui-material3` | The basic catalog's Material 3 renderers and a Material 3 "building UI" state, so a Material 3 transcript draws A2UI with one call. | `0.1.0` |
 | `agui-replay` | A Ktor server that replays upstream's recorded A2UI traffic over SSE — the sample's server, and the trace-driven tests' fixtures. JVM only. See [Replaying upstream](#replaying-upstream). | never |
 | `agui-sample` | A desktop window that talks to a real AG-UI server: the whole stack above, assembled the way an application would. See [The sample](#the-sample). | never |
 
