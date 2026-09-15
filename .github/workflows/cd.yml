@@ -1,0 +1,253 @@
+name: CD
+
+# A tag, and nothing else. `workflow_dispatch` is deliberately absent: the version this publishes
+# is read from the tag, so a manual run would have to invent one, and a coordinate published under
+# a version no tag points at is not reproducible from the repository.
+on:
+  push:
+    tags: ['v*']
+
+# Read-only, as in `build.yml` and for the same reason. Nothing here writes to the repository --
+# the credentials this job needs are the portal's and the signing key's, and both arrive as
+# secrets rather than through the token.
+permissions:
+  contents: read
+
+# Two tags pushed close together must not publish concurrently. `cancel-in-progress: false`
+# protects the *running* release: by the time a second tag arrives the first may already have
+# uploaded, and Central neither re-uploads nor deletes, so there is nothing to roll back to.
+#
+# This workflow stops at the upload and the portal holds each deployment separately, so a dropped
+# pending run costs a re-run rather than a release that silently never happens (`uny/autograph`,
+# which publishes with `automaticRelease = true`, sets `queue: max` for that reason). Left at the
+# default until that changes -- but know what the default does: `single` holds ONE pending run and cancels it when a third tag arrives, so pushing
+# `v0.1.0`, `v0.1.1`, `v0.1.2` in quick succession drops `v0.1.1` entirely, and a cancelled run
+# sends no failure notification.
+#
+# Recovering that is a re-run of the cancelled run from the Actions UI, NOT a re-push of the tag:
+# `git push` of a tag the remote already has reports "Everything up-to-date" and delivers no
+# event, so nothing restarts. If the run is past its retention window and no longer re-runnable,
+# `git push --delete origin <tag>` and push it again -- deleting first is what makes the second
+# push a new event. What does not work is the plain re-push, and `workflow_dispatch` is absent
+# (see above), so those two are the whole list.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# Actions pinned to a commit, matching `build.yml`. To move one deliberately:
+#
+#   gh api repos/<owner>/<repo>/commits/<tag> --jq .sha
+#
+jobs:
+  publish:
+    # macOS, because the Apple targets are silently *skipped* on Linux --
+    # `kotlin.native.ignoreDisabledTargets=true` turns them off rather than failing -- and a
+    # release that skipped them would upload a catalogue of variants with three missing from the
+    # lower modules, two from the Compose ones, and no error to say so.
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    # `release`, the name `uny/a2ui-compose` -- whose release path this file copies -- and
+    # `uny/autograph` already use, and where their Maven Central and GPG secrets already live. The
+    # name is not cosmetic: an `environment:` that names one which does not exist gates nothing,
+    # and a secret set on a *different* environment is simply absent here. Matching the convention
+    # means one set of names to remember across the libraries, and it is why the secret names
+    # below are `GPG_*` rather than the plugin's own property names.
+    #
+    # A human, between the tag and the secrets.
+    #
+    # Charset-checking the tag closes the injection path, but not this one: the job checks out the
+    # tagged commit and runs *its* Gradle scripts, so anyone who can push a `v*` tag can point it
+    # at an unreviewed commit whose `settings.gradle.kts` reads `signingInMemoryKey` out of the
+    # environment. No amount of quoting helps -- the build script is the payload. An environment
+    # with required reviewers is what holds the secrets back until someone approves the run, and
+    # it is the right gate for a step that is irreversible: Central never re-uploads and never
+    # deletes, so a bad `0.1.0` is not fixed, it is abandoned.
+    #
+    # Job-scoped rather than step-scoped because that is the only scope GitHub offers, and it is
+    # the one we want anyway: approval comes before the build, not after the ten-plus minutes of
+    # it that `build.yml` already takes.
+    #
+    # The environment itself is a repository setting, not this file. Until `release` exists under
+    # Settings -> Environments with at least one required reviewer, this line names an environment
+    # that gates nothing: a `release` environment carrying the secrets, with no protection rules
+    # on it, holds nothing back.
+    environment: release
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      # The tag is the version. `v0.1.0` publishes `0.1.0`; nothing else decides it.
+      #
+      # Checked against a charset before it is used, because a tag name is attacker-shaped input:
+      # `git check-ref-format` forbids space and control characters but permits `$ ( ) ; | & ' "`
+      # and a backtick, so `v1.0.0;$(...)` is a pushable tag that matches the `v*` filter above.
+      # Every use below quotes the value as well -- this is the belt to that pair of braces --
+      # and the charset is also what a Central coordinate may contain, so a tag that fails here
+      # would not have produced a usable version anyway.
+      #
+      # `-SNAPSHOT` is refused on its own line because the charset admits it and the plugin treats
+      # it specially: at a snapshot version every `sign*Publication` task is SKIPPED and
+      # `publishToMavenCentral` uploads to the snapshot repository instead -- so `v0.1.0-SNAPSHOT`
+      # would sail through every step below and land an unsigned snapshot under a tag.
+      - name: Read the version from the tag
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          case "$version" in
+            "" | *[!0-9A-Za-z.-]* )
+              echo "Refusing tag '$GITHUB_REF_NAME': a version must be non-empty [0-9A-Za-z.-]" >&2
+              exit 1
+              ;;
+            *-SNAPSHOT )
+              echo "Refusing tag '$GITHUB_REF_NAME': a tag releases, and a -SNAPSHOT version would be published unsigned to the snapshot repository" >&2
+              exit 1
+              ;;
+          esac
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      # Every secret this job needs, checked before the build rather than at the step that uses
+      # it. Two of these fail in ways worth pre-empting:
+      #
+      #  - A missing secret is the empty string, not an error. `signingInMemoryKeyId` empty fails
+      #    with `The key ID must be in a valid form (eg 00B5050F or 0x00B5050F), given value:` --
+      #    a message about the key's *shape* for a secret that was never set, arriving after the
+      #    full suite has run.
+      #  - Gradle takes the short 8-hex key id only. Measured in `uny/a2ui-compose` against a
+      #    throwaway key: the 8-hex form and *omitting the property entirely* both sign; the 16-hex
+      #    long id, the 40-hex fingerprint and the empty string all fail the `sign*Publication` tasks.
+      #    `gpg --list-secret-keys --keyid-format SHORT` prints the form that works.
+      #
+      # `GPG_PASSPHRASE` is required here deliberately, and this check is stricter than the
+      # toolchain: the plugin resolves `signingInMemoryKeyPassword` as `.orElse("").get()` (0.37.0
+      # bytecode), so an unprotected key signs fine with the property empty or absent. Requiring it
+      # encodes a policy rather than a technical need -- this repository signs with a
+      # passphrase-protected key, so an empty `GPG_PASSPHRASE` means a secret nobody set, not a key
+      # that needs none. If that key is ever replaced with an unprotected one, drop the name from
+      # the loop below; the failure otherwise reads as a missing secret.
+      - name: Check the release credentials are present
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          missing=
+          for name in MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD GPG_KEY_ID GPG_PRIVATE_KEY GPG_PASSPHRASE; do
+            eval "value=\$$name"
+            [ -n "$value" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Not set on the 'release' environment:$missing" >&2
+            exit 1
+          fi
+          case "$GPG_KEY_ID" in
+            [0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] | \
+            0[xX][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] ) ;;
+            * )
+              echo "::error::GPG_KEY_ID must be the short 8-hex key id (gpg --list-secret-keys --keyid-format SHORT), not a long id or a fingerprint." >&2
+              exit 1
+              ;;
+          esac
+          case "$GPG_PRIVATE_KEY" in
+            *"BEGIN PGP PRIVATE KEY BLOCK"*"END PGP PRIVATE KEY BLOCK"* ) ;;
+            * )
+              echo "::error::GPG_PRIVATE_KEY must be the ASCII-armored private key, header and footer included (gpg --export-secret-keys --armor <SHORT_KEY_ID>)." >&2
+              exit 1
+              ;;
+          esac
+
+      # The full suite before anything leaves the machine. A release is the one build where
+      # "the tests passed on the PR" is not enough: the tag may point at a merge the PR never had.
+      - name: Verify
+        run: ./gradlew build checkKotlinAbi --stacktrace
+
+      # Publish locally first, and consume it. This is the gate -- see `smoke-test/README.md`.
+      # Publishing to Maven Central is irreversible: a version is never re-uploaded and never
+      # deleted, so a broken publication is fixed only by burning the number. The smoke test is
+      # what stops that reaching the portal.
+      #
+      # The signing key is needed *here*, not only at the upload. `signAllPublications()` is
+      # exempt for a `-SNAPSHOT` version, not for a local publish: at a release version the
+      # `sign*Publication` tasks run under `publishToMavenLocal` too, and without a signatory
+      # they fail. Measured on 2026-09-15 on this tree, no key present:
+      #
+      #   $ ./gradlew :agui-model:publishToMavenLocal -PVERSION_NAME=0.1.0-probe
+      #   > Task :agui-model:signAndroidPublication FAILED
+      #   > No configured signatory
+      #
+      # and the same publish at `0.1.0-probe-SNAPSHOT` succeeds with every `sign*` task SKIPPED,
+      # which is why publishing snapshots by hand never shows this. With a throwaway key passed
+      # the way this step passes it, the full `0.1.0-probe` publish lands 48 POMs with an `.asc`
+      # beside every file. Passing the key here is also what makes the KDoc on every
+      # module's `mavenPublishing` block true: a missing or malformed secret now fails before the
+      # build's wall clock has been spent rather than at the upload.
+      - name: Publish to the local repository
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./gradlew publishToMavenLocal -PVERSION_NAME="$VERSION" --stacktrace
+
+      # `-p`, so the separate build runs under this repository's wrapper rather than carrying a
+      # second copy of `gradle-wrapper.jar` to keep pinned. It is still a separate build: its own
+      # `settings.gradle.kts` is what makes the dependency resolve by coordinate.
+      #
+      # `compileCommonMainKotlinMetadata` and `compileNoIosX64MainKotlinMetadata`, not
+      # `compileKotlinMetadata`. The latter exists as a task but is disabled under the hierarchical
+      # source-set model and can never run (`> Task :compileKotlinMetadata SKIPPED`, and
+      # `--rerun-tasks` does not force it), so naming it compiles nothing, and the metadata
+      # variants -- the ones a consumer's own shared source sets resolve -- would be the published
+      # variants this gate did not cover. Two of them here, because `smoke-test` has two shared
+      # source sets: `commonMain` for the three modules that publish `iosX64`, `noIosX64Main` for
+      # the six that do not.
+      - name: Resolve it as a consumer would
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          ./gradlew -p smoke-test \
+            compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
+            compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
+            compileAndroidMain \
+            -PaguiVersion="$VERSION" --stacktrace
+
+      # Uploads; it does not validate, and it does not release. The last step is a button in the
+      # Central Portal, held by the person whose account it is -- which is the right place for it
+      # while `publishAndReleaseToMavenCentral` exists and this is the first version to go out.
+      #
+      # "Does not validate" is the plugin's, not a choice made here: at 0.37.0 the deployment is
+      # uploaded as `USER_MANAGED` and the build ends with `Skipping deployment validation!` --
+      # the plugin only polls Central's validation when `automaticRelease = true`
+      # (`MavenCentralBuildService.close`, and the KDoc on `publishToMavenCentral`). So a green
+      # run here means the bundle was accepted for upload, not that it passed validation: a release
+      # key whose public half is on no keyserver, or a POM Central rejects, shows as FAILED in the
+      # portal and nowhere in this log. Read the deployment's status there before pressing the
+      # button; a failed deployment is dropped, not burnt, since nothing was released.
+      - name: Upload to Maven Central
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./gradlew publishToMavenCentral -PVERSION_NAME="$VERSION" --stacktrace
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports-release
+          path: '**/build/reports/**'
+          retention-days: 7
