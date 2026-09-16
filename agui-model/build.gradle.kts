@@ -19,11 +19,11 @@ kotlin {
     jvmToolchain(21)
 
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation()
+    abiValidation { enabled.set(true) }
 
     android {
         namespace = "dev.ynagai.agui.model"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        compileSdk = libs.versions.android.coreCompileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         // Runs `commonTest` on the JVM against the Android variant. Without it the warning the

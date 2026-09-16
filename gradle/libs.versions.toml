@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.10"
+kotlin = "2.3.21"
 agp = "9.3.2"
 coroutines = "1.11.0"
 serialization = "1.11.0"
@@ -58,6 +58,7 @@ datetime = "0.8.0-0.6.x-compat"
 # for the non-UI modules -- the Compose modules this repository will ship force 37 through
 # androidx.compose, and a consumer taking any of them needs 37 regardless.
 android-compileSdk = "37"
+android-coreCompileSdk = "24"
 android-minSdk = "24"
 
 [libraries]
