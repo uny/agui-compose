@@ -121,7 +121,7 @@ class InlineBuilderTest {
 
     @Test
     fun anUnresolvedReferenceKeepsItsInlineSyntaxAndAShortcutImageDrawsItsAlt() {
-        assertEquals("foo [bar] and pic", text("foo [*bar*] and ![pic]\n\n[pic]: /img"))
+        assertEquals("foo [bar] and pic, ![nope]", text("foo [*bar*] and ![pic], ![nope]\n\n[pic]: /img"))
     }
 
     @Test

@@ -19,8 +19,13 @@ import org.intellij.markdown.parser.MarkdownParser
 internal class MarkdownSegment(val source: String, val root: ASTNode) {
     val blocks: List<ASTNode> get() = root.children
 
-    /** Whether anything here is drawn: the parser's top level also holds `EOL` tokens for blank lines. */
-    val hasBlocks: Boolean get() = blocks.any { it.type != MarkdownTokenTypes.EOL && it.type != MarkdownTokenTypes.WHITE_SPACE }
+    /**
+     * Whether anything here is drawn: the parser's top level also holds `EOL` tokens for blank
+     * lines, and a link reference definition is consulted rather than drawn.
+     */
+    val hasBlocks: Boolean get() = blocks.any {
+        it.type != MarkdownTokenTypes.EOL && it.type != MarkdownTokenTypes.WHITE_SPACE && it.type != MarkdownElementTypes.LINK_DEFINITION
+    }
 
     /**
      * Link reference definitions in this segment, label to destination, for `[text][label]` and

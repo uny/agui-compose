@@ -173,14 +173,16 @@ internal class InlineBuilder(
             }
 
             // Nothing is fetched. An image is drawn as its alt text, which is what a screen reader
-            // would say and what an agent meant the reader to know about it.
+            // would say and what an agent meant the reader to know about it. A reference image
+            // with no definition is not an image, and stays as written like an undefined link.
             MarkdownElementTypes.IMAGE -> {
                 val inner = node.children.firstOrNull { it.type == MarkdownElementTypes.INLINE_LINK }
                     ?: node.children.firstOrNull { it.type == MarkdownElementTypes.FULL_REFERENCE_LINK }
                     ?: node.children.firstOrNull { it.type == MarkdownElementTypes.SHORT_REFERENCE_LINK }
-                val alt = inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
-                    ?: inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
-                if (alt != null) link(text = alt, destination = null) else appendChildren(node)
+                val label = inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
+                val defined = label == null || normalizeLabel(label.text()) in segment.linkDefinitions
+                val alt = inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT } ?: label
+                if (alt != null && defined) link(text = alt, destination = null) else appendChildren(node)
             }
 
             // A line break inside a paragraph is a space. Two trailing spaces or a backslash
