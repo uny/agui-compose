@@ -131,8 +131,9 @@ The published surface is one class and two functions. Swapping the parser later 
 module's internals plus whichever of `MarkdownColors` and `MarkdownTypography` a caller named --
 both of which are the parser's types, so the swap is not free. That is the price of letting a caller
 style the output at all, and it is paid once here rather than by every consumer. (It was paid at
-`0.2.0`: decision 13 made the two types this module's own, and that is the one edit a consumer of
-`0.1.0` who named them has to make.)
+`0.2.0`: decision 13 made the two types this module's own. A consumer of `0.1.0` who only named
+them changes an import; one who implemented the parser's interfaces or constructed its `Default*`
+classes has a little more to do, since the new types are final and carry fewer slots.)
 
 ## What would change the answer
 

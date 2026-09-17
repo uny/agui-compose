@@ -99,8 +99,9 @@ one dependency shorter.
 
 The rendering layer is this repository's to maintain. What that costs is a known list rather than
 an open one: task-list checkboxes are drawn as their `[ ]` characters, raw HTML is drawn as text,
-footnotes and math are not in the element set, and a link reference definition that arrives after a
-streaming settle point does not resolve until the run finishes, because resolution is per segment.
+footnotes and math are not in the element set, and a link reference definition on the other side
+of a streaming settle point from its reference does not resolve until the run finishes, because
+resolution is per segment.
 None of these are things an agent writes often, and each is a bounded change to one file when one
 does.
 
