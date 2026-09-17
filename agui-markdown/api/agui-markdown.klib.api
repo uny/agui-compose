@@ -7,13 +7,90 @@
 
 // Library unique name: <dev.ynagai.agui:agui-markdown>
 final class dev.ynagai.agui.markdown/MarkdownAguiTextRenderer : dev.ynagai.agui.compose/AguiTextRenderer { // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer|null[0]
-    constructor <init>(kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, com.mikepenz.markdown.model/MarkdownColors> = ..., kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, com.mikepenz.markdown.model/MarkdownTypography> = ..., org.intellij.markdown.flavours/MarkdownFlavourDescriptor = ...) // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer.<init>|<init>(kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,com.mikepenz.markdown.model.MarkdownColors>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,com.mikepenz.markdown.model.MarkdownTypography>;org.intellij.markdown.flavours.MarkdownFlavourDescriptor){}[0]
+    constructor <init>(kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, dev.ynagai.agui.markdown/MarkdownColors> = ..., kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, dev.ynagai.agui.markdown/MarkdownTypography> = ..., org.intellij.markdown.flavours/MarkdownFlavourDescriptor = ...) // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer.<init>|<init>(kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,dev.ynagai.agui.markdown.MarkdownColors>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,dev.ynagai.agui.markdown.MarkdownTypography>;org.intellij.markdown.flavours.MarkdownFlavourDescriptor){}[0]
 
     final fun Render(kotlin/String, kotlin/Boolean, androidx.compose.ui/Modifier, androidx.compose.runtime/Composer?, kotlin/Int) // dev.ynagai.agui.markdown/MarkdownAguiTextRenderer.Render|Render(kotlin.String;kotlin.Boolean;androidx.compose.ui.Modifier;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
 }
 
+final class dev.ynagai.agui.markdown/MarkdownAlertColors { // dev.ynagai.agui.markdown/MarkdownAlertColors|null[0]
+    constructor <init>(androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color) // dev.ynagai.agui.markdown/MarkdownAlertColors.<init>|<init>(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color){}[0]
+
+    final val caution // dev.ynagai.agui.markdown/MarkdownAlertColors.caution|{}caution[0]
+        final fun <get-caution>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownAlertColors.caution.<get-caution>|<get-caution>(){}[0]
+    final val important // dev.ynagai.agui.markdown/MarkdownAlertColors.important|{}important[0]
+        final fun <get-important>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownAlertColors.important.<get-important>|<get-important>(){}[0]
+    final val note // dev.ynagai.agui.markdown/MarkdownAlertColors.note|{}note[0]
+        final fun <get-note>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownAlertColors.note.<get-note>|<get-note>(){}[0]
+    final val tip // dev.ynagai.agui.markdown/MarkdownAlertColors.tip|{}tip[0]
+        final fun <get-tip>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownAlertColors.tip.<get-tip>|<get-tip>(){}[0]
+    final val warning // dev.ynagai.agui.markdown/MarkdownAlertColors.warning|{}warning[0]
+        final fun <get-warning>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownAlertColors.warning.<get-warning>|<get-warning>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.markdown/MarkdownAlertColors.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.markdown/MarkdownAlertColors.hashCode|hashCode(){}[0]
+}
+
+final class dev.ynagai.agui.markdown/MarkdownColors { // dev.ynagai.agui.markdown/MarkdownColors|null[0]
+    constructor <init>(androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Color, dev.ynagai.agui.markdown/MarkdownAlertColors) // dev.ynagai.agui.markdown/MarkdownColors.<init>|<init>(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;dev.ynagai.agui.markdown.MarkdownAlertColors){}[0]
+
+    final val alert // dev.ynagai.agui.markdown/MarkdownColors.alert|{}alert[0]
+        final fun <get-alert>(): dev.ynagai.agui.markdown/MarkdownAlertColors // dev.ynagai.agui.markdown/MarkdownColors.alert.<get-alert>|<get-alert>(){}[0]
+    final val codeBackground // dev.ynagai.agui.markdown/MarkdownColors.codeBackground|{}codeBackground[0]
+        final fun <get-codeBackground>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownColors.codeBackground.<get-codeBackground>|<get-codeBackground>(){}[0]
+    final val dividerColor // dev.ynagai.agui.markdown/MarkdownColors.dividerColor|{}dividerColor[0]
+        final fun <get-dividerColor>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownColors.dividerColor.<get-dividerColor>|<get-dividerColor>(){}[0]
+    final val inlineCodeBackground // dev.ynagai.agui.markdown/MarkdownColors.inlineCodeBackground|{}inlineCodeBackground[0]
+        final fun <get-inlineCodeBackground>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownColors.inlineCodeBackground.<get-inlineCodeBackground>|<get-inlineCodeBackground>(){}[0]
+    final val tableBackground // dev.ynagai.agui.markdown/MarkdownColors.tableBackground|{}tableBackground[0]
+        final fun <get-tableBackground>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownColors.tableBackground.<get-tableBackground>|<get-tableBackground>(){}[0]
+    final val text // dev.ynagai.agui.markdown/MarkdownColors.text|{}text[0]
+        final fun <get-text>(): androidx.compose.ui.graphics/Color // dev.ynagai.agui.markdown/MarkdownColors.text.<get-text>|<get-text>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.markdown/MarkdownColors.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.markdown/MarkdownColors.hashCode|hashCode(){}[0]
+}
+
+final class dev.ynagai.agui.markdown/MarkdownTypography { // dev.ynagai.agui.markdown/MarkdownTypography|null[0]
+    constructor <init>(androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextStyle, androidx.compose.ui.text/TextLinkStyles, androidx.compose.ui.text/TextStyle) // dev.ynagai.agui.markdown/MarkdownTypography.<init>|<init>(androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextStyle;androidx.compose.ui.text.TextLinkStyles;androidx.compose.ui.text.TextStyle){}[0]
+
+    final val code // dev.ynagai.agui.markdown/MarkdownTypography.code|{}code[0]
+        final fun <get-code>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.code.<get-code>|<get-code>(){}[0]
+    final val h1 // dev.ynagai.agui.markdown/MarkdownTypography.h1|{}h1[0]
+        final fun <get-h1>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h1.<get-h1>|<get-h1>(){}[0]
+    final val h2 // dev.ynagai.agui.markdown/MarkdownTypography.h2|{}h2[0]
+        final fun <get-h2>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h2.<get-h2>|<get-h2>(){}[0]
+    final val h3 // dev.ynagai.agui.markdown/MarkdownTypography.h3|{}h3[0]
+        final fun <get-h3>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h3.<get-h3>|<get-h3>(){}[0]
+    final val h4 // dev.ynagai.agui.markdown/MarkdownTypography.h4|{}h4[0]
+        final fun <get-h4>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h4.<get-h4>|<get-h4>(){}[0]
+    final val h5 // dev.ynagai.agui.markdown/MarkdownTypography.h5|{}h5[0]
+        final fun <get-h5>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h5.<get-h5>|<get-h5>(){}[0]
+    final val h6 // dev.ynagai.agui.markdown/MarkdownTypography.h6|{}h6[0]
+        final fun <get-h6>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.h6.<get-h6>|<get-h6>(){}[0]
+    final val inlineCode // dev.ynagai.agui.markdown/MarkdownTypography.inlineCode|{}inlineCode[0]
+        final fun <get-inlineCode>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.inlineCode.<get-inlineCode>|<get-inlineCode>(){}[0]
+    final val quote // dev.ynagai.agui.markdown/MarkdownTypography.quote|{}quote[0]
+        final fun <get-quote>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.quote.<get-quote>|<get-quote>(){}[0]
+    final val table // dev.ynagai.agui.markdown/MarkdownTypography.table|{}table[0]
+        final fun <get-table>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.table.<get-table>|<get-table>(){}[0]
+    final val text // dev.ynagai.agui.markdown/MarkdownTypography.text|{}text[0]
+        final fun <get-text>(): androidx.compose.ui.text/TextStyle // dev.ynagai.agui.markdown/MarkdownTypography.text.<get-text>|<get-text>(){}[0]
+    final val textLink // dev.ynagai.agui.markdown/MarkdownTypography.textLink|{}textLink[0]
+        final fun <get-textLink>(): androidx.compose.ui.text/TextLinkStyles // dev.ynagai.agui.markdown/MarkdownTypography.textLink.<get-textLink>|<get-textLink>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // dev.ynagai.agui.markdown/MarkdownTypography.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // dev.ynagai.agui.markdown/MarkdownTypography.hashCode|hashCode(){}[0]
+}
+
 final val dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop|#static{}dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop[0]
+final val dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop|#static{}dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop[0]
+final val dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownColors$stableprop // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownColors$stableprop|#static{}dev_ynagai_agui_markdown_MarkdownColors$stableprop[0]
+final val dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownTypography$stableprop // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownTypography$stableprop|#static{}dev_ynagai_agui_markdown_MarkdownTypography$stableprop[0]
 
 final fun dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter(): kotlin/Int // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter|dev_ynagai_agui_markdown_MarkdownAguiTextRenderer$stableprop_getter(){}[0]
-final fun dev.ynagai.agui.markdown/markdownAguiColors(androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., com.mikepenz.markdown.model/MarkdownAlertColors = ...): com.mikepenz.markdown.model/MarkdownColors // dev.ynagai.agui.markdown/markdownAguiColors|markdownAguiColors(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;com.mikepenz.markdown.model.MarkdownAlertColors){}[0]
-final fun dev.ynagai.agui.markdown/markdownAguiTypography(androidx.compose.ui.text/TextStyle = ...): com.mikepenz.markdown.model/MarkdownTypography // dev.ynagai.agui.markdown/markdownAguiTypography|markdownAguiTypography(androidx.compose.ui.text.TextStyle){}[0]
+final fun dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop_getter(): kotlin/Int // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop_getter|dev_ynagai_agui_markdown_MarkdownAlertColors$stableprop_getter(){}[0]
+final fun dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownColors$stableprop_getter(): kotlin/Int // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownColors$stableprop_getter|dev_ynagai_agui_markdown_MarkdownColors$stableprop_getter(){}[0]
+final fun dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownTypography$stableprop_getter(): kotlin/Int // dev.ynagai.agui.markdown/dev_ynagai_agui_markdown_MarkdownTypography$stableprop_getter|dev_ynagai_agui_markdown_MarkdownTypography$stableprop_getter(){}[0]
+final fun dev.ynagai.agui.markdown/markdownAguiColors(androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Color = ..., dev.ynagai.agui.markdown/MarkdownAlertColors = ...): dev.ynagai.agui.markdown/MarkdownColors // dev.ynagai.agui.markdown/markdownAguiColors|markdownAguiColors(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Color;dev.ynagai.agui.markdown.MarkdownAlertColors){}[0]
+final fun dev.ynagai.agui.markdown/markdownAguiTypography(androidx.compose.ui.text/TextStyle = ...): dev.ynagai.agui.markdown/MarkdownTypography // dev.ynagai.agui.markdown/markdownAguiTypography|markdownAguiTypography(androidx.compose.ui.text.TextStyle){}[0]
+final fun dev.ynagai.agui.markdown/markdownAlertColors(kotlin/Boolean): dev.ynagai.agui.markdown/MarkdownAlertColors // dev.ynagai.agui.markdown/markdownAlertColors|markdownAlertColors(kotlin.Boolean){}[0]

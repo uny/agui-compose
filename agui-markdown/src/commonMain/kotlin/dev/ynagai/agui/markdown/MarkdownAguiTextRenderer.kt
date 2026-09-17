@@ -1,19 +1,12 @@
 package dev.ynagai.agui.markdown
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.mikepenz.markdown.compose.Markdown
-import com.mikepenz.markdown.model.MarkdownColors
-import com.mikepenz.markdown.model.MarkdownTypography
-import com.mikepenz.markdown.model.rememberMarkdownState
-import com.mikepenz.markdown.model.rememberStreamingMarkdownState
+import androidx.compose.ui.unit.dp
 import dev.ynagai.agui.compose.AguiTextRenderer
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
@@ -33,8 +26,9 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
  *
  * `remember` is not decoration. [LocalAguiTextRenderer][dev.ynagai.agui.compose.LocalAguiTextRenderer]
  * is a static composition local with no equality beyond identity, so a renderer constructed inside
- * the `provides` re-provides itself on every recomposition and re-parses every visible run of a
- * streaming response on every frame.
+ * the `provides` re-provides itself on every recomposition, and the streaming document a renderer
+ * keeps per run is thrown away and rebuilt with it -- which re-parses every visible run from the
+ * top on every frame.
  *
  * **The default styling is black on nothing, and that is deliberate.** This module depends on
  * `agui-compose` and a parser, not on a design system, so there is no ambient text style or content
@@ -56,19 +50,19 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
  * **This makes agent text clickable, which is a change of posture and not only of appearance.**
  * [PlainAguiTextRenderer][dev.ynagai.agui.compose.PlainAguiTextRenderer] draws a URL as the
  * characters it is; this draws it as a link, and `TEXT_MESSAGE_CONTENT` is written by a model that
- * may be relaying whatever it was told to relay. The parser emits a `LinkAnnotation.Url` carrying
- * the agent's own string, with no scheme filtering here or in the parser, so a tap reaches the
- * ambient `LocalUriHandler` -- and under GFM, bare autolinked URLs are tap targets too, without any
+ * may be relaying whatever it was told to relay. A link is emitted as a `LinkAnnotation.Url`
+ * carrying the agent's own string, with no scheme filtering, so a tap reaches the ambient
+ * `LocalUriHandler` -- and under GFM, bare autolinked URLs are tap targets too, without any
  * `[](...)` syntax. An application with its own deep-link scheme should assume the transcript can
- * ask to open one, and provide a `LocalUriHandler` that decides what it will act on. Note that
- * images are not fetched: the parser's default transformer is a no-op, so nothing here reaches the
- * network on its own.
+ * ask to open one, and provide a `LocalUriHandler` that decides what it will act on. Images are
+ * not fetched: an `![alt](src)` is drawn as its alt text, so nothing here reaches the network on
+ * its own.
  *
  * @param colors read in composition rather than passed as a value, so that a caller reading
  *   `MaterialTheme` gets a renderer that follows a theme change without being reconstructed --
  *   which is what lets the whole thing sit behind a single `remember` with no keys.
  * @param typography read in composition for the same reason. Note that reasoning is dimmed by the
- *   slot around this renderer through `LocalContentColor`, and a `MarkdownColors` carries an
+ *   slot around this renderer through `LocalContentColor`, and a [MarkdownColors] carries an
  *   explicit colour -- so under Material 3 the lambda above is also what keeps dimming working.
  * @param flavour the Markdown dialect. GitHub Flavored Markdown by default, which is what an agent
  *   writing tables and fenced code is almost always writing.
@@ -84,97 +78,23 @@ public class MarkdownAguiTextRenderer(
         val colors = colors()
         val typography = typography()
 
-        if (streaming) {
-            Streaming(text = text, colors = colors, typography = typography, modifier = modifier)
+        // Parsed in composition, on the frame the text arrives, rather than in an effect a frame
+        // later. This branch is reached by a finished message -- including the moment a streaming
+        // one finishes -- and a deferred parse would draw an empty box there, which reads as the
+        // answer disappearing and coming back. A chat-sized document is not a parse worth
+        // deferring; the streaming path below is what bounds the cost for the one that is not
+        // chat-sized yet.
+        val segments = if (streaming) {
+            val document = remember(flavour) { StreamingMarkdownDocument(flavour) }
+            document.update(text)
         } else {
-            Markdown(
-                markdownState = rememberMarkdownState(
-                    content = text,
-                    flavour = flavour,
-                    // Parse on the frame that first composes this rather than a frame later. The
-                    // async default renders an empty box until the parse lands, and this branch is
-                    // reached by a finished message -- including the moment a streaming one
-                    // finishes -- so the blank would read as the answer disappearing and coming
-                    // back. A chat-sized document is not a parse worth deferring.
-                    immediate = true,
-                ),
-                colors = colors,
-                typography = typography,
-                modifier = modifier,
-            )
+            listOf(remember(text, flavour) { flavour.parse(text) })
         }
-    }
 
-    /**
-     * The incremental path, taken while text is still arriving.
-     *
-     * [AguiTextRenderer.Render] is handed the whole run rather than the latest delta, and the
-     * parser's streaming state is append-only, so the delta is recovered here by comparing what
-     * has been fed in against what has now arrived. That is worth doing rather than re-parsing the
-     * accumulated string on every token: the streaming parser keeps the settled prefix of the
-     * document and re-parses only the tail, so the *parse* stops repeating work it has already
-     * done.
-     *
-     * The comparison that recovers the delta does still walk the whole prefix -- `content` is
-     * declared `CharSequence`, so `startsWith` compares character by character rather than taking
-     * `String`'s intrinsic. That is the same shape of growth as the re-parse it replaces, at a
-     * constant factor low enough not to matter; what this path removes is the parsing, not the
-     * comparing.
-     *
-     * The unsettled tail is drawn, not held back -- that is the parser's own behaviour and it is
-     * the behaviour worth having. Syntax that is not finished is on screen as whatever it currently
-     * parses to, which for prose is the sentence being typed; holding the tail back instead would
-     * leave every paragraph invisible until the blank line that ends it.
-     */
-    @Composable
-    private fun Streaming(
-        text: String,
-        colors: MarkdownColors,
-        typography: MarkdownTypography,
-        modifier: Modifier,
-    ) {
-        // Bumped when `text` stops being an extension of what has been fed in -- a regenerated
-        // message, or a renderer reused across runs. An append-only parser cannot retract, so the
-        // only way back is a new one.
-        var generation by remember { mutableIntStateOf(0) }
-
-        // The parser and everything drawn from it sit inside the same `key`, so that starting over
-        // replaces both at once. Keeping the renderer outside it and swapping only the parser
-        // crashes: `Markdown` collects the snapshot into remembered state that holds its previous
-        // value until the new parser emits, while reading the text to slice through the parser it
-        // was just handed -- so for one frame it indexes the old document's nodes into an empty
-        // string.
-        //
-        // `flavour` is in the key for that reason and not for its own. `rememberStreamingMarkdownState`
-        // keys on it, so a new flavour builds a new parser whether this code asks for one or not --
-        // and the default `GFMFlavourDescriptor()` is a fresh instance per renderer, so *any* new
-        // renderer arriving mid-run is a new flavour. Without it here, a caller who provides an
-        // unremembered renderer gets that crash rather than the re-parse the KDoc warns about.
-        key(generation, flavour) {
-            val state = rememberStreamingMarkdownState(flavour = flavour)
-
-            // Every write to the parser happens here rather than in the composition body. A parser
-            // fed from composition is a parser fed once per recomposition, and its state updates
-            // schedule the next one -- which is a recomposition loop that pins the frame thread,
-            // not a slow renderer.
-            LaunchedEffect(state, text) {
-                // `content` is the parser's own buffer, compared rather than copied: a `toString`
-                // here would allocate the run again per token, which is the cost this path exists
-                // to avoid.
-                val fed = state.content
-                when {
-                    !text.startsWith(fed) -> generation++
-                    text.length > fed.length -> state.append(text.substring(fed.length))
-                    else -> Unit
-                }
+        Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            segments.forEach { segment ->
+                MarkdownBlocks(segment = segment, colors = colors, typography = typography)
             }
-
-            Markdown(
-                streamingMarkdownState = state,
-                colors = colors,
-                typography = typography,
-                modifier = modifier,
-            )
         }
     }
 }

@@ -72,11 +72,11 @@ kotlin {
             // not name that type could not provide it to `LocalAguiTextRenderer`.
             api(projects.aguiCompose)
 
-            // `api` as well, and here it is not a convenience: `MarkdownColors`, `MarkdownTypography`
-            // and `MarkdownFlavourDescriptor` are constructor parameters of the renderer this module
-            // publishes. Scoped `implementation` they would reach a consumer's runtime classpath but
-            // not its compile classpath, and the renderer could not be constructed at all.
-            api(libs.markdown.renderer)
+            // `api` as well, and here it is not a convenience: `MarkdownFlavourDescriptor` is a
+            // constructor parameter of the renderer this module publishes. Scoped `implementation`
+            // it would reach a consumer's runtime classpath but not its compile classpath, and a
+            // caller choosing a dialect could not name one.
+            api(libs.intellij.markdown)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
