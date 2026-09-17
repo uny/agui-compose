@@ -91,11 +91,12 @@ public class MarkdownAlertColors(
 }
 
 /**
- * GitHub's own alert accents, in the set it uses on a light or a dark surface.
+ * Alert accents in the hues GitHub draws them in, one set for a light surface and one for a dark.
  *
- * These are the `--fgColor-accent` / `-success` / `-done` / `-attention` / `-danger` values of
- * GitHub's two default themes, so an alert in a transcript reads as the same alert it would be on
- * the page the agent may well have taken it from.
+ * Blue for a note, green for a tip, purple for important, amber for a warning, red for caution --
+ * the association a reader already has from the page an agent may well have taken the alert
+ * from. The values are close to GitHub's default themes rather than copied from them; what
+ * matters is the hue, and a caller who wants an exact palette passes their own.
  */
 public fun markdownAlertColors(darkTheme: Boolean): MarkdownAlertColors = if (darkTheme) {
     MarkdownAlertColors(
