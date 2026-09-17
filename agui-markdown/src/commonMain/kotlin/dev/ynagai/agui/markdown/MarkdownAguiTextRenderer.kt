@@ -79,10 +79,10 @@ public class MarkdownAguiTextRenderer(
         val typography = typography()
 
         // Parsed in composition, on the frame the text arrives, rather than in an effect a frame
-        // later. This branch is reached by a finished message -- including the moment a streaming
-        // one finishes -- and a deferred parse would draw an empty box there, which reads as the
-        // answer disappearing and coming back. A chat-sized document is not a parse worth
-        // deferring; the streaming path below is what bounds the cost for the one that is not
+        // later. The finished branch is reached by a finished message -- including the moment a
+        // streaming one finishes -- and a deferred parse would draw an empty box there, which
+        // reads as the answer disappearing and coming back. A chat-sized document is not a parse
+        // worth deferring; the streaming branch is what bounds the cost for the one that is not
         // chat-sized yet.
         val segments = if (streaming) {
             val document = remember(flavour) { StreamingMarkdownDocument(flavour) }
@@ -91,8 +91,10 @@ public class MarkdownAguiTextRenderer(
             listOf(remember(text, flavour) { flavour.parse(text) })
         }
 
+        // A segment with nothing but blank lines in it (a run that opens with them, or a tail that
+        // is only the blank line after a settle point) draws nothing, and so gets no gap either.
         Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            segments.forEach { segment ->
+            segments.filter { it.hasBlocks }.forEach { segment ->
                 MarkdownBlocks(segment = segment, colors = colors, typography = typography)
             }
         }

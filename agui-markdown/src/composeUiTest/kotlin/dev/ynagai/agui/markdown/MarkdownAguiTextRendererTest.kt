@@ -35,9 +35,9 @@ class MarkdownAguiTextRendererTest {
     /**
      * Text that arrives in pieces is on screen at every piece, and whole at the end.
      *
-     * Each recomposition hands the renderer the run so far; the settled prefix keeps its tree and
-     * the open tail is parsed again. What can go wrong is at the seam: a tail that is not drawn
-     * until it settles, or a prefix drawn twice once the tail has been folded into it.
+     * Each recomposition hands the renderer the run so far, and the run here never settles, so
+     * what this pins is the open tail alone: that it is drawn while it is still open. The seam
+     * between a settled prefix and the tail is [aRunThatCrossesASettlePointDrawsBothSides].
      */
     @Test
     fun aRunThatArrivesInPiecesIsParsedAsOne() = runComposeUiTest {
@@ -61,6 +61,30 @@ class MarkdownAguiTextRendererTest {
     }
 
     /**
+     * A streamed run that crosses a settle point is drawn whole on both sides of it: the settled
+     * prefix once, and the tail after it. A renderer that drew only the last segment, or every
+     * segment twice, would fail here and nowhere else in this file.
+     */
+    @Test
+    fun aRunThatCrossesASettlePointDrawsBothSides() = runComposeUiTest {
+        var text by mutableStateOf("First **paragraph**.")
+
+        setContent { Rendered(text = text, streaming = true) }
+        onNodeWithText("First paragraph.").assertIsDisplayed()
+
+        text = "First **paragraph**.\n\nSecond, still"
+        waitForIdle()
+        onNodeWithText("First paragraph.").assertIsDisplayed()
+        onNodeWithText("Second, still").assertIsDisplayed()
+
+        text = "First **paragraph**.\n\nSecond, still open.\n\nThird"
+        waitForIdle()
+        onNodeWithText("First paragraph.").assertIsDisplayed()
+        onNodeWithText("Second, still open.").assertIsDisplayed()
+        onNodeWithText("Third").assertIsDisplayed()
+    }
+
+    /**
      * The constructor's flavour is the one that parses, asserted against a dialect that differs.
      *
      * `**bold**` is in every dialect, so no other test here would notice the flavour going astray.
@@ -75,9 +99,11 @@ class MarkdownAguiTextRendererTest {
 
         setContent {
             commonMark.Render(text = "A ~~struck~~ claim.", streaming = false, modifier = Modifier)
+            commonMark.Render(text = "Still ~~struck~~ here.", streaming = true, modifier = Modifier)
         }
 
         onNodeWithText("A ~~struck~~ claim.").assertIsDisplayed()
+        onNodeWithText("Still ~~struck~~ here.").assertIsDisplayed()
     }
 
     /** The default dialect is GitHub's, which is the one that reads `~~struck~~` as struck. */
@@ -186,9 +212,9 @@ class MarkdownAguiTextRendererTest {
     }
 
     /**
-     * One `remember`ed renderer, as the KDoc tells a caller to write it -- and as the tests need it,
-     * since a renderer rebuilt per frame would rebuild its streaming document with it and hide
-     * exactly the settled-prefix behaviour being asserted.
+     * One `remember`ed renderer, as the KDoc tells a caller to write it -- and as the streaming
+     * tests need it, since a renderer rebuilt per frame would rebuild its streaming document with
+     * it and parse every frame from the top.
      */
     @Composable
     private fun Rendered(text: String, streaming: Boolean) {
