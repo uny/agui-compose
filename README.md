@@ -61,11 +61,11 @@ what each carries, and [Targets](#targets) which platforms.
 Three floors, and they are not the same for every module. Each is what the published artifacts
 declare, read from them rather than from this file's intentions.
 
-| Floor | `agui-model` / `agui-core` / `agui-agent` | Every other module | How it fails |
-| --- | --- | --- | --- |
-| `compileSdk` | **24** | **37** | AGP's `checkAarMetadata` names the module and the version it wants. `compileSdk` is what you compile against; `targetSdk` and `minSdk` need not move. |
-| Compose Multiplatform | none | **1.12.0** | Silently. Gradle takes the highest version, so a lower one you declare is raised without a message; holding it with `strictly` fails resolution instead. |
-| Kotlin | **2.4** line | **2.4** line | A 2.3 compiler reads the JVM and Android artifacts (metadata one minor version ahead is readable) and refuses the iOS klibs (`incompatible ABI version '2.4.0'`). |
+| Floor | `agui-model` / `agui-core` / `agui-agent` | `agui-a2ui` | Every module that draws | How it fails |
+| --- | --- | --- | --- | --- |
+| `compileSdk` | **24** | **37** | **37** | AGP's `checkAarMetadata` names the module and the version it wants. `compileSdk` is what you compile against; `targetSdk` and `minSdk` need not move. |
+| Compose Multiplatform | none | none | **1.12.0** | Silently. Gradle takes the highest version, so a lower one you declare is raised without a message; holding it with `strictly` fails resolution instead. |
+| Kotlin | **2.4** line | **2.4** line | **2.4** line | A 2.3 compiler reads the JVM and Android artifacts (metadata one minor version ahead is readable) and refuses the iOS klibs (`incompatible ABI version '2.4.0'`). |
 
 The `compileSdk` split is the point of publishing the lower modules on their own: the three carry
 no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
