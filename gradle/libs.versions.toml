@@ -63,8 +63,8 @@ datetime = "0.8.0-0.6.x-compat"
 #
 # `android-coreCompileSdk` is for `agui-model`, `agui-core` and `agui-agent`, whose Android
 # dependencies -- the upstream SDK's three AARs and `kotlin-json-patch` -- all carry
-# `minCompileSdk=1`. It sits at `minSdk`, the lowest AGP accepts, so a KSP-pinned consumer can take
-# the transport before its toolchain can take the UI. `checkAndroidMainAarMetadata`, which
+# `minCompileSdk=1`. It sits at `minSdk`, the lowest AGP accepts, so a consumer whose `compileSdk`
+# is below 37 can take the transport before it can take the UI. `checkAndroidMainAarMetadata`, which
 # `assemble` runs, fails the build if a dependency bump ever asks for more; raising this value is a
 # compatibility decision for consumers, not a dependency chore, and `minCompileSdk` only ever comes
 # down for free.

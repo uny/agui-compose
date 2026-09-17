@@ -71,12 +71,14 @@ The `compileSdk` split is the point of publishing the lower modules on their own
 no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
 draws nothing either but rides on `a2ui-core`, whose AAR asks for 37.
 
-**The Kotlin floor is the one that bites**, because KSP has no Kotlin 2.4 release, so a project
-with Room, Dagger or Moshi in the build is on 2.3 and cannot move — and if it targets iOS, it cannot
-take these artifacts. That floor is inherited from two dependencies rather than chosen, and it is
-coming down: the plan, and what it waits on, is
-[#20](https://github.com/uny/agui-compose/issues/20). Until then the `0.x` line tracks the newest
-Kotlin.
+**The Kotlin floor is the one that bites**: the Kotlin version is project-wide, so a project held
+on 2.3 by anything at all cannot move for one library — and if it targets iOS, it cannot take these
+artifacts. KSP is not that anything: it has no 2.4-numbered release, but its 2.3 line runs on a
+Kotlin 2.4 project (measured: KSP 2.3.12 with Moshi's codegen on Kotlin 2.4.10, JVM, and the plugin
+applied to a KMP project with iOS targets), so Room, Dagger or Moshi alone do not hold a consumer
+back. That floor is inherited from two dependencies rather than chosen, and it is coming down: the
+plan, and what it waits on, is [#20](https://github.com/uny/agui-compose/issues/20). Until then the
+`0.x` line tracks the newest Kotlin.
 
 ## Modules
 
