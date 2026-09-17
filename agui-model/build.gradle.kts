@@ -23,8 +23,8 @@ kotlin {
 
     android {
         namespace = "dev.ynagai.agui.model"
-        // The lower of the two floors: this module draws nothing, and every AAR it depends on
-        // says `minCompileSdk=1`. See the catalog for what the value promises.
+        // The lower of the two floors: this module draws nothing and depends on no AAR at all.
+        // See the catalog for what the value promises.
         compileSdk = libs.versions.android.coreCompileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
