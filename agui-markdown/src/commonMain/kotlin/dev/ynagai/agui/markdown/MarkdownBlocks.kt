@@ -119,7 +119,8 @@ private fun Heading(node: ASTNode, inline: InlineBuilder, style: TextStyle, colo
 /**
  * A list item is its marker token followed by blocks. The marker is drawn as it was written for
  * an ordered list, so a list that starts at 3 starts at 3, and as a bullet for an unordered one,
- * whatever character the agent used.
+ * whatever character the agent used. A GFM task box (`[ ]` or `[x]`) is a token of its own
+ * after the marker, and is drawn as written too, in front of the item's first block.
  */
 @Composable
 private fun ListBlock(
@@ -135,12 +136,16 @@ private fun ListBlock(
             val marker = item.children.firstOrNull {
                 it.type == MarkdownTokenTypes.LIST_NUMBER || it.type == MarkdownTokenTypes.LIST_BULLET
             }
-            val label = if (ordered) marker?.getTextInNode(segment.source)?.trim().toString() else "•"
+            val checkBox = item.children.firstOrNull { it.type == GFMTokenTypes.CHECK_BOX }
+            val label = buildString {
+                append(if (ordered) marker?.getTextInNode(segment.source)?.trim() else "•")
+                if (checkBox != null) append(' ').append(checkBox.getTextInNode(segment.source).trim())
+            }
             Row {
                 Prose(AnnotatedString(label), typography.text, colors, Modifier.padding(end = 8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(BlockSpacing / 2)) {
                     item.children.forEach { child ->
-                        if (child !== marker) MarkdownBlock(child, segment, inline, colors, typography)
+                        if (child !== marker && child !== checkBox) MarkdownBlock(child, segment, inline, colors, typography)
                     }
                 }
             }
@@ -232,16 +237,32 @@ private fun fenceContent(node: ASTNode, segment: MarkdownSegment): String {
     return lines.joinToString("\n")
 }
 
-/** An indented block is `CODE_LINE` tokens, indentation included, so four columns come off each. */
-private fun indentedContent(node: ASTNode, segment: MarkdownSegment): String =
-    node.children
-        .filter { it.type == MarkdownTokenTypes.CODE_LINE }
-        .joinToString("\n") { line ->
-            val text = line.getTextInNode(segment.source)
-            var strip = 0
-            while (strip < text.length && strip < 4 && text[strip] == ' ') strip++
-            text.subSequence(strip, text.length)
+/**
+ * An indented block is `CODE_LINE` tokens with `EOL`s between them, indentation included, so four
+ * columns (or the one tab that stands for them) come off each. A blank line inside the block is
+ * an `EOL` with no `CODE_LINE` before it, which is why the lines are counted off the `EOL`s.
+ */
+private fun indentedContent(node: ASTNode, segment: MarkdownSegment): String {
+    val lines = mutableListOf<String>()
+    var line: String? = null
+    for (child in node.children) {
+        when (child.type) {
+            MarkdownTokenTypes.EOL -> {
+                lines += line.orEmpty()
+                line = null
+            }
+            MarkdownTokenTypes.CODE_LINE -> {
+                val text = child.getTextInNode(segment.source)
+                var strip = 0
+                if (text.startsWith("\t")) strip = 1 else while (strip < text.length && strip < 4 && text[strip] == ' ') strip++
+                line = text.subSequence(strip, text.length).toString()
+            }
+            else -> Unit
         }
+    }
+    if (line != null) lines += line
+    return lines.joinToString("\n")
+}
 
 @Composable
 private fun CodeBlock(content: String, colors: MarkdownColors, typography: MarkdownTypography) {
@@ -264,7 +285,8 @@ private fun Rule(colors: MarkdownColors) {
 /**
  * A GFM table is a `HEADER` row, a `TABLE_SEPARATOR` line, and `ROW`s; each row is `CELL`s with
  * `TABLE_SEPARATOR` pipes between them. Alignment is read from the separator line, which is the
- * only place the syntax states it.
+ * only place the syntax states it. The header sets the column count: a short row is padded with
+ * empty cells so its cells keep their columns (the parser already drops a long row's excess).
  */
 @Composable
 private fun Table(
@@ -289,6 +311,7 @@ private fun Table(
         }
         .orEmpty()
     val rows = node.children.filter { it.type == GFMElementTypes.HEADER || it.type == GFMElementTypes.ROW }
+    val columns = rows.firstOrNull()?.children?.count { it.type == GFMTokenTypes.CELL } ?: 0
 
     Column(
         modifier = Modifier
@@ -312,9 +335,10 @@ private fun Table(
                         },
                     ),
             ) {
-                row.children.filter { it.type == GFMTokenTypes.CELL }.forEachIndexed { column, cell ->
+                val cells = row.children.filter { it.type == GFMTokenTypes.CELL }
+                repeat(maxOf(columns, cells.size)) { column ->
                     BasicText(
-                        text = inline.build(cell.children),
+                        text = cells.getOrNull(column)?.let { inline.build(it.children) } ?: AnnotatedString(""),
                         style = style.copy(color = colors.text, textAlign = alignments.getOrElse(column) { TextAlign.Start }),
                         modifier = Modifier.weight(1f).padding(CellPadding),
                     )

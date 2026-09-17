@@ -93,4 +93,23 @@ class MarkdownBlocksTest {
         onNodeWithText("below").assertIsDisplayed()
         onNodeWithText("---", substring = true).assertDoesNotExist()
     }
+
+    @Test
+    fun aTaskListDrawsItsBoxesInFrontOfItsItems() = rendered("- [ ] todo\n- [x] done") {
+        onNodeWithText("• [ ]").assertIsDisplayed()
+        onNodeWithText("• [x]").assertIsDisplayed()
+        onNodeWithText("todo").assertIsDisplayed()
+        onNodeWithText("done").assertIsDisplayed()
+    }
+
+    @Test
+    fun anIndentedBlockKeepsItsBlankLinesAndLosesItsTab() = rendered("    a\n\n\tb") {
+        onNodeWithText("a\n\nb").assertIsDisplayed()
+    }
+
+    @Test
+    fun aShortTableRowKeepsItsColumns() = rendered("| a | b |\n|---|---|\n| 1 |") {
+        onNodeWithText("1").assertIsDisplayed()
+        onNodeWithText("b").assertIsDisplayed()
+    }
 }
