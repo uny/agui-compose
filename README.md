@@ -109,7 +109,7 @@ API 24, not the 37 the rest of the repository needs; see
 
 `agui-compose`, and every module that draws: the same set **minus `iosX64`**. Compose Multiplatform
 1.12.0 does not publish an `ios_x64` variant of `foundation`, `ui` or `runtime`, so no Compose
-module can reach an Intel simulator regardless of how it is configured. The lower two modules keep
+module can reach an Intel simulator regardless of how it is configured. The lower three modules keep
 the fifth target rather than being trimmed to match — folding an event stream needs no Compose, and
 a consumer on an Intel simulator can still do it and render the result with something else.
 
