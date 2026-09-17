@@ -43,8 +43,8 @@ kotlin {
 
     // Four targets, matching `agui-compose`, and for its reason rather than this module's:
     // Compose Multiplatform 1.12.0 publishes no `ios_x64` variant of `foundation`, `ui` or
-    // `runtime`. The Markdown renderer happens to publish the same four (plus `js`, `wasmJs` and
-    // `macosArm64`, which this repository does not take), so it adds no constraint of its own.
+    // `runtime`. intellij-markdown publishes `jvm`, `ios_arm64` and `ios_simulator_arm64` (Android
+    // takes the jvm one) among others, so it adds no constraint of its own.
     iosArm64()
     iosSimulatorArm64()
 
@@ -87,6 +87,12 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
     }
+}
+
+// The streaming cost measurement in `jvmTest` is off unless asked for; see its KDoc. A Gradle
+// property rather than `-D`, so the switch reaches the forked test JVM.
+tasks.withType<Test>().configureEach {
+    systemProperty("agui.measure", providers.gradleProperty("agui.measure").orElse("false").get())
 }
 
 /**

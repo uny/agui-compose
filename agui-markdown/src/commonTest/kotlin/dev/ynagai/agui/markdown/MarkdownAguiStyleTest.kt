@@ -112,8 +112,8 @@ class MarkdownAguiStyleTest {
      * GFM alert accents follow the surface the text colour implies.
      *
      * These are the one part of the palette that cannot be a tint of [markdownAguiColors]'s `text`,
-     * so the parser's own default -- its light-theme set, whatever it was handed -- would otherwise
-     * leave a dark transcript with light-theme alerts.
+     * so a fixed default -- the light-theme set, whatever `text` was -- would leave a dark
+     * transcript with light-theme alerts.
      */
     @Test
     fun alertColoursFollowTheImpliedTheme() {

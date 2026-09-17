@@ -15,10 +15,10 @@ import kotlin.test.Test
 
 /**
  * What this module adds over `agui-compose`'s default renderer is that the syntax stops being
- * literal, and that a run still arriving is parsed incrementally rather than from the top. The
- * first is one assertion; the second is where the code can actually be wrong, because the renderer
- * is handed the accumulated run and the parser it drives is append-only, so the delta between them
- * is reconstructed rather than given.
+ * literal, and that a run still arriving is drawn as it arrives rather than only once it is done.
+ * The first is one assertion; the second is where the code can actually be wrong, because the
+ * renderer is handed the accumulated run and keeps a settled prefix of it parsed, so what it draws
+ * is two trees stitched together rather than one -- and the seam is where a frame can go missing.
  */
 @OptIn(ExperimentalTestApi::class)
 class MarkdownAguiTextRendererTest {
@@ -33,11 +33,11 @@ class MarkdownAguiTextRendererTest {
     }
 
     /**
-     * Text that arrives in pieces ends up rendered whole.
+     * Text that arrives in pieces is on screen at every piece, and whole at the end.
      *
-     * This is the reconstruction working: each recomposition hands the renderer the run so far, and
-     * only the part of it the parser has not seen may be appended. Feed the parser the whole run
-     * every time and the document doubles; feed it nothing and it stops at the first token.
+     * Each recomposition hands the renderer the run so far; the settled prefix keeps its tree and
+     * the open tail is parsed again. What can go wrong is at the seam: a tail that is not drawn
+     * until it settles, or a prefix drawn twice once the tail has been folded into it.
      */
     @Test
     fun aRunThatArrivesInPiecesIsParsedAsOne() = runComposeUiTest {
@@ -45,11 +45,10 @@ class MarkdownAguiTextRendererTest {
 
         setContent { Rendered(text = text, streaming = true) }
 
-        // Asserted after every piece, not only at the end. Feeding the parser the whole run each
-        // time doubles the document -- but only until the *next* piece fails the prefix check,
-        // which restarts the parser and launders the damage away. A single assertion on the
-        // settled last frame therefore passes while the delta reconstruction is broken; these
-        // intermediate ones are what fail.
+        // Asserted after every piece, not only at the end. The last frame is a finished run's
+        // worth of text, and a renderer that held the tail back until it settled would still draw
+        // that frame correctly; the intermediate assertions are what pin that the tail is drawn
+        // while it is still open.
         onNodeWithText("A bold").assertIsDisplayed()
 
         text = "A **bold** claim"
@@ -65,10 +64,10 @@ class MarkdownAguiTextRendererTest {
      * The constructor's flavour is the one that parses, asserted against a dialect that differs.
      *
      * `**bold**` is in every dialect, so no other test here would notice the flavour going astray.
-     * Nor would asserting GFM alone: the parser's *own* default is GFM too, so dropping
-     * `flavour = flavour` at either call site changes nothing observable. What pins the wiring is a
-     * caller passing something else and getting it -- CommonMark has no strikethrough, so the
-     * tildes stay on screen as the characters they are.
+     * Nor would asserting GFM alone: the constructor's default is GFM, so a renderer that ignored
+     * its own parameter and built a `GFMFlavourDescriptor` at either parse site would change
+     * nothing observable. What pins the wiring is a caller passing something else and getting it
+     * -- CommonMark has no strikethrough, so the tildes stay on screen as the characters they are.
      */
     @Test
     fun theConstructorsFlavourIsTheOneThatParses() = runComposeUiTest {
@@ -93,10 +92,9 @@ class MarkdownAguiTextRendererTest {
      * A run that begins empty is parsed from its first real token.
      *
      * `TEXT_MESSAGE_START` arrives before any content does, so the first frame of every streamed
-     * message has `text == ""` -- a production path no other test here supplies. It is covered
-     * rather than pinned: the arm it lands in does nothing, and the neighbouring `>=` spelling
-     * would append an empty string instead, which is a wasted call and not a defect. What this
-     * asserts is that starting from empty does not read as a replaced run.
+     * message has `text == ""` -- a production path no other test here supplies. An empty run is
+     * an empty document that every later run extends, so nothing is discarded when the first token
+     * lands; what this asserts is that starting from empty does not read as a replaced run.
      */
     @Test
     fun aRunThatBeginsEmptyIsParsedFromItsFirstToken() = runComposeUiTest {
@@ -114,12 +112,12 @@ class MarkdownAguiTextRendererTest {
      * A renderer replaced while a run is still arriving does not take the transcript down with it.
      *
      * The KDoc tells a caller to `remember` the renderer and gives re-parsing every frame as the
-     * cost of not doing so. That understated it: `rememberStreamingMarkdownState` keys on the
-     * flavour, and the default `GFMFlavourDescriptor()` is a fresh instance per renderer, so a new
-     * renderer arriving mid-run replaced the parser *without* replacing the `Markdown` around it --
-     * which then indexed the previous snapshot's node ranges into an empty buffer and threw
-     * `StringIndexOutOfBoundsException`. An unremembered renderer is the single easiest mistake to
-     * make against this API, and it crashed rather than merely being slow.
+     * cost of not doing so. An unremembered renderer is the single easiest mistake to make against
+     * this API, and with the previous rendering layer it crashed rather than merely being slow: the
+     * parser was replaced underneath a composable still holding the old tree's offsets. The test
+     * outlived that layer because the mistake did not. A new renderer is a new
+     * `GFMFlavourDescriptor()` and therefore a new streaming document keyed on it; what is pinned
+     * is that the switch is a re-parse and not a crash.
      */
     @Test
     fun aRendererReplacedMidRunDoesNotCrash() = runComposeUiTest {
@@ -140,10 +138,11 @@ class MarkdownAguiTextRendererTest {
     /**
      * A run that is replaced rather than extended is replaced on screen too.
      *
-     * An append-only parser cannot retract, so this is the one case the renderer has to notice and
-     * start over for -- a regenerated message, or a renderer reused across two runs. Getting it
-     * wrong leaves the old text on screen with the new text welded onto the end of it, which is
-     * why the old wording is asserted gone rather than the new one merely present.
+     * A settled prefix is kept on the assumption that the run extends it, so this is the one case
+     * the renderer has to notice and start over for -- a regenerated message, or a renderer reused
+     * across two runs. Getting it wrong leaves the old text on screen with the new text welded
+     * onto the end of it, which is why the old wording is asserted gone rather than the new one
+     * merely present.
      */
     @Test
     fun aRunThatIsReplacedStartsOver() = runComposeUiTest {
@@ -163,9 +162,10 @@ class MarkdownAguiTextRendererTest {
     /**
      * The end of a run is not a blank frame.
      *
-     * `streaming` flipping to `false` swaps the incremental parser for a complete parse of the same
-     * text, and the complete parse is asked for synchronously precisely so that this instant does
-     * not render an empty box. A reader would see the finished answer vanish and return.
+     * `streaming` flipping to `false` swaps the settled segments for one complete parse of the same
+     * text, and that parse happens in composition, on the same frame, precisely so that this
+     * instant does not render an empty box. A reader would see the finished answer vanish and
+     * return.
      */
     @Test
     fun theFinishedRunSurvivesTheSwitchOffStreaming() = runComposeUiTest {
@@ -175,9 +175,9 @@ class MarkdownAguiTextRendererTest {
 
         onNodeWithText("Done, in full.").assertIsDisplayed()
 
-        // One frame, not `waitForIdle`. Idling drains the asynchronous parse too, so this test
-        // would pass with `immediate = false` and assert nothing about the frame the reader
-        // actually sees at the moment a run finishes -- which is the whole claim.
+        // One frame, not `waitForIdle`. Idling would drain a parse deferred to an effect too, so
+        // this test would pass with one and assert nothing about the frame the reader actually
+        // sees at the moment a run finishes -- which is the whole claim.
         mainClock.autoAdvance = false
         streaming = false
         mainClock.advanceTimeByFrame()
@@ -187,8 +187,8 @@ class MarkdownAguiTextRendererTest {
 
     /**
      * One `remember`ed renderer, as the KDoc tells a caller to write it -- and as the tests need it,
-     * since a renderer rebuilt per frame would rebuild the parser with it and hide exactly the
-     * incremental behaviour being asserted.
+     * since a renderer rebuilt per frame would rebuild its streaming document with it and hide
+     * exactly the settled-prefix behaviour being asserted.
      */
     @Composable
     private fun Rendered(text: String, streaming: Boolean) {

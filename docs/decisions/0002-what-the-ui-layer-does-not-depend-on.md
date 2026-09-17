@@ -58,6 +58,10 @@ candidate, and it appeared to force a choice:
 at 0.42.0. The two are mutually exclusive in that library, and pinning 0.40.2 to keep the fifth
 target meant a dead version line built on an older Kotlin.
 
+(The library was later left altogether, for a reason this table already shows in its last column:
+[decision 13](0013-owning-the-markdown-rendering-layer.md). The target conclusion here does not
+depend on it.)
+
 The CMP finding above dissolves that: a Compose module has four targets whatever it depends on, and
 0.45.0's published set is a superset of those four. The library's core is also
 design-system-free — its classes reference `foundation`, `ui`, `runtime` and `animation` and

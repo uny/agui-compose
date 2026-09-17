@@ -6,8 +6,15 @@ import kotlin.time.measureTime
 
 /**
  * Not an assertion: a measurement, printed, of what the settled-prefix scheme saves over
- * re-parsing the accumulated run on every token. Run with `--info` (or read the test report's
- * standard output) to see it. The numbers are what uny/agui-compose#21 quotes.
+ * re-parsing the accumulated run on every token. The numbers are what `docs/decisions/0013`
+ * quotes.
+ *
+ * Skipped unless asked for, because the from-the-top loop it compares against costs seconds by
+ * design:
+ *
+ * ```
+ * ./gradlew :agui-markdown:jvmTest --tests '*StreamingCostMeasurement*' -Pagui.measure=true -i
+ * ```
  */
 class StreamingCostMeasurement {
     private val flavour = GFMFlavourDescriptor()
@@ -25,6 +32,10 @@ class StreamingCostMeasurement {
 
     @Test
     fun measure() {
+        if (System.getProperty("agui.measure") != "true") {
+            println("skipped: pass -Pagui.measure=true to take the measurement")
+            return
+        }
         for (paragraphs in listOf(10, 40, 160)) {
             val run = run(paragraphs)
             val delta = 8
