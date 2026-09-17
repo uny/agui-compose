@@ -85,7 +85,7 @@ class StreamingMarkdownDocumentTest {
     /**
      * Only the open tail is re-parsed per token. Fed a long run in small pieces, the settled
      * prefix is parsed once per boundary and the parse that repeats is bounded by a paragraph,
-     * which is what makes the scheme worth its two hundred lines over re-parsing from the top.
+     * which is what makes the scheme worth having over re-parsing from the top.
      */
     @Test
     fun onlyTheOpenTailIsReparsedPerToken() {
@@ -104,5 +104,58 @@ class StreamingMarkdownDocumentTest {
         val fromTheTop = (8..run.length step 8).sumOf { it.toLong() } + run.length
         assertTrue(reparsed * 10 < fromTheTop, "re-parsed $reparsed chars against $fromTheTop from the top")
         assertEquals(flavour.parse(run).blocks.map { it.type }, document.segments.flatMap { it.blocks }.map { it.type })
+    }
+
+    @Test
+    fun aClosingFenceWithAnInfoStringIsNotAClose() {
+        val document = StreamingMarkdownDocument(flavour)
+        document.update("```\ncode\n```kotlin\n\nstill code")
+
+        assertEquals(1, document.segments.size)
+        assertEquals(listOf("CODE_FENCE"), blockTypes(document))
+    }
+
+    @Test
+    fun anIndentedFenceAfterABlankContinuesItsListItem() {
+        val document = StreamingMarkdownDocument(flavour)
+        document.update("- item\n\n  ```\n  code\n  ```\n- next")
+
+        assertEquals(1, document.segments.size)
+        assertEquals(listOf("UNORDERED_LIST"), blockTypes(document))
+    }
+
+    /**
+     * The last line of the run is still being typed, so a bare number there may yet become an
+     * ordered-list marker continuing the list above -- and a settle taken on it could not be
+     * revoked once the `.` arrived.
+     */
+    @Test
+    fun aBareNumberOnTheLastLineIsNotABoundary() {
+        val document = StreamingMarkdownDocument(flavour)
+        document.update("1. a\n\n1")
+        document.update("1. a\n\n1. b")
+
+        assertEquals(1, document.segments.size)
+        assertEquals(listOf("ORDERED_LIST"), blockTypes(document))
+    }
+
+    /**
+     * What the per-segment resolution of link references costs: a definition in one segment
+     * does not resolve a reference in another, in either direction.
+     */
+    @Test
+    fun aLinkDefinitionInAnotherSegmentDoesNotResolve() {
+        val document = StreamingMarkdownDocument(flavour)
+        document.update("See [d].\n\n[d]: https://x")
+        assertEquals(2, document.segments.size)
+        assertEquals(emptyMap(), document.segments[0].linkDefinitions)
+        assertEquals(mapOf("d" to "https://x"), document.segments[1].linkDefinitions)
+    }
+
+    @Test
+    fun aLinkDefinitionIsFoundInsideAContainerAndTheFirstOneWins() {
+        val segment = flavour.parse("- see [d]\n\n  [d]: https://one\n\n[Foo  Bar]: https://two\n[foo bar]: https://three")
+
+        assertEquals(mapOf("d" to "https://one", "foo bar" to "https://two"), segment.linkDefinitions)
     }
 }

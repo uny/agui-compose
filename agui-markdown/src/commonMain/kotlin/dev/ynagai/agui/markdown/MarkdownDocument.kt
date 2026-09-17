@@ -1,9 +1,11 @@
 package dev.ynagai.agui.markdown
 
 import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
+import org.intellij.markdown.html.entities.Entities
 import org.intellij.markdown.parser.CancellationToken
 import org.intellij.markdown.parser.MarkdownParser
 
@@ -17,23 +19,74 @@ import org.intellij.markdown.parser.MarkdownParser
 internal class MarkdownSegment(val source: String, val root: ASTNode) {
     val blocks: List<ASTNode> get() = root.children
 
+    /** Whether anything here is drawn: the parser's top level also holds `EOL` tokens for blank lines. */
+    val hasBlocks: Boolean get() = blocks.any { it.type != MarkdownTokenTypes.EOL && it.type != MarkdownTokenTypes.WHITE_SPACE }
+
     /**
      * Link reference definitions in this segment, label to destination, for `[text][label]` and
-     * `[label]` links. Labels are matched case-insensitively, as CommonMark specifies.
+     * `[label]` links. A definition can sit inside a list item or a quote as well as at the top
+     * level; labels are matched as CommonMark specifies (see [normalizeLabel]) and the first
+     * definition of a label wins.
      */
     val linkDefinitions: Map<String, String> by lazy {
         buildMap {
-            root.children.filter { it.type == MarkdownElementTypes.LINK_DEFINITION }.forEach { node ->
-                val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
-                val destination = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_DESTINATION }
-                if (label != null && destination != null) {
-                    put(
-                        label.getTextInNode(source).toString().trim('[', ']').lowercase(),
-                        destination.getTextInNode(source).toString().trim('<', '>'),
-                    )
+            fun collect(node: ASTNode) {
+                if (node.type == MarkdownElementTypes.LINK_DEFINITION) {
+                    val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
+                    val destination = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_DESTINATION }
+                    if (label != null && destination != null) {
+                        getOrPut(normalizeLabel(label.getTextInNode(source))) {
+                            unescape(destination.getTextInNode(source).toString().trim('<', '>'))
+                        }
+                    }
+                } else {
+                    node.children.forEach(::collect)
                 }
             }
+            collect(root)
         }
+    }
+}
+
+/** A reference label as CommonMark matches it: brackets off, internal whitespace collapsed, case-folded. */
+internal fun normalizeLabel(label: CharSequence): String =
+    label.toString().trim('[', ']').trim().split(whitespaceRun).joinToString(" ").lowercase()
+
+private val whitespaceRun = Regex("""\s+""")
+
+/**
+ * Backslash escapes and entity references resolved, as CommonMark does for text and destinations.
+ *
+ * Not the parser's own `EntityConverter`: that one produces HTML, so it turns a bare `&` into
+ * `&amp;` and a quote into `&quot;`, which is the opposite of what a string bound for the screen
+ * needs. Its entity table is what is borrowed, keyed by the whole `&name;`. An unknown name stays
+ * as written.
+ */
+internal fun unescape(text: CharSequence): String {
+    if (text.indexOf('\\') < 0 && text.indexOf('&') < 0) return text.toString()
+    return escapeOrEntity.replace(text) { match ->
+        val escaped = match.groups[1]?.value
+        val decimal = match.groups[2]?.value
+        val hex = match.groups[3]?.value
+        val named = match.groups[4]?.value
+        when {
+            escaped != null -> escaped
+            decimal != null -> codePointOrReplacement(decimal.toIntOrNull() ?: 0)
+            hex != null -> codePointOrReplacement(hex.toIntOrNull(16) ?: 0)
+            named != null -> Entities.map[match.value]?.let { codePointOrReplacement(it) } ?: match.value
+            else -> match.value
+        }
+    }
+}
+
+private val escapeOrEntity = Regex("""\\([!-/:-@\[-`{-~])|&#(\d{1,7});|&#[xX]([0-9a-fA-F]{1,6});|&([A-Za-z][A-Za-z0-9]{1,31});""")
+
+private fun codePointOrReplacement(codePoint: Int): String = when {
+    codePoint == 0 || codePoint > 0x10FFFF || codePoint in 0xD800..0xDFFF -> "\uFFFD"
+    codePoint < 0x10000 -> codePoint.toChar().toString()
+    else -> {
+        val offset = codePoint - 0x10000
+        charArrayOf(Char(0xD800 + (offset shr 10)), Char(0xDC00 + (offset and 0x3FF))).concatToString()
     }
 }
 
@@ -50,18 +103,20 @@ internal fun MarkdownFlavourDescriptor.parse(text: String): MarkdownSegment {
  * blank line and a fresh block is not going to change -- so everything before the last such point
  * is parsed once and kept, and only the open tail is re-parsed per token.
  *
- * A blank line is not always a boundary, and the two exceptions are what [settlePoint] checks:
+ * A blank line is not always a boundary, and the exceptions are what [settlePoint] checks:
  *
  * - inside an open code fence, a blank line is content, not a break;
  * - between two list items, a blank line makes the list loose rather than ending it, and a blank
- *   line before an indented line is a continuation of whatever block the indentation belongs to.
+ *   line before an indented line is a continuation of whatever block the indentation belongs to;
+ * - the last line of the run is still arriving, so a bare number there is not yet known not to
+ *   be an ordered-list marker.
  *
- * Both are recognised by looking at the line *after* the blank: a settle point is only taken
+ * All are recognised by looking at the line *after* the blank: a settle point is only taken
  * where that line starts at column zero and is not itself a list item. Lists and fences are the
- * common cases in agent output; what is not covered is a link reference definition that a later
- * segment needs, which resolves against the definitions of the segment the link is in and so
- * fails to resolve if the definition arrives after a settle point. See the module's tests for
- * what that costs.
+ * common cases in agent output. What is not covered: a fence opened on a list-marker line
+ * (`- ```` ), an HTML block that spans a blank line (`<pre>`, `<!-- -->`), and a link reference
+ * definition in one segment referenced from another, which resolves only against the
+ * definitions of the segment the link is in. See the module's tests for what that costs.
  *
  * Correctness does not depend on any of this: a run that is not an extension of what has been
  * parsed is parsed again from the top, and a finished run is handed to [parse] whole.
@@ -109,7 +164,8 @@ internal class StreamingMarkdownDocument(private val flavour: MarkdownFlavourDes
 
     private companion object {
         private val listMarker = Regex("""^(?:[-*+]|\d{1,9}[.)])(?:\s|$)""")
-        private val fence = Regex("""^ {0,3}(`{3,}|~{3,})""")
+        private val bareNumber = Regex("""^\d{1,9}$""")
+        private val fence = Regex("""^ {0,3}(`{3,}|~{3,})(.*)$""")
 
         /**
          * The offset in [open] up to which the text can be settled, or 0 if none of it can.
@@ -126,34 +182,38 @@ internal class StreamingMarkdownDocument(private val flavour: MarkdownFlavourDes
             while (lineStart < open.length) {
                 val lineEnd = open.indexOf('\n', lineStart).let { if (it < 0) open.length else it }
                 val line = open.substring(lineStart, lineEnd)
-                val fenceMatch = fence.find(line)?.groupValues?.get(1)
+                val fenceMatch = fence.find(line)?.groupValues
                 if (inFence != null) {
-                    if (fenceMatch != null && fenceMatch[0] == inFence[0] && fenceMatch.length >= inFence.length) {
+                    // A closing fence carries nothing after its marker; one with an info string
+                    // is content.
+                    if (fenceMatch != null && fenceMatch[1][0] == inFence[0] && fenceMatch[1].length >= inFence.length && fenceMatch[2].isBlank()) {
                         inFence = null
                     }
                     previousBlank = false
                 } else if (fenceMatch != null) {
-                    // A fence opening after a blank line is a block start like any other; what
-                    // cannot be settled is anything *inside* it, which the branch above handles.
-                    if (previousBlank) settle = lineStart
-                    inFence = fenceMatch
+                    // A fence opening after a blank line is a block start like any other, unless
+                    // it is indented into the block above; what cannot be settled is anything
+                    // *inside* it, which the branch above handles.
+                    if (previousBlank && !line[0].isWhitespace()) settle = lineStart
+                    inFence = fenceMatch[1]
                     previousBlank = false
                 } else if (line.isBlank()) {
                     previousBlank = true
                 } else {
                     // A line that starts a block of its own, after a blank line, is where the
                     // text before it can be settled. Indented lines continue whatever came
-                    // before; list items after a blank line continue the list.
-                    if (previousBlank && !line[0].isWhitespace() && !listMarker.containsMatchIn(line)) {
+                    // before; list items after a blank line continue the list; a bare number on
+                    // an unfinished last line may still become one.
+                    val unfinished = lineEnd == open.length
+                    if (previousBlank && !line[0].isWhitespace() && !listMarker.containsMatchIn(line) &&
+                        !(unfinished && bareNumber.matches(line))
+                    ) {
                         settle = lineStart
                     }
                     previousBlank = false
                 }
                 lineStart = lineEnd + 1
             }
-            // A settle point inside a fence that never closed is not one: the fence started after
-            // it, so it is fine -- what would not be fine is settling *into* an open fence, and
-            // the loop above never records a point while `inFence` is set.
             return settle
         }
     }
