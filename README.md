@@ -58,8 +58,10 @@ what each carries, and [Targets](#targets) which platforms.
 
 ### What a consumer has to be on
 
-Three floors, and they are not the same for every module. Each is what the published artifacts
-declare, read from them rather than from this file's intentions.
+Three floors, and they are not the same for every module. Each is what the artifacts built from
+this tree declare, read from them rather than from this file's intentions — and `0.1.0` predates
+the split: its AARs declare `compileSdk` 37 for all nine modules, so the 24 below is the next
+release's.
 
 | Floor | `agui-model` / `agui-core` / `agui-agent` | `agui-a2ui` | Every module that draws | How it fails |
 | --- | --- | --- | --- | --- |
@@ -69,9 +71,7 @@ declare, read from them rather than from this file's intentions.
 
 The `compileSdk` split is the point of publishing the lower modules on their own: the three carry
 no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
-draws nothing either but rides on `a2ui-core`, whose AAR asks for 37. The split is the next
-release's: `0.1.0` was published from one shared value, and its AARs declare 37 for all nine
-modules.
+draws nothing either but rides on `a2ui-core`, whose AAR asks for 37.
 
 **The Kotlin floor is the one that bites**: the Kotlin version is project-wide, so a project held
 on 2.3 by anything at all cannot move for one library — and if it targets iOS, it cannot take these
@@ -103,8 +103,9 @@ The `agui-provider-*` adapters come next.
 ## Targets
 
 `agui-model`, `agui-core` and `agui-agent`: `androidTarget`, `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64` —
-the five the upstream SDK publishes. Their Android variant compiles against API 24, not the 37 the
-rest of the repository needs; see [what a consumer has to be on](#what-a-consumer-has-to-be-on).
+the five the upstream SDK publishes. From the next release their Android variant compiles against
+API 24, not the 37 the rest of the repository needs; see
+[what a consumer has to be on](#what-a-consumer-has-to-be-on).
 
 `agui-compose`, and every module that draws: the same set **minus `iosX64`**. Compose Multiplatform
 1.12.0 does not publish an `ios_x64` variant of `foundation`, `ui` or `runtime`, so no Compose
