@@ -22,7 +22,9 @@ kotlin {
 
     android {
         namespace = "dev.ynagai.agui.agent"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        // The lower of the two floors: this module draws nothing, and every AAR it depends on
+        // says `minCompileSdk=1`. See the catalog for what the value promises.
+        compileSdk = libs.versions.android.coreCompileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         // Runs `commonTest` on the JVM against the Android variant. Without it the warning the

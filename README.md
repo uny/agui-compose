@@ -56,6 +56,28 @@ to fold events with no Compose at all, `agui-compose` to draw with a design syst
 Material 3. Coordinates are `dev.ynagai.agui:<module>:0.1.0`; the [Modules](#modules) table says
 what each carries, and [Targets](#targets) which platforms.
 
+### What a consumer has to be on
+
+Three floors, and they are not the same for every module. Each is what the published artifacts
+declare, read from them rather than from this file's intentions.
+
+| Floor | `agui-model` / `agui-core` / `agui-agent` | Every other module | How it fails |
+| --- | --- | --- | --- |
+| `compileSdk` | **24** | **37** | AGP's `checkAarMetadata` names the module and the version it wants. `compileSdk` is what you compile against; `targetSdk` and `minSdk` need not move. |
+| Compose Multiplatform | none | **1.12.0** | Silently. Gradle takes the highest version, so a lower one you declare is raised without a message; holding it with `strictly` fails resolution instead. |
+| Kotlin | **2.4** line | **2.4** line | A 2.3 compiler reads the JVM and Android artifacts (metadata one minor version ahead is readable) and refuses the iOS klibs (`incompatible ABI version '2.4.0'`). |
+
+The `compileSdk` split is the point of publishing the lower modules on their own: the three carry
+no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
+draws nothing either but rides on `a2ui-core`, whose AAR asks for 37.
+
+**The Kotlin floor is the one that bites**, because KSP has no Kotlin 2.4 release, so a project
+with Room, Dagger or Moshi in the build is on 2.3 and cannot move — and if it targets iOS, it cannot
+take these artifacts. That floor is inherited from two dependencies rather than chosen, and it is
+coming down: the plan, and what it waits on, is
+[#20](https://github.com/uny/agui-compose/issues/20). Until then the `0.x` line tracks the newest
+Kotlin.
+
 ## Modules
 
 | Module | What it is | Version |
@@ -77,7 +99,8 @@ The `agui-provider-*` adapters come next.
 ## Targets
 
 `agui-model`, `agui-core` and `agui-agent`: `androidTarget`, `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64` —
-the five the upstream SDK publishes.
+the five the upstream SDK publishes. Their Android variant compiles against API 24, not the 37 the
+rest of the repository needs; see [what a consumer has to be on](#what-a-consumer-has-to-be-on).
 
 `agui-compose`, and every module that draws: the same set **minus `iosX64`**. Compose Multiplatform
 1.12.0 does not publish an `ios_x64` variant of `foundation`, `ui` or `runtime`, so no Compose
