@@ -38,7 +38,8 @@ internal class InlineBuilder(
     fun build(nodes: List<ASTNode>): AnnotatedString {
         atLineStart = true
         afterHardBreak = false
-        return buildAnnotatedString { nodes.forEach { append(it) } }.trim()
+        inLink = false
+        return buildAnnotatedString { appendAll(nodes) }.trim()
     }
 
     /**
@@ -49,7 +50,31 @@ internal class InlineBuilder(
      * `STRONG` or `EMPH` element around it.
      */
     private fun AnnotatedString.Builder.appendChildren(node: ASTNode, delimiter: IElementType? = null) {
-        node.children.forEach { if (it.type != delimiter) append(it) }
+        appendAll(if (delimiter == null) node.children else node.children.filter { it.type != delimiter })
+    }
+
+    /**
+     * Appends [nodes] in order. The one construct that spans siblings is an email autolink,
+     * `<name@host>`, which the parser leaves as three tokens rather than wrapping in an element.
+     */
+    private fun AnnotatedString.Builder.appendAll(nodes: List<ASTNode>) {
+        var index = 0
+        while (index < nodes.size) {
+            val node = nodes[index]
+            if (node.type == MarkdownTokenTypes.LT &&
+                nodes.getOrNull(index + 1)?.type == MarkdownTokenTypes.EMAIL_AUTOLINK &&
+                nodes.getOrNull(index + 2)?.type == MarkdownTokenTypes.GT
+            ) {
+                val email = nodes[index + 1].text()
+                atLineStart = false
+                afterHardBreak = false
+                link("mailto:$email") { append(email) }
+                index += 3
+            } else {
+                append(node)
+                index++
+            }
+        }
     }
 
     /**
@@ -61,6 +86,22 @@ internal class InlineBuilder(
 
     /** Whether the line was ended by a hard break, whose own `EOL` token follows it and is not a space. */
     private var afterHardBreak: Boolean = false
+
+    /**
+     * Whether a link is open. A URL inside a link's text (or an image's alt text) is that text,
+     * not a second link over the same characters.
+     */
+    private var inLink: Boolean = false
+
+    private inline fun AnnotatedString.Builder.link(url: String, block: AnnotatedString.Builder.() -> Unit) {
+        if (inLink) {
+            block()
+        } else {
+            inLink = true
+            withLink(LinkAnnotation.Url(url, typography.textLink)) { block() }
+            inLink = false
+        }
+    }
 
     private fun AnnotatedString.Builder.append(node: ASTNode) {
         if (atLineStart) {
@@ -85,14 +126,25 @@ internal class InlineBuilder(
             GFMElementTypes.STRIKETHROUGH -> withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
                 appendChildren(node, GFMTokenTypes.TILDE)
             }
+            // The opening and closing backtick runs go; everything between them is code as
+            // written, including further backticks and the whitespace prose would fold -- except
+            // the one space on each side that lets a span begin or end with a backtick.
             MarkdownElementTypes.CODE_SPAN -> withStyle(inlineCode) {
-                appendChildren(node, MarkdownTokenTypes.BACKTICK)
+                val children = node.children
+                val code = buildString {
+                    children.forEachIndexed { index, child ->
+                        if (index == 0 || index == children.lastIndex) return@forEachIndexed
+                        if (child.type == MarkdownTokenTypes.EOL) append(' ') else append(child.text())
+                    }
+                }
+                val padded = code.length >= 2 && code.first() == ' ' && code.last() == ' ' && code.any { it != ' ' }
+                append(if (padded) code.substring(1, code.length - 1) else code)
             }
 
             MarkdownElementTypes.INLINE_LINK -> link(
                 text = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT },
                 destination = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_DESTINATION }
-                    ?.text()?.trim('<', '>'),
+                    ?.text()?.trim('<', '>')?.let(::unescape),
             )
 
             MarkdownElementTypes.FULL_REFERENCE_LINK,
@@ -100,22 +152,24 @@ internal class InlineBuilder(
             -> {
                 val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
                 val text = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT } ?: label
-                val destination = label?.text()?.trim('[', ']')?.lowercase()?.let(segment.linkDefinitions::get)
+                val destination = label?.text()?.let(::normalizeLabel)?.let(segment.linkDefinitions::get)
                 // A reference with no definition is not a link; CommonMark leaves it as the
-                // bracketed characters, and so does this.
-                if (destination == null) append(node.text()) else link(text = text, destination = destination)
+                // bracketed characters, with whatever inline syntax is inside them, and so does this.
+                if (destination == null) appendChildren(node) else link(text = text, destination = destination)
             }
 
             // `<https://...>`: the angle brackets are tokens, the URL between them is the text.
             MarkdownElementTypes.AUTOLINK -> {
                 val url = node.children.firstOrNull { it.type == MarkdownTokenTypes.AUTOLINK }?.text()
-                if (url != null) withLink(LinkAnnotation.Url(url, typography.textLink)) { append(url) } else appendChildren(node)
+                if (url != null) link(url) { append(url) } else appendChildren(node)
             }
 
-            // A bare URL under GFM. One token, its text is the destination.
+            // A bare URL under GFM. One token, its text is the destination -- with the scheme GFM
+            // implies for the `www.` form, which a `UriHandler` cannot open without.
             GFMTokenTypes.GFM_AUTOLINK -> {
-                val url = node.text()
-                withLink(LinkAnnotation.Url(url, typography.textLink)) { append(url) }
+                val text = node.text()
+                val url = if (text.startsWith("www.", ignoreCase = true)) "http://$text" else text
+                link(url) { append(text) }
             }
 
             // Nothing is fetched. An image is drawn as its alt text, which is what a screen reader
@@ -125,6 +179,7 @@ internal class InlineBuilder(
                     ?: node.children.firstOrNull { it.type == MarkdownElementTypes.FULL_REFERENCE_LINK }
                     ?: node.children.firstOrNull { it.type == MarkdownElementTypes.SHORT_REFERENCE_LINK }
                 val alt = inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
+                    ?: inner?.children?.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
                 if (alt != null) link(text = alt, destination = null) else appendChildren(node)
             }
 
@@ -140,6 +195,9 @@ internal class InlineBuilder(
                 afterHardBreak = true
             }
 
+            // Prose, with its backslash escapes and entity references resolved.
+            MarkdownTokenTypes.TEXT -> append(unescape(node.text()))
+
             // Anything else: a leaf contributes its characters, an element its children's.
             else -> if (node.children.isEmpty()) append(node.text()) else appendChildren(node)
         }
@@ -147,14 +205,15 @@ internal class InlineBuilder(
 
     /**
      * [text] is a `LINK_TEXT` (or a `LINK_LABEL` standing in for one): its first and last children
-     * are the brackets, and everything between is inline content.
+     * are the brackets, and everything between is inline content. A null [destination] draws the
+     * text without a link -- and without any link inside it either, which is the image case.
      */
     private fun AnnotatedString.Builder.link(text: ASTNode?, destination: String?) {
         if (text == null) return
         // A `LINK_LABEL` is a leaf: the label's characters, brackets included.
         if (text.children.isEmpty()) {
             val label = text.text().trim('[', ']')
-            if (destination == null) append(label) else withLink(LinkAnnotation.Url(destination, typography.textLink)) { append(label) }
+            if (destination == null) append(label) else link(destination) { append(label) }
             return
         }
         val inner = text.children.let { children ->
@@ -168,9 +227,12 @@ internal class InlineBuilder(
             }
         }
         if (destination == null) {
-            inner.forEach { append(it) }
+            val wasInLink = inLink
+            inLink = true
+            appendAll(inner)
+            inLink = wasInLink
         } else {
-            withLink(LinkAnnotation.Url(destination, typography.textLink)) { inner.forEach { append(it) } }
+            link(destination) { appendAll(inner) }
         }
     }
 

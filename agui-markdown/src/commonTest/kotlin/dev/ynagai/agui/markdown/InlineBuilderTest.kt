@@ -82,4 +82,53 @@ class InlineBuilderTest {
 
         assertEquals("quoted more", InlineBuilder(segment, markdownAguiTypography(), markdownAguiColors()).build(paragraph).text)
     }
+
+    @Test
+    fun escapesAndEntityReferencesAreResolvedInProseOnly() {
+        assertEquals("snake_case, *not emphasis*, a & b, A, ©", text("snake\\_case, \\*not emphasis\\*, a &amp; b, &#65;, &copy;"))
+        assertEquals("a\\_b", text("`a\\_b`"))
+    }
+
+    @Test
+    fun aCodeSpanKeepsItsInnerBackticksAndSpaces() {
+        assertEquals("x a`b y and     z", text("x `` a`b `` y and `   ` z"))
+        assertEquals("a   b", text("`a\n  b`"))
+    }
+
+    @Test
+    fun anEmailAutolinkIsAMailtoLinkAndAWwwAutolinkGetsItsScheme() {
+        val (segment, node) = paragraphs("<a@b.com> or www.example.com").single()
+        val built = InlineBuilder(segment, markdownAguiTypography(), markdownAguiColors()).build(node)
+
+        assertEquals("a@b.com or www.example.com", built.text)
+        assertEquals(
+            listOf("mailto:a@b.com", "http://www.example.com"),
+            built.getLinkAnnotations(0, built.length).map { (it.item as LinkAnnotation.Url).url },
+        )
+    }
+
+    @Test
+    fun aUrlInsideLinkTextOrAltTextIsNotASecondLink() {
+        val (segment, node) = paragraphs("[https://a.b](https://c.d) ![see https://e.f](https://g.h)").single()
+        val built = InlineBuilder(segment, markdownAguiTypography(), markdownAguiColors()).build(node)
+
+        assertEquals("https://a.b see https://e.f", built.text)
+        assertEquals(
+            listOf("https://c.d"),
+            built.getLinkAnnotations(0, built.length).map { (it.item as LinkAnnotation.Url).url },
+        )
+    }
+
+    @Test
+    fun anUnresolvedReferenceKeepsItsInlineSyntaxAndAShortcutImageDrawsItsAlt() {
+        assertEquals("foo [bar] and pic", text("foo [*bar*] and ![pic]\n\n[pic]: /img"))
+    }
+
+    @Test
+    fun aLinkDestinationIsUnescaped() {
+        val (segment, node) = paragraphs("[b](https://example.com/?a=1&amp;b=2)").single()
+        val built = InlineBuilder(segment, markdownAguiTypography(), markdownAguiColors()).build(node)
+
+        assertEquals(listOf("https://example.com/?a=1&b=2"), built.getLinkAnnotations(0, built.length).map { (it.item as LinkAnnotation.Url).url })
+    }
 }
