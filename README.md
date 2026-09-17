@@ -69,7 +69,9 @@ declare, read from them rather than from this file's intentions.
 
 The `compileSdk` split is the point of publishing the lower modules on their own: the three carry
 no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
-draws nothing either but rides on `a2ui-core`, whose AAR asks for 37.
+draws nothing either but rides on `a2ui-core`, whose AAR asks for 37. The split is the next
+release's: `0.1.0` was published from one shared value, and its AARs declare 37 for all nine
+modules.
 
 **The Kotlin floor is the one that bites**: the Kotlin version is project-wide, so a project held
 on 2.3 by anything at all cannot move for one library — and if it targets iOS, it cannot take these
