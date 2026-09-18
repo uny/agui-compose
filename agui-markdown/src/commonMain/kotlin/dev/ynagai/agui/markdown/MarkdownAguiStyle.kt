@@ -1,5 +1,6 @@
 package dev.ynagai.agui.markdown
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.SpanStyle
@@ -12,12 +13,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
-import com.mikepenz.markdown.model.DefaultMarkdownColors
-import com.mikepenz.markdown.model.DefaultMarkdownTypography
-import com.mikepenz.markdown.model.MarkdownAlertColors
-import com.mikepenz.markdown.model.MarkdownColors
-import com.mikepenz.markdown.model.MarkdownTypography
-import com.mikepenz.markdown.model.markdownAlertColors
 
 /**
  * What `TextStyle.Default` draws at.
@@ -30,17 +25,161 @@ import com.mikepenz.markdown.model.markdownAlertColors
 private val DefaultFontSize: TextUnit = 14.sp
 
 /**
+ * The colours [MarkdownAguiTextRenderer] draws with.
+ *
+ * Five colours plus the GFM alert set. [text] is the one a caller actually knows; the other four
+ * are backgrounds and rules that only have to read against the surface behind the transcript,
+ * which is why [markdownAguiColors] derives them from [text] rather than asking for each.
+ */
+@Immutable
+public class MarkdownColors(
+    public val text: Color,
+    public val codeBackground: Color,
+    public val inlineCodeBackground: Color,
+    public val dividerColor: Color,
+    public val tableBackground: Color,
+    public val alert: MarkdownAlertColors,
+) {
+    override fun equals(other: Any?): Boolean = other is MarkdownColors &&
+        text == other.text &&
+        codeBackground == other.codeBackground &&
+        inlineCodeBackground == other.inlineCodeBackground &&
+        dividerColor == other.dividerColor &&
+        tableBackground == other.tableBackground &&
+        alert == other.alert
+
+    override fun hashCode(): Int {
+        var result = text.hashCode()
+        result = 31 * result + codeBackground.hashCode()
+        result = 31 * result + inlineCodeBackground.hashCode()
+        result = 31 * result + dividerColor.hashCode()
+        result = 31 * result + tableBackground.hashCode()
+        result = 31 * result + alert.hashCode()
+        return result
+    }
+}
+
+/**
+ * The accent colour of each GFM alert kind -- `> [!NOTE]` through `> [!CAUTION]`.
+ *
+ * Drawn as the alert's border and title. These are the one part of the palette that cannot be a
+ * tint of the text colour, because an alert's whole meaning is the named hue it carries.
+ */
+@Immutable
+public class MarkdownAlertColors(
+    public val note: Color,
+    public val tip: Color,
+    public val important: Color,
+    public val warning: Color,
+    public val caution: Color,
+) {
+    override fun equals(other: Any?): Boolean = other is MarkdownAlertColors &&
+        note == other.note &&
+        tip == other.tip &&
+        important == other.important &&
+        warning == other.warning &&
+        caution == other.caution
+
+    override fun hashCode(): Int {
+        var result = note.hashCode()
+        result = 31 * result + tip.hashCode()
+        result = 31 * result + important.hashCode()
+        result = 31 * result + warning.hashCode()
+        result = 31 * result + caution.hashCode()
+        return result
+    }
+}
+
+/**
+ * Alert accents in the hues GitHub draws them in, one set for a light surface and one for a dark.
+ *
+ * Blue for a note, green for a tip, purple for important, amber for a warning, red for caution --
+ * the association a reader already has from the page an agent may well have taken the alert
+ * from. The values are close to GitHub's default themes rather than copied from them; what
+ * matters is the hue, and a caller who wants an exact palette passes their own.
+ */
+public fun markdownAlertColors(darkTheme: Boolean): MarkdownAlertColors = if (darkTheme) {
+    MarkdownAlertColors(
+        note = Color(0xFF4493F8),
+        tip = Color(0xFF3FB950),
+        important = Color(0xFFAB7DF8),
+        warning = Color(0xFFD29922),
+        caution = Color(0xFFF85149),
+    )
+} else {
+    MarkdownAlertColors(
+        note = Color(0xFF0969DA),
+        tip = Color(0xFF1A7F37),
+        important = Color(0xFF8250DF),
+        warning = Color(0xFF9A6700),
+        caution = Color(0xFFD1242F),
+    )
+}
+
+/**
+ * The text styles [MarkdownAguiTextRenderer] draws with.
+ *
+ * Every block element that carries prose has a style here. [textLink] is a [TextLinkStyles] rather
+ * than a [TextStyle] because a link is a span inside a paragraph, not a block of its own, and it
+ * is the one style that has states (hovered, pressed) to describe.
+ */
+@Immutable
+public class MarkdownTypography(
+    public val h1: TextStyle,
+    public val h2: TextStyle,
+    public val h3: TextStyle,
+    public val h4: TextStyle,
+    public val h5: TextStyle,
+    public val h6: TextStyle,
+    public val text: TextStyle,
+    public val code: TextStyle,
+    public val inlineCode: TextStyle,
+    public val quote: TextStyle,
+    public val textLink: TextLinkStyles,
+    public val table: TextStyle,
+) {
+    override fun equals(other: Any?): Boolean = other is MarkdownTypography &&
+        h1 == other.h1 &&
+        h2 == other.h2 &&
+        h3 == other.h3 &&
+        h4 == other.h4 &&
+        h5 == other.h5 &&
+        h6 == other.h6 &&
+        text == other.text &&
+        code == other.code &&
+        inlineCode == other.inlineCode &&
+        quote == other.quote &&
+        textLink == other.textLink &&
+        table == other.table
+
+    override fun hashCode(): Int {
+        var result = h1.hashCode()
+        result = 31 * result + h2.hashCode()
+        result = 31 * result + h3.hashCode()
+        result = 31 * result + h4.hashCode()
+        result = 31 * result + h5.hashCode()
+        result = 31 * result + h6.hashCode()
+        result = 31 * result + text.hashCode()
+        result = 31 * result + code.hashCode()
+        result = 31 * result + inlineCode.hashCode()
+        result = 31 * result + quote.hashCode()
+        result = 31 * result + textLink.hashCode()
+        result = 31 * result + table.hashCode()
+        return result
+    }
+}
+
+/**
  * Markdown colours derived from one text colour.
  *
- * The parser's palette is five colours plus the GFM alert set, and four of the five are backgrounds
- * and rules that only have to read against the surface behind them. Deriving them from [text] as
+ * The palette is five colours plus the GFM alert set, and four of the five are backgrounds and
+ * rules that only have to read against the surface behind them. Deriving them from [text] as
  * low-alpha tints means the whole set follows the one colour a caller actually knows -- pass
  * `LocalContentColor.current` and code blocks stay legible in a dark theme without a second
  * argument.
  *
  * [alert] is the sixth, and it is the one that cannot be tinted: GFM's `> [!WARNING]` blocks are
- * drawn in named accent colours, and the parser's own default is its light-theme set regardless of
- * what it was handed for [text]. So the default here picks the set by the luminance of [text] --
+ * drawn in named accent colours. So the default here picks the set by the luminance of [text] --
  * light text means a dark surface behind it -- rather than leaving a dark-theme transcript with
  * light-theme alerts. A caller who knows better passes their own.
  *
@@ -64,7 +203,7 @@ public fun markdownAguiColors(
     dividerColor: Color = text.copy(alpha = 0.24f),
     tableBackground: Color = text.copy(alpha = 0.04f),
     alert: MarkdownAlertColors = markdownAlertColors(darkTheme = text.luminance() > 0.15f),
-): MarkdownColors = DefaultMarkdownColors(
+): MarkdownColors = MarkdownColors(
     text = text,
     codeBackground = codeBackground,
     inlineCodeBackground = inlineCodeBackground,
@@ -76,11 +215,11 @@ public fun markdownAguiColors(
 /**
  * Markdown typography derived from one text style.
  *
- * The parser wants seventeen styles. All of them are this one with something changed: headings are
- * bold and scaled, code is monospace, a quote is italic, and the rest are [base] unaltered. The
- * heading scale is HTML's own (2, 1.5, 1.17, 1, 0.83, 0.75) rather than a type ramp of this
- * library's invention -- a Markdown document is written against that scale, and a caller who wants
- * a designed one has a `MarkdownTypography` of their own to pass.
+ * Twelve styles, and all of them are this one with something changed: headings are bold and
+ * scaled, code is monospace, a quote is italic, and the rest are [base] unaltered. The heading
+ * scale is HTML's own (2, 1.5, 1.17, 1, 0.83, 0.75) rather than a type ramp of this library's
+ * invention -- a Markdown document is written against that scale, and a caller who wants a
+ * designed one has a [MarkdownTypography] of their own to pass.
  *
  * Pass `LocalTextStyle.current` from Material 3 and the whole transcript follows the host's type.
  */
@@ -106,7 +245,7 @@ public fun markdownAguiTypography(
         fontWeight = FontWeight.Bold,
     )
     val code = base.copy(fontFamily = FontFamily.Monospace)
-    return DefaultMarkdownTypography(
+    return MarkdownTypography(
         h1 = heading(2f),
         h2 = heading(1.5f),
         h3 = heading(1.17f),
@@ -117,10 +256,6 @@ public fun markdownAguiTypography(
         code = code,
         inlineCode = code,
         quote = base.copy(fontStyle = FontStyle.Italic),
-        paragraph = base,
-        ordered = base,
-        bullet = base,
-        list = base,
         textLink = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline)),
         table = base,
     )

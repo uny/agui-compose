@@ -78,7 +78,7 @@ on 2.3 by anything at all cannot move for one library — and if it targets iOS,
 artifacts. KSP is not that anything: it has no 2.4-numbered release, but its 2.3 line runs on a
 Kotlin 2.4 project (measured: KSP 2.3.12 with Moshi's codegen on Kotlin 2.4.10, JVM, and the plugin
 applied to a KMP project with iOS targets), so Room, Dagger or Moshi alone do not hold a consumer
-back. That floor is inherited from two dependencies rather than chosen, and it is coming down: the
+back. That floor is inherited from a dependency rather than chosen, and it is coming down: the
 plan, and what it waits on, is [#20](https://github.com/uny/agui-compose/issues/20). Until then the
 `0.x` line tracks the newest Kotlin.
 
@@ -90,7 +90,7 @@ plan, and what it waits on, is [#20](https://github.com/uny/agui-compose/issues/
 | `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | `0.1.0` |
 | `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | `0.1.0` |
 | `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | `0.1.0` |
-| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, parsing incrementally while a run is still arriving. Depends on `agui-compose` and a parser; no design system. | `0.1.0` |
+| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, re-parsing only the unsettled tail while a run is still arriving. Depends on `agui-compose` and intellij-markdown; the rendering layer is its own, and no design system. | `0.1.0` |
 | `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | `0.1.0` |
 | `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | `0.1.0` |
 | `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | `0.1.0` |

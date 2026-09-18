@@ -4,7 +4,13 @@ Date: 2026-09-10
 
 ## Status
 
-Accepted.
+Accepted; amended by [decision 13](0013-owning-the-markdown-rendering-layer.md) on 2026-09-18.
+What that decision changes is the rendering layer: the module no longer depends on
+`multiplatform-markdown-renderer` and draws intellij-markdown's tree itself. The choice of parser,
+the shape of the styling parameters, the default palette, the security consequence and the
+Android-testing consequence below all stand. Passages about the renderer dependency and its
+incremental parser are left as written, because they explain why the module has the shape it has;
+decision 13 says what replaced them.
 
 ## Context
 
@@ -124,7 +130,10 @@ narrows it without closing it, and the argument is not re-litigated here.
 The published surface is one class and two functions. Swapping the parser later is a change to this
 module's internals plus whichever of `MarkdownColors` and `MarkdownTypography` a caller named --
 both of which are the parser's types, so the swap is not free. That is the price of letting a caller
-style the output at all, and it is paid once here rather than by every consumer.
+style the output at all, and it is paid once here rather than by every consumer. (It was paid at
+`0.2.0`: decision 13 made the two types this module's own. A consumer of `0.1.0` who only named
+them changes an import; one who implemented the parser's interfaces or constructed its `Default*`
+classes has a little more to do, since the new types are final and carry fewer slots.)
 
 ## What would change the answer
 
