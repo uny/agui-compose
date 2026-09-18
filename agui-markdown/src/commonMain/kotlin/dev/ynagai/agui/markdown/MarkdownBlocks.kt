@@ -117,10 +117,11 @@ private fun Heading(node: ASTNode, inline: InlineBuilder, style: TextStyle, colo
 }
 
 /**
- * A list item is its marker token followed by blocks. The marker is drawn as it was written for
- * an ordered list, so a list that starts at 3 starts at 3, and as a bullet for an unordered one,
- * whatever character the agent used. A GFM task box (`[ ]` or `[x]`) is a token of its own
- * after the marker, and is drawn as written too, in front of the item's first block.
+ * A list item is its marker token followed by blocks. An ordered list counts up from its first
+ * marker, as CommonMark specifies -- a list that starts at 3 starts at 3, and the `1. 1. 1.` an
+ * agent so often writes is 1, 2, 3 -- with the delimiter the agent used; an unordered one gets a
+ * bullet whatever character the agent used. A GFM task box (`[ ]` or `[x]`) is a token of its
+ * own after the marker, and is drawn as written, in front of the item's first block.
  */
 @Composable
 private fun ListBlock(
@@ -131,14 +132,19 @@ private fun ListBlock(
     typography: MarkdownTypography,
 ) {
     val ordered = node.type == MarkdownElementTypes.ORDERED_LIST
+    val items = node.children.filter { it.type == MarkdownElementTypes.LIST_ITEM }
+    val first = items.firstOrNull()?.children?.firstOrNull { it.type == MarkdownTokenTypes.LIST_NUMBER }
+        ?.getTextInNode(segment.source)?.trim()?.toString()
+    val start = first?.dropLast(1)?.toIntOrNull() ?: 1
+    val delimiter = first?.lastOrNull() ?: '.'
     Column(verticalArrangement = Arrangement.spacedBy(BlockSpacing / 2)) {
-        node.children.filter { it.type == MarkdownElementTypes.LIST_ITEM }.forEach { item ->
+        items.forEachIndexed { index, item ->
             val marker = item.children.firstOrNull {
                 it.type == MarkdownTokenTypes.LIST_NUMBER || it.type == MarkdownTokenTypes.LIST_BULLET
             }
             val checkBox = item.children.firstOrNull { it.type == GFMTokenTypes.CHECK_BOX }
             val label = buildString {
-                append(if (ordered) marker?.getTextInNode(segment.source)?.trim() else "•")
+                append(if (ordered) "${start + index}$delimiter" else "•")
                 if (checkBox != null) append(' ').append(checkBox.getTextInNode(segment.source).trim())
             }
             Row {

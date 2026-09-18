@@ -33,11 +33,14 @@ class MarkdownBlocksTest {
     }
 
     @Test
-    fun listsDrawTheirItemsAndKeepOrderedNumbers() = rendered("- one\n- two\n\n3. third\n4. fourth") {
+    fun listsDrawTheirItemsAndCountFromTheFirstNumber() = rendered("- one\n- two\n\n3. third\n3. fourth\n\n1) a\n1) b") {
         onNodeWithText("one").assertIsDisplayed()
         onNodeWithText("two").assertIsDisplayed()
         onNodeWithText("3.").assertIsDisplayed()
+        onNodeWithText("4.").assertIsDisplayed()
         onNodeWithText("fourth").assertIsDisplayed()
+        onNodeWithText("1)").assertIsDisplayed()
+        onNodeWithText("2)").assertIsDisplayed()
     }
 
     @Test
