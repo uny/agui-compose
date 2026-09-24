@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package dev.ynagai.agui.agent
 
 import com.agui.core.types.BaseEvent

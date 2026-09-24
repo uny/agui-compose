@@ -19,7 +19,7 @@ kotlin {
     jvmToolchain(21)
 
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation()
+    abiValidation { enabled.set(true) }
 
     android {
         namespace = "dev.ynagai.agui.core"

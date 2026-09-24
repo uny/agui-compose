@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.10"
+kotlin = "2.3.21"
 agp = "9.3.2"
 coroutines = "1.11.0"
 serialization = "1.11.0"
@@ -34,12 +34,15 @@ agui = "0.4.1"
 # upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
 jsonPatch = "1.0.0"
 
-# The A2UI renderer `agui-a2ui` maps activities and tool calls onto. `0.1.0` is the first release
-# on Central and its API is declared unstable; it targets A2UI v1.0 only, which is why the
-# translation from the v0.9 envelopes upstream's a2ui-middleware emits lives here and not there.
+# The A2UI renderer `agui-a2ui` maps activities and tool calls onto. `0.2.0` is the newest release
+# and its API is declared unstable; it targets A2UI v1.0 only, which is why the translation from
+# the v0.9 envelopes upstream's a2ui-middleware emits lives here and not there. It is also the
+# release that lowered that repository's own floors -- built on Kotlin 2.3.21, and `a2ui-core`'s
+# AAR now asks for `minCompileSdk=24` rather than 37 (uny/a2ui-compose#64, #88), which is what
+# lets this repository follow on both axes.
 # Publishes `android`, `jvm`, `iosArm64`, `iosSimulatorArm64` plus web and macOS -- and no
 # `iosX64`, so no module that depends on it can keep the fifth target `agui-agent` ships.
-a2ui = "0.1.0"
+a2ui = "0.2.0"
 
 # Ktor, for the replay server only. Pinned to the version `kotlin-client` 0.4.1 requires -- its
 # module metadata says `ktor-client-core` 3.2.4 -- so that the sample's test classpath, which holds
@@ -57,13 +60,12 @@ datetime = "0.8.0-0.6.x-compat"
 # Android consumer of that module must compile against. Two values, because the floor is a
 # dependency's, not this repository's.
 #
-# `android-compileSdk` is for every module that draws, and for `agui-a2ui`: androidx.compose 1.12.0
-# carries `minCompileSdk=37`, and so does `a2ui-core-android` 0.1.0, published from a repository
-# with one shared value. A consumer taking any of them needs 37 regardless.
+# `android-compileSdk` is for every module that draws: androidx.compose 1.12.0 carries
+# `minCompileSdk=37`, so a consumer taking any of them needs 37 regardless.
 #
-# `android-coreCompileSdk` is for `agui-model`, `agui-core` and `agui-agent`, whose Android
-# dependencies -- the upstream SDK's three AARs and `kotlin-json-patch` -- all carry
-# `minCompileSdk=1`. It sits at `minSdk`, the lowest AGP accepts, so a consumer whose `compileSdk`
+# `android-coreCompileSdk` is for `agui-model`, `agui-core`, `agui-agent` and `agui-a2ui`, none of
+# which draws. Their Android dependencies -- the upstream SDK's three AARs, `kotlin-json-patch`,
+# and `a2ui-core` 0.2.0 -- all carry `minCompileSdk` of 1 or 24. It sits at `minSdk`, the lowest AGP accepts, so a consumer whose `compileSdk`
 # is below 37 can take the transport before it can take the UI. `checkAndroidMainAarMetadata`, which
 # `assemble` runs, fails the build if a dependency bump ever asks for more; raising this value is a
 # compatibility decision for consumers, not a dependency chore, and `minCompileSdk` only ever comes

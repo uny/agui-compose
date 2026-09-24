@@ -18,7 +18,7 @@ kotlin {
     jvmToolchain(21)
 
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation()
+    abiValidation { enabled.set(true) }
 
     // Explicit for the same reason as in `agui-compose`: this module adds `dependsOn` edges below,
     // and Kotlin silently drops the default hierarchy template for any project that does.

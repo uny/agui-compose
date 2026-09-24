@@ -1020,19 +1020,23 @@ public class UiTranscriptReducer(
             null
         }
 
-    private companion object {
-        /**
-         * Prefix for the synthetic ids the deprecated `THINKING_*` events are folded under.
-         *
-         * They carry none of their own, and a reasoning part needs one. Namespaced so it cannot
-         * collide with a real message id, and numbered so two blocks are two parts.
-         */
-        const val THINKING_ID_PREFIX = "agui-compose:thinking:"
-
-        /** The `REASONING_ENCRYPTED_VALUE` subtype whose `entityId` names a tool call. */
-        const val ENCRYPTED_SUBTYPE_TOOL_CALL = "tool-call"
-    }
 }
+
+/**
+ * Prefix for the synthetic ids the deprecated `THINKING_*` events are folded under.
+ *
+ * They carry none of their own, and a reasoning part needs one. Namespaced so it cannot collide
+ * with a real message id, and numbered so two blocks are two parts.
+ *
+ * Top-level rather than in a `private companion object`, and that is not a style preference: a
+ * `const val` in a private companion is compiled to a public static field on the enclosing class,
+ * so both of these were on the published JVM surface. The ABI dump only said so once the repository
+ * moved to Kotlin 2.3, whose default module name differs -- the leak predates the move.
+ */
+private const val THINKING_ID_PREFIX = "agui-compose:thinking:"
+
+/** The `REASONING_ENCRYPTED_VALUE` subtype whose `entityId` names a tool call. */
+private const val ENCRYPTED_SUBTYPE_TOOL_CALL = "tool-call"
 
 private inline fun <reified T> PartRef.part(): T = message.parts[index] as T
 
