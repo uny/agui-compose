@@ -1031,7 +1031,7 @@ public class UiTranscriptReducer(
  * Top-level rather than in a `private companion object`, and that is not a style preference: a
  * `const val` in a private companion is compiled to a public static field on the enclosing class,
  * so both of these were on the published JVM surface. The ABI dump only said so once the repository
- * moved to Kotlin 2.3, whose default module name differs -- the leak predates the move.
+ * moved to Kotlin 2.3 -- the 2.4 dump left them out although the 0.1.0 class carries them.
  */
 private const val THINKING_ID_PREFIX = "agui-compose:thinking:"
 

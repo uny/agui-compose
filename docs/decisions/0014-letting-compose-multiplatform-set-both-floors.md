@@ -82,9 +82,10 @@ for 37 because that repository published one shared value. Its 0.2.0 lowered it
 
 Two constants moved out of a `private companion object` in `UiTranscriptReducer`. A `const val`
 there compiles to a public static field on the enclosing class, so `THINKING_ID_PREFIX` and
-`ENCRYPTED_SUBTYPE_TOOL_CALL` were on the published JVM surface; the ABI dump only revealed it when
-the default module name changed with the Kotlin version. The leak predates this change and is
-fixed by it.
+`ENCRYPTED_SUBTYPE_TOOL_CALL` were on the published JVM surface -- `javap` on the 0.1.0 jar shows
+both. The 2.4 dump left them out and the 2.3 one does not, with or without the old module name, so
+it is the Kotlin version and not the rename that revealed them. The leak predates this change and
+is fixed by it.
 
 The Compose lambda-mangling suffix in `agui-compose` and `agui-material3`'s dumps changed from
 `$dev_ynagai_agui_agui_compose` to `$agui_compose`, because Kotlin 2.4 derives a module's default
