@@ -22,7 +22,7 @@ permissions:
 #  - `queue: max` protects the *pending* ones, which that flag does not. The default `single` holds
 #    ONE pending run and cancels it when a third tag arrives, so pushing `v0.1.0`, `v0.1.1`,
 #    `v0.1.2` in quick succession would drop `v0.1.1` entirely, and a cancelled run sends no
-#    failure notification. While this workflow stopped at the upload that cost a re-run; now that
+#    failure notification. When this workflow stopped at the upload, that cost a re-run; now that
 #    it releases (see the last step), it is a release that silently never happens. `max` queues up
 #    to 100 and runs them in order. `uny/autograph` carries the same block for the same reason.
 #
@@ -104,8 +104,9 @@ jobs:
       #
       # `-SNAPSHOT` is refused on its own line because the charset admits it and the plugin treats
       # it specially: at a snapshot version every `sign*Publication` task is SKIPPED and
-      # `publishAndReleaseToMavenCentral` uploads to the snapshot repository instead -- so `v0.1.0-SNAPSHOT`
-      # would sail through every step below and land an unsigned snapshot under a tag.
+      # `publishAndReleaseToMavenCentral` uploads to the snapshot repository instead -- so
+      # `v0.1.0-SNAPSHOT` would sail through every step below and land an unsigned snapshot under
+      # a tag.
       - name: Read the version from the tag
         id: version
         run: |
@@ -246,8 +247,13 @@ jobs:
       # (`MavenCentralBuildService.close`); `publishToMavenCentral` ended with `Skipping deployment
       # validation!`. So a release key whose public half is on no keyserver, or a POM Central
       # rejects, fails this step instead of showing as FAILED only in the portal. A failed
-      # deployment is dropped, not burnt, since nothing was released; a green step is a release,
-      # and that one is irreversible.
+      # deployment is dropped, not burnt, since nothing was released. The poll stops at
+      # `VALIDATED`, the plugin's default, not `PUBLISHED`: past that point Central publishes on
+      # its own, so a green step is a release, and that one is irreversible.
+      #
+      # The converse does not hold. A step that dies *after* the upload -- the job's timeout, a
+      # dropped connection mid-poll -- is red while Central may still validate and publish the
+      # deployment. Read its status in the portal before re-running a red run.
       - name: Release to Maven Central
         env:
           VERSION: ${{ steps.version.outputs.value }}
