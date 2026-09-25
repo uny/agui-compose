@@ -4,11 +4,20 @@ Date: 2026-09-15
 
 ## Status
 
-Accepted, and exercised once. `v0.1.0` went through this path on 2026-09-16: the dry run first
-(all steps green, 48 POMs signed, every POM named), then the tag, the environment's approval, the
-upload as deployment `160098bf`, the portal's Publish, and the consumer build resolving all nine
-coordinates from Central on every target within the hour. The README's version column reads
-`0.1.0`.
+Accepted, and exercised twice.
+
+`v0.1.0` went through this path on 2026-09-16: the dry run first (all steps green, 48 POMs signed,
+every POM named), then the tag, the environment's approval, the upload as deployment `160098bf`,
+the portal's Publish, and the consumer build resolving all nine coordinates from Central on every
+target within the hour.
+
+`v0.2.0` followed it on 2026-09-25, unchanged, and the second run is worth recording for what it
+says about the path rather than the release: nothing in it had to be re-decided. The dry run was
+green on the same eleven steps, and the consumer gate carried one step it did not have the first
+time -- `:floor:assemble`, the `compileSdk` floor check added for this release
+([decision 14](0014-letting-compose-multiplatform-set-both-floors.md)), whose first run anywhere
+was that dry run rather than the tag. A path whose rehearsal covers a new gate before the one-way
+door is the property this decision was written for.
 
 ## Context
 
