@@ -74,7 +74,9 @@ does not. That is the first thing the gate found, before any release ran.
   without releasing. It does not validate either: at plugin 0.37.0 a `USER_MANAGED` deployment
   is uploaded and the build ends with `Skipping deployment validation!`, since the plugin only
   polls Central's validation when it is also releasing. The deployment's status, and the last
-  step, are in the Central Portal, held by the account that owns the namespace.
+  step, are in the Central Portal, held by the account that owns the namespace. *Superseded
+  after 0.2.0: `cd.yml` now runs `publishAndReleaseToMavenCentral`, which validates and releases
+  -- see Status.*
 - `.github/workflows/release-dry-run.yml` runs the same path on demand with the upload replaced
   by a publish to a directory under the runner's temp and the release key replaced by one
   generated inside the job -- passphrase-protected and passed by key id, because that is the
