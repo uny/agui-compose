@@ -19,6 +19,15 @@ time -- `:floor:assemble`, the `compileSdk` floor check added for this release
 was that dry run rather than the tag. A path whose rehearsal covers a new gate before the one-way
 door is the property this decision was written for.
 
+After those two, the portal button went: `cd.yml` now runs `publishAndReleaseToMavenCentral`
+instead of `publishToMavenCentral`, the change "What would change the answer" below anticipated.
+The human gate that remains is the `release` environment's approval, before the build. Two things
+come with it. Central's validation is now part of the job's result -- the plugin polls it only
+when it also releases -- so a deployment Central rejects fails the run instead of showing as
+FAILED only in the portal. And the `release` concurrency group queues pending runs (`queue: max`),
+because a pending run the default would cancel is now a release that silently never happens
+rather than an upload to redo.
+
 ## Context
 
 Nine modules carry a `mavenPublishing {}` block -- Central coordinates, unconditional signing, a
@@ -126,7 +135,7 @@ passed as `cd.yml` passes it lands 48 POMs with an `.asc` beside every file.
   publish five targets and the second source set would have nothing to hold; `commonMain` would
   take all nine and `noIosX64Main` would go.
 - `publishAndReleaseToMavenCentral` replacing the portal button, once a release has gone through
-  by hand and the path is trusted. `cd.yml` records why it stops at the upload today.
+  by hand and the path is trusted. Done after 0.2.0 -- see Status.
 - A module that must not publish -- `agui-sample` and `agui-replay` today -- gaining a
   `mavenPublishing` block by accident. The gate would not notice: it enumerates the modules it
   expects, not the ones the publish wrote. `git grep mavenPublishing` before a tag is the check.

@@ -586,8 +586,8 @@ says less than it appears to -- which is why CI runs on macOS.
 
 A `v*` tag is a release: `.github/workflows/cd.yml` reads the version from it, publishes every
 module locally and signs it, resolves that publish from a separate consumer build
-([`smoke-test/`](smoke-test/README.md)) on every target, and uploads to Maven Central without
-releasing -- the last step is a button in the portal. The job runs under a `release`
+([`smoke-test/`](smoke-test/README.md)) on every target, and publishes and releases to Maven
+Central, failing if Central's validation rejects the deployment. The job runs under a `release`
 environment, so once that environment exists with a required reviewer the run waits on a human
 before it touches a secret; until then the line gates nothing. `release-dry-run.yml` rehearses
 the same path from the Actions tab with a throwaway key and no upload; run it before the first

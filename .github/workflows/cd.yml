@@ -13,18 +13,24 @@ on:
 permissions:
   contents: read
 
-# Two tags pushed close together must not publish concurrently. `cancel-in-progress: false`
-# protects the *running* release: by the time a second tag arrives the first may already have
-# uploaded, and Central neither re-uploads nor deletes, so there is nothing to roll back to.
+# Two tags pushed close together must not publish concurrently, and all three keys below are
+# load-bearing -- two of them guard different runs:
 #
-# This workflow stops at the upload and the portal holds each deployment separately, so a dropped
-# pending run costs a re-run rather than a release that silently never happens (`uny/autograph`,
-# which publishes with `automaticRelease = true`, sets `queue: max` for that reason). Left at the
-# default until that changes -- but know what the default does: `single` holds ONE pending run and cancels it when a third tag arrives, so pushing
-# `v0.1.0`, `v0.1.1`, `v0.1.2` in quick succession drops `v0.1.1` entirely, and a cancelled run
-# sends no failure notification.
+#  - `cancel-in-progress: false` protects the *running* release. By the time a second tag arrives
+#    the first may already have released, and Central neither re-uploads nor deletes, so there is
+#    nothing to roll back to.
+#  - `queue: max` protects the *pending* ones, which that flag does not. The default `single` holds
+#    ONE pending run and cancels it when a third tag arrives, so pushing `v0.1.0`, `v0.1.1`,
+#    `v0.1.2` in quick succession would drop `v0.1.1` entirely, and a cancelled run sends no
+#    failure notification. While this workflow stopped at the upload that cost a re-run; now that
+#    it releases (see the last step), it is a release that silently never happens. `max` queues up
+#    to 100 and runs them in order. `uny/autograph` carries the same block for the same reason.
 #
-# Recovering that is a re-run of the cancelled run from the Actions UI, NOT a re-push of the tag:
+# actionlint 1.7.12 rejects `queue` as an unknown key for `concurrency` -- its schema predates the
+# feature. `uny/autograph` verified it by having GitHub itself run a throwaway workflow carrying
+# this exact block; it was accepted.
+#
+# Recovering a cancelled or failed run is a re-run from the Actions UI, NOT a re-push of the tag:
 # `git push` of a tag the remote already has reports "Everything up-to-date" and delivers no
 # event, so nothing restarts. If the run is past its retention window and no longer re-runnable,
 # `git push --delete origin <tag>` and push it again -- deleting first is what makes the second
@@ -33,6 +39,7 @@ permissions:
 concurrency:
   group: release
   cancel-in-progress: false
+  queue: max
 
 # Actions pinned to a commit, matching `build.yml`. To move one deliberately:
 #
@@ -97,7 +104,7 @@ jobs:
       #
       # `-SNAPSHOT` is refused on its own line because the charset admits it and the plugin treats
       # it specially: at a snapshot version every `sign*Publication` task is SKIPPED and
-      # `publishToMavenCentral` uploads to the snapshot repository instead -- so `v0.1.0-SNAPSHOT`
+      # `publishAndReleaseToMavenCentral` uploads to the snapshot repository instead -- so `v0.1.0-SNAPSHOT`
       # would sail through every step below and land an unsigned snapshot under a tag.
       - name: Read the version from the tag
         id: version
@@ -229,19 +236,19 @@ jobs:
             compileAndroidMain :floor:assemble \
             -PaguiVersion="$VERSION" --stacktrace
 
-      # Uploads; it does not validate, and it does not release. The last step is a button in the
-      # Central Portal, held by the person whose account it is -- which is the right place for it
-      # while `publishAndReleaseToMavenCentral` exists and this is the first version to go out.
+      # Uploads, waits for Central's validation, and releases. No portal button: the human gate
+      # is the `release` environment's approval above, before the build, and the path had been
+      # walked by hand twice (0.1.0, 0.2.0) before the button was dropped -- see
+      # `docs/decisions/0012`.
       #
-      # "Does not validate" is the plugin's, not a choice made here: at 0.37.0 the deployment is
-      # uploaded as `USER_MANAGED` and the build ends with `Skipping deployment validation!` --
-      # the plugin only polls Central's validation when `automaticRelease = true`
-      # (`MavenCentralBuildService.close`, and the KDoc on `publishToMavenCentral`). So a green
-      # run here means the bundle was accepted for upload, not that it passed validation: a release
-      # key whose public half is on no keyserver, or a POM Central rejects, shows as FAILED in the
-      # portal and nowhere in this log. Read the deployment's status there before pressing the
-      # button; a failed deployment is dropped, not burnt, since nothing was released.
-      - name: Upload to Maven Central
+      # Validation is now part of this step's result. `publishAndReleaseToMavenCentral` uploads
+      # with `automaticRelease = true`, and only then does the plugin poll Central's validation
+      # (`MavenCentralBuildService.close`); `publishToMavenCentral` ended with `Skipping deployment
+      # validation!`. So a release key whose public half is on no keyserver, or a POM Central
+      # rejects, fails this step instead of showing as FAILED only in the portal. A failed
+      # deployment is dropped, not burnt, since nothing was released; a green step is a release,
+      # and that one is irreversible.
+      - name: Release to Maven Central
         env:
           VERSION: ${{ steps.version.outputs.value }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -249,7 +256,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
-        run: ./gradlew publishToMavenCentral -PVERSION_NAME="$VERSION" --stacktrace
+        run: ./gradlew publishAndReleaseToMavenCentral -PVERSION_NAME="$VERSION" --stacktrace
 
       - name: Upload reports
         if: failure()

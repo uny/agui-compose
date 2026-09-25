@@ -18,7 +18,7 @@ name: Release dry run
 #
 #  - That Central accepts the result. Nothing is uploaded, so Central's own validation -- the
 #    rest of the required POM fields, the staging bundle, whether the signing key's public half
-#    is on a keyserver -- never runs. `publishToMavenCentral` additionally runs
+#    is on a keyserver -- never runs. `publishAndReleaseToMavenCentral` additionally runs
 #    `prepareMavenCentralPublishing` and the `...ToMavenCentralRepository` tasks, none of which
 #    this exercises.
 #  - That `cd.yml`'s "Check the release credentials are present" step works. It reads five
