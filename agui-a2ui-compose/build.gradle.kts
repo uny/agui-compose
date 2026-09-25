@@ -19,7 +19,7 @@ kotlin {
     jvmToolchain(21)
 
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation()
+    abiValidation { enabled.set(true) }
 
     // Called explicitly because this module adds `dependsOn` edges of its own below, and Kotlin
     // silently drops the default template for any project that does. Without this line there is no

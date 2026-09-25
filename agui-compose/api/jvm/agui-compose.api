@@ -46,13 +46,13 @@ public final class dev/ynagai/agui/compose/AguiTranscriptKt {
 public final class dev/ynagai/agui/compose/ComposableSingletons$AguiComponentsKt {
 	public static final field INSTANCE Ldev/ynagai/agui/compose/ComposableSingletons$AguiComponentsKt;
 	public fun <init> ()V
-	public final fun getLambda$-1375453304$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function4;
-	public final fun getLambda$-2014472816$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function5;
-	public final fun getLambda$-2040801816$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function4;
-	public final fun getLambda$-968444884$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function5;
-	public final fun getLambda$1706718280$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function4;
-	public final fun getLambda$1963886784$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function4;
-	public final fun getLambda$629543208$dev_ynagai_agui_agui_compose ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$-1375453304$agui_compose ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$-2014472816$agui_compose ()Lkotlin/jvm/functions/Function5;
+	public final fun getLambda$-2040801816$agui_compose ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$-968444884$agui_compose ()Lkotlin/jvm/functions/Function5;
+	public final fun getLambda$1706718280$agui_compose ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$1963886784$agui_compose ()Lkotlin/jvm/functions/Function4;
+	public final fun getLambda$629543208$agui_compose ()Lkotlin/jvm/functions/Function4;
 }
 
 public final class dev/ynagai/agui/compose/PlainAguiTextRenderer : dev/ynagai/agui/compose/AguiTextRenderer {

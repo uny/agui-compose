@@ -16,11 +16,13 @@ kotlin {
     jvmToolchain(21)
 
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation()
+    abiValidation { enabled.set(true) }
 
     android {
         namespace = "dev.ynagai.agui.a2ui"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        // The lower of the two floors, as of `a2ui-core` 0.2.0: this module draws nothing, and
+        // every AAR it depends on now says 24 or less. See the catalog for what the value promises.
+        compileSdk = libs.versions.android.coreCompileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         // Runs `commonTest` on the JVM against the Android variant, for the reason `agui-agent`

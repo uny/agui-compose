@@ -60,27 +60,30 @@ what each carries, and [Targets](#targets) which platforms.
 
 Three floors, and they are not the same for every module. Each is what the artifacts built from
 this tree declare, read from them rather than from this file's intentions — and `0.1.0` predates
-the split: its AARs declare `compileSdk` 37 for all nine modules, so the 24 below is the next
-release's.
+both splits: it declares `compileSdk` 37 for all nine modules and a Kotlin 2.4 floor, so the table
+below is the next release's.
 
-| Floor | `agui-model` / `agui-core` / `agui-agent` | `agui-a2ui` | Every module that draws | How it fails |
-| --- | --- | --- | --- | --- |
-| `compileSdk` | **24** | **37** | **37** | AGP's `checkAarMetadata` names the module and the version it wants. `compileSdk` is what you compile against; `targetSdk` and `minSdk` need not move. |
-| Compose Multiplatform | none | none | **1.12.0** | Silently. Gradle takes the highest version, so a lower one you declare is raised without a message; holding it with `strictly` wins, and the mismatch surfaces at compile or run time instead of at resolution. |
-| Kotlin | **2.4** line | **2.4** line | **2.4** line | A 2.3 compiler reads the JVM and Android artifacts (metadata one minor version ahead is readable) and refuses the iOS klibs (`incompatible ABI version '2.4.0'`). |
+| Floor | The four that draw nothing | Every module that draws | How it fails |
+| --- | --- | --- | --- |
+| `compileSdk` | **24** | **37** | AGP's `checkAarMetadata` names the module and the version it wants. `compileSdk` is what you compile against; `targetSdk` and `minSdk` need not move. |
+| Compose Multiplatform | none | **1.12.0** | Silently. Gradle takes the highest version, so a lower one you declare is raised without a message; holding it with `strictly` wins, and the mismatch surfaces at compile or run time instead of at resolution. |
+| Kotlin | **2.3** line | **2.3** line | A 2.4 compiler reads all of it. A 2.2 one reads the JVM and Android artifacts (class-file metadata is read one language release ahead) and refuses the iOS klibs (`incompatible ABI version`). |
 
-The `compileSdk` split is the point of publishing the lower modules on their own: the three carry
-no Compose, and the AARs they depend on ask for nothing, so they sit at `minSdk`. `agui-a2ui`
-draws nothing either but rides on `a2ui-core`, whose AAR asks for 37.
+`agui-model`, `agui-core`, `agui-agent` and `agui-a2ui` are the four: none carries Compose, and
+every AAR they depend on asks for 24 or less — including `a2ui-core` 0.2.0, which lowered its own
+floor (uny/a2ui-compose#88) so that this one could follow.
 
-**The Kotlin floor is the one that bites**: the Kotlin version is project-wide, so a project held
-on 2.3 by anything at all cannot move for one library — and if it targets iOS, it cannot take these
-artifacts. KSP is not that anything: it has no 2.4-numbered release, but its 2.3 line runs on a
-Kotlin 2.4 project (measured: KSP 2.3.12 with Moshi's codegen on Kotlin 2.4.10, JVM, and the plugin
-applied to a KMP project with iOS targets), so Room, Dagger or Moshi alone do not hold a consumer
-back. That floor is inherited from a dependency rather than chosen, and it is coming down: the
-plan, and what it waits on, is [#20](https://github.com/uny/agui-compose/issues/20). Until then the
-`0.x` line tracks the newest Kotlin.
+**Both floors follow Compose Multiplatform, and that is the whole rule.** A drawing module's
+`compileSdk` is the `minCompileSdk` the current stable Compose declares (37 at 1.12.0); the Kotlin
+floor is the line the current stable Compose is *built* on, which its klib manifests give as 2.3.20
+— so 2.3 it is. Below that buys nobody, because a consumer of Compose is already there; above it
+locks out consumers Compose itself admits. Both move when Compose moves, and not on their own
+schedule. The reasoning, and the same rule in the two sibling repositories, is on
+[#20](https://github.com/uny/agui-compose/issues/20).
+
+What that leaves for a consumer: a project on Kotlin 2.3 or newer, with `compileSdk` 37 for the UI
+or 24 for the transport. A KSP processor is not a constraint either way — KSP 2.3.x runs on a
+Kotlin 2.4 project, so Room, Dagger or Moshi do not pin anyone here.
 
 ## Modules
 
