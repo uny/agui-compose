@@ -30,7 +30,8 @@ permissions:
 # feature. `uny/autograph` verified it by having GitHub itself run a throwaway workflow carrying
 # this exact block; it was accepted.
 #
-# Recovering a cancelled or failed run is a re-run from the Actions UI, NOT a re-push of the tag:
+# Recovering a cancelled or failed run -- once the portal shows its deployment did not go out, if
+# it got as far as the last step -- is a re-run from the Actions UI, NOT a re-push of the tag:
 # `git push` of a tag the remote already has reports "Everything up-to-date" and delivers no
 # event, so nothing restarts. If the run is past its retention window and no longer re-runnable,
 # `git push --delete origin <tag>` and push it again -- deleting first is what makes the second
