@@ -56,6 +56,10 @@ val aguiVersion: String =
                 "-PaguiVersion=<version>.",
         )
 
+// Read by `floor/`, the second consumer in this build, so the two resolve the same publish from
+// one place rather than each parsing the producer's properties file.
+extra["aguiVersion"] = aguiVersion
+
 kotlin {
     // The repository's floor, for the reason `agui-agent` records: upstream's `kotlin-core-jvm`
     // is class-file 65.

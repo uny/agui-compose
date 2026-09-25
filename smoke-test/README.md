@@ -33,6 +33,24 @@ The first draft put `agui-a2ui` in the first group, on the grounds that it carri
 gate said otherwise: its `.module` lists no `iosX64` variant, because `a2ui-core`'s does not. That
 is the kind of fact this build exists to surface.
 
+## And a second consumer, for the `compileSdk` floor
+
+`docs/decisions/0014` promises that `agui-model`, `agui-core`, `agui-agent` and `agui-a2ui` can be
+taken by an Android consumer compiling against API 24, because none of them draws and every AAR
+they depend on asks for 24 or less. The root project cannot check that: its Android target is at
+the drawing floor, 37, so it resolves those four at 37 and says nothing about the promise.
+
+`floor/` is that check -- an Android consumer at 24 depending on exactly those four. A second
+Gradle project rather than a second source set, because one Android library cannot be built at two
+API levels. What enforces the floor is AGP's own `checkAarMetadata`, which `assemble` runs: it
+reads each dependency's published `aar-metadata.properties` and fails naming the module and the
+version it wants, which is the same failure a consumer gets, from the same file, at the same API
+level. So a dependency bump that raises one of the four, or a module reading the wrong catalog key,
+fails on the tag rather than in someone else's project.
+
+It reads the four coordinates and `compileSdk` from the same places the root project and the
+producer's catalog hold them, not from literals, so neither can drift out from under it.
+
 ## Running it by hand
 
 From the repository root, with its wrapper -- this build has none of its own, because a second
@@ -43,7 +61,7 @@ copy of `gradle-wrapper.jar` is a second thing to keep pinned:
 ./gradlew -p smoke-test \
   compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
   compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-  compileAndroidMain
+  compileAndroidMain :floor:assemble
 ```
 
 Needs an Android SDK (`ANDROID_HOME`, or `sdk.dir` in `smoke-test/local.properties` -- the root
@@ -66,9 +84,7 @@ Compile classpaths only, on a build with no tests and no `run`. So it does **not
 confined to a *runtime* variant -- `agui-agent`'s `kotlinx-datetime` pin (decision 0007) is
 `implementation`, so it reaches a consumer's runtime classpath and not its compile classpath, and
 dropping it would pass this gate on JVM and Android and fail first in a consumer's
-`NoClassDefFoundError`, exactly as it did before the pin existed. Nor does it run AGP's
-`checkAarMetadata`, so a `minCompileSdk` raised past a consumer's `compileSdk` is not caught here
-either.
+`NoClassDefFoundError`, exactly as it did before the pin existed.
 
 It also does not pin each module's `api` scopes individually. It depends on all nine, so a type
 reachable through more than one of them stays reachable when one downgrades it. And the module and
@@ -128,3 +144,18 @@ mv /tmp/agui-core-<version>.jar ~/.m2/repository/dev/ynagai/agui/agui-core/<vers
 `Could not find dev.ynagai.agui:agui-core:<version>`; `compileKotlinMetadata` reports `SKIPPED`
 and exits 0. A consumer writing `commonMain` against that publication could not have compiled,
 and a gate naming the old task would have passed it.
+
+**A module that draws added to the floor consumer** -- the third control, measured on 2026-09-25
+against a `0.2.0-floorprobe-SNAPSHOT` publish. Add a drawing module to `floor/build.gradle.kts`'s
+dependencies and the gate must refuse it:
+
+```bash
+# with implementation("dev.ynagai.agui:agui-compose:$aguiVersion") added to floor/
+./gradlew -p smoke-test :floor:assemble --rerun-tasks     # must fail
+```
+
+`:floor:checkAndroidMainAarMetadata` fails with `53 issues were found when checking AAR metadata`,
+each naming a dependency that `requires libraries and applications that depend on it to compile
+against version 37 or later of the Android APIs` and stating `:floor is currently compiled against
+android-24`. Which is what a consumer at 24 would see, and why the four modules' floor is a
+checked claim rather than a stated one.
