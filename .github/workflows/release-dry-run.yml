@@ -204,6 +204,13 @@ jobs:
       # -bound to `dev.ynagai.agui`, so nothing else can answer for the group under test -- and
       # `includeGroup` is exact, so `dev.ynagai.a2ui`, which `agui-a2ui` depends on and which is
       # already on Central, is still resolved from Central here as it would be for a consumer.
+      #
+      # `:floor:assemble` is the `compileSdk` floor, and it is a second consumer rather than a
+      # second source set: the root project compiles its Android target at 37, and one Android
+      # library cannot be built at two API levels. `floor` is at 24 and depends on the four modules
+      # that draw nothing, so AGP's `checkAarMetadata` -- which `assemble` runs -- fails naming any
+      # of them that asks for more. That is `docs/decisions/0014`'s promise, checked the way a
+      # consumer would find it broken.
       - name: Resolve it as a consumer would
         env:
           VERSION: ${{ steps.version.outputs.value }}
@@ -211,7 +218,7 @@ jobs:
           ./gradlew -p smoke-test \
             compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
             compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-            compileAndroidMain \
+            compileAndroidMain :floor:assemble \
             -PaguiVersion="$VERSION" -Dmaven.repo.local="${RUNNER_TEMP}/dry-run-m2" --stacktrace
 
       # Central requires a detached signature for every deployed file, and a local repository takes

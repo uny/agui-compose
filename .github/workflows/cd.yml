@@ -212,6 +212,13 @@ jobs:
       # variants this gate did not cover. Two of them here, because `smoke-test` has two shared
       # source sets: `commonMain` for the three modules that publish `iosX64`, `noIosX64Main` for
       # the six that do not.
+      #
+      # `:floor:assemble` is the `compileSdk` floor, and it is a second consumer rather than a
+      # second source set: the root project compiles its Android target at 37, and one Android
+      # library cannot be built at two API levels. `floor` is at 24 and depends on the four modules
+      # that draw nothing, so AGP's `checkAarMetadata` -- which `assemble` runs -- fails naming any
+      # of them that asks for more. That is `docs/decisions/0014`'s promise, checked the way a
+      # consumer would find it broken.
       - name: Resolve it as a consumer would
         env:
           VERSION: ${{ steps.version.outputs.value }}
@@ -219,7 +226,7 @@ jobs:
           ./gradlew -p smoke-test \
             compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
             compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-            compileAndroidMain \
+            compileAndroidMain :floor:assemble \
             -PaguiVersion="$VERSION" --stacktrace
 
       # Uploads; it does not validate, and it does not release. The last step is a button in the

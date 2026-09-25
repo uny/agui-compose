@@ -1,5 +1,10 @@
 rootProject.name = "agui-consumer-smoke-test"
 
+// The `compileSdk` floor gate. A second consumer rather than a second source set, because the
+// property under test is a *lower* `compileSdk` than the root project compiles at and one Android
+// library cannot be built at two.
+include(":floor")
+
 pluginManagement {
     repositories {
         google {
