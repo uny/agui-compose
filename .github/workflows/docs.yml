@@ -75,7 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ github.event.workflow_run.id }}
-        # `! [ -gt 0 ]` rather than `[ -eq 0 ]`, so an empty count fails the check instead of passing it.
+        # `! [ -gt 0 ]` rather than `[ -eq 0 ]`: an empty count fails the check instead of passing.
         run: |
           path=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq .path)
           approved=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/approvals" --jq \
