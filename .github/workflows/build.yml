@@ -30,12 +30,15 @@ concurrency:
 # `dependabot.yml` moves them on a schedule and rewrites the comment with the hash.
 
 jobs:
-  # One job, on macOS.
+  # Everything that is not a web backend: the Apple targets, JVM, Android, the metadata and
+  # publication artifacts, and the public API check. The web backends run in the two jobs below --
+  # the split `a2ui-compose` uses, where Kotlin/JS and Kotlin/Wasm are the larger part of the build.
+  # Four modules publish them (`docs/decisions/0015`), so the same split applies here.
   #
-  # The sibling `a2ui-compose` splits its build three ways because Kotlin/JS and Kotlin/Wasm are 60%
-  # of its wall clock. This repository publishes neither backend (see
-  # `docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md`), so there is nothing to split off
-  # and a second runner would only add a cold Gradle cache.
+  # The union of the three jobs' task graphs is the task graph of `build checkKotlinAbi`. Re-check
+  # that when changing any command line below:
+  #
+  #   ./gradlew <job's arguments> --dry-run | grep -oE '^:[a-zA-Z0-9:_-]+' | sort -u
   #
   # macOS rather than Linux, because on Linux the Apple targets are silently *skipped* --
   # `kotlin.native.ignoreDisabledTargets=true` turns them off rather than failing -- and a green
@@ -61,12 +64,81 @@ jobs:
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
       - name: Build
-        run: ./gradlew build checkKotlinAbi --stacktrace
+        run: >
+          ./gradlew build checkKotlinAbi
+          -x jsTest -x jsBrowserTest -x wasmJsTest -x wasmJsBrowserTest
+          -x jsBrowserDistribution -x wasmJsBrowserDistribution
+          -x compileProductionExecutableKotlinJs
+          -x compileProductionExecutableKotlinWasmJs
+          -x compileProductionExecutableKotlinWasmJsOptimize
+          --stacktrace
 
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: reports
+          name: reports-apple
+          path: '**/build/reports/**'
+          retention-days: 7
+
+  # Kotlin/JS: the browser tests and the production bundle.
+  #
+  # Ubuntu rather than macOS, and safely so: this job names only JS tasks, so there is no Apple
+  # target for the runner to skip. If one were named and the target were disabled, Gradle would
+  # fail with an unknown task rather than pass having done nothing.
+  js:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Test
+        run: ./gradlew jsTest jsBrowserDistribution --stacktrace
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports-js
+          path: '**/build/reports/**'
+          retention-days: 7
+
+  # Kotlin/Wasm: the browser tests and the production bundle. The only place the Compose UI
+  # tests run in a browser -- the JS harness cannot boot Skiko, so those tests are excluded from the
+  # `js` target's source set.
+  wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Test
+        run: ./gradlew wasmJsTest wasmJsBrowserDistribution --stacktrace
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports-wasm
           path: '**/build/reports/**'
           retention-days: 7

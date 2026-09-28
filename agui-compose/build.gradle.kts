@@ -48,7 +48,7 @@ kotlin {
 
     jvm()
 
-    // Four targets, not the five `agui-model` and `agui-core` publish.
+    // Six targets: `agui-model`'s seven less `iosX64`.
     //
     // `iosX64` is absent because Compose Multiplatform does not publish it: at 1.12.0 the
     // `org.jetbrains.compose.foundation:foundation`, `:ui` and `:runtime` modules carry
@@ -63,20 +63,42 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    // The two web backends, which Compose Multiplatform 1.12.0 publishes for `foundation`, `ui` and
+    // `runtime`. `binaries.executable()` is required by the Compose plugin even for a library:
+    // without it the Skiko runtime is not bundled by webpack and the UI tests cannot load (CMP-4906).
+    // The same block as `a2ui-compose`'s.
+    js {
+        browser()
+        binaries.executable()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
     sourceSets {
         /**
          * Tests that need a composition on screen.
          *
-         * Compiled for the JVM and both iOS targets, and not Android: its host test task has no
-         * composition to draw into without an instrumentation or Robolectric harness, and this
-         * module carries neither. The default renderers therefore ship in the `.aar` with nothing
-         * drawing them on Android. That is a real gap rather than a justified exclusion, and it is
-         * written down here so it is not mistaken for one.
+         * Compiled for the JVM, both iOS targets and `wasmJs`, and not Android: its host test task
+         * has no composition to draw into without an instrumentation or Robolectric harness, and
+         * this module carries neither. The default renderers therefore ship in the `.aar` with
+         * nothing drawing them on Android. That is a real gap rather than a justified exclusion,
+         * and it is written down here so it is not mistaken for one.
          *
-         * Of the three targets compiled, two actually *run*. `iosArm64` is a device target, so
+         * Not `js` either, and for a reason outside this module: Compose's UI test harness cannot
+         * boot Skiko on Kotlin/JS -- every test dies in `Surface`'s initialiser before any
+         * composition happens, which is what `a2ui-compose` measured and why it wires its tests
+         * the same way. `wasmJs` runs these tests from the same source, so the renderers are drawn
+         * in a browser; what `js` gets is a compile of them.
+         *
+         * Of the four targets compiled, three actually *run*. `iosArm64` is a device target, so
          * Kotlin builds and links the test binary but creates no task that executes it; what the
          * edge buys there is a compile against the device klib, which catches an API that exists
-         * in the simulator's and not in it. Assertions execute on `jvm` and `iosSimulatorArm64`.
+         * in the simulator's and not in it. Assertions execute on `jvm`, `iosSimulatorArm64` and
+         * `wasmJs`.
          *
          * A source set rather than a runtime skip, because a test that returns early still reports
          * as passing. What the build says instead is that these tests do not run on Android at all.
@@ -89,6 +111,7 @@ kotlin {
         jvmTest.get().dependsOn(composeUiTest)
         iosArm64Test.get().dependsOn(composeUiTest)
         iosSimulatorArm64Test.get().dependsOn(composeUiTest)
+        wasmJsTest.get().dependsOn(composeUiTest)
 
         commonMain.dependencies {
             api(projects.aguiModel)

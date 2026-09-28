@@ -36,13 +36,23 @@ kotlin {
 
     jvm()
 
-    // The five targets the upstream SDK publishes, and no more. `iosX64` is in the list because
-    // upstream ships it and dropping it would make this library unusable from an Intel simulator
-    // that upstream still supports. macOS/Native and the two web backends are absent for the
-    // reason recorded in `docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md`.
+    // The five targets the upstream SDK publishes, plus the two web backends. `iosX64` is in the
+    // list because upstream ships it and dropping it would make this library unusable from an Intel
+    // simulator that upstream still supports.
+    //
+    // The web backends are here and not in `agui-core` because this module names no upstream type:
+    // its one dependency, kotlinx-serialization, publishes both. What stops the modules above it is
+    // recorded in `docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md` and #29. A browser
+    // can therefore draw a transcript folded somewhere else -- a native host's reducer, handed over
+    // a WebView bridge -- without the protocol layer following it there.
     iosArm64()
     iosSimulatorArm64()
     iosX64()
+
+    js { browser() }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs { browser() }
 
     sourceSets {
         commonMain.dependencies {
