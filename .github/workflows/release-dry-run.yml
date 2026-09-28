@@ -225,9 +225,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
         run: |
           ./gradlew -p smoke-test \
-            compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
+            compileCommonMainKotlinMetadata compileProtocolMainKotlinMetadata \
+            compileDrawingMainKotlinMetadata compileA2uiMainKotlinMetadata compileKotlinJvm \
             compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-            compileAndroidMain :floor:assemble \
+            compileKotlinJs compileKotlinWasmJs compileAndroidMain :floor:assemble \
             -PaguiVersion="$VERSION" -Dmaven.repo.local="${RUNNER_TEMP}/dry-run-m2" --stacktrace
 
       # Central requires a detached signature for every deployed file, and a local repository takes

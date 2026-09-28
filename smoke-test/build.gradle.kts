@@ -9,15 +9,19 @@
  * publish succeeds, and the consumer cannot resolve.
  *
  * It declares every target the library publishes, and depends on every module from the source
- * set that matches the module's own target list. Three modules (`agui-model`, `agui-core`,
- * `agui-agent`) publish the five targets the upstream SDK does, `iosX64` among them; the other
- * six publish four, because they ride on Compose Multiplatform or on `a2ui-compose`, and neither
- * publishes `iosX64`. One `commonMain` naming all nine would not resolve on `iosX64`, and
- * dropping `iosX64` from this build would leave a published variant of three modules uncovered.
- * So the three are `commonMain` dependencies and the six belong to `noIosX64Main`, an
- * intermediate source set that only the four targets they publish depend on. The first draft of
- * this build put `agui-a2ui` in the first group, and this gate is what said otherwise: its
- * `.module` file lists no `iosX64` variant, because `a2ui-core`'s does not.
+ * set that matches the module's own target list. There are four lists:
+ *
+ * - `agui-model`: seven -- the upstream SDK's five, plus `js` and `wasmJs`. `commonMain`.
+ * - `agui-core`, `agui-agent`: the upstream SDK's five, `iosX64` among them. `protocolMain`.
+ * - `agui-compose`, `agui-material3`, `agui-markdown`: six -- no `iosX64`, because Compose
+ *   Multiplatform publishes none, and the two web backends. `drawingMain`.
+ * - `agui-a2ui`, `agui-a2ui-compose`, `agui-a2ui-material3`: four -- neither `iosX64` nor the web,
+ *   because they reach the upstream SDK and `a2ui-compose` both. `a2uiMain`, under `drawingMain`.
+ *
+ * One `commonMain` naming all nine would resolve on none of `iosX64`, `js` or `wasmJs`, and
+ * dropping a target from this build would leave a published variant uncovered. The first draft of
+ * this build put `agui-a2ui` with the five-target modules, and this gate is what said otherwise:
+ * its `.module` file lists no `iosX64` variant, because `a2ui-core`'s does not.
  *
  * No Compose compiler plugin. The sources name Compose types on published signatures and call
  * nothing composable, and a compilation that carries no `@Composable` does not need the plugin.
@@ -65,28 +69,43 @@ kotlin {
     // is class-file 65.
     jvmToolchain(21)
 
-    // The default template plus one group. `noIosX64` is "every target but `iosX64`" -- the four
-    // that six of the nine modules publish -- and it gives this build a `noIosX64Main` source set
-    // for those modules' dependencies. A group in the template rather than hand-written
-    // `dependsOn` edges, because KGP refuses to apply the default template alongside explicit
+    // The default template plus three groups, one per target list in the header. `protocol` and
+    // `drawing` overlap -- the JVM, Android and two iOS targets are in both -- and `a2ui` is their
+    // intersection, nested under `drawing` because what it touches names Compose types. Groups in
+    // the template rather than hand-written `dependsOn` edges, because KGP refuses to apply the default template alongside explicit
     // edges, and without the template there would be no `iosMain` and no `commonMain`-to-target
     // wiring to start from.
     //
     // Android by platform type, not `withAndroidTarget()`: that matcher covers the old
     // `com.android.library` target only, and against the `com.android.kotlin.multiplatform.library`
     // target this build uses it matches nothing -- `androidMain` then depends on `commonMain`
-    // alone, `compileAndroidMain` compiles `Smoke.kt` and not `SmokeNoIosX64.kt`, and the six
-    // modules' `-android` variants are never resolved, with nothing in the output to say so.
-    // Measured on 2026-09-15: with `withAndroidTarget()` the edge is absent; with the predicate
-    // below `androidMain -> [noIosX64Main]` and both files compile for Android.
+    // alone, `compileAndroidMain` compiles `Smoke.kt` and nothing else, and every other module's
+    // `-android` variant is never resolved, with nothing in the output to say so. Measured on
+    // 2026-09-15: with `withAndroidTarget()` the edge is absent; with the predicate below the group
+    // edges are present and every file compiles for Android.
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     applyDefaultHierarchyTemplate {
         common {
-            group("noIosX64") {
+            group("protocol") {
                 withCompilations { it.platformType == KotlinPlatformType.androidJvm }
                 withJvm()
                 withIosArm64()
                 withIosSimulatorArm64()
+                withIosX64()
+            }
+            group("drawing") {
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+                withJvm()
+                withIosArm64()
+                withIosSimulatorArm64()
+                withJs()
+                withWasmJs()
+                group("a2ui") {
+                    withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+                    withJvm()
+                    withIosArm64()
+                    withIosSimulatorArm64()
+                }
             }
         }
     }
@@ -103,19 +122,26 @@ kotlin {
     iosSimulatorArm64()
     iosX64()
 
+    js { browser() }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs { browser() }
+
     sourceSets {
         commonMain.dependencies {
             implementation("dev.ynagai.agui:agui-model:$aguiVersion")
+        }
+        getByName("protocolMain").dependencies {
             implementation("dev.ynagai.agui:agui-core:$aguiVersion")
             implementation("dev.ynagai.agui:agui-agent:$aguiVersion")
         }
-
-        // The six modules that publish no `iosX64`, on the four targets they do publish.
-        getByName("noIosX64Main").dependencies {
-            implementation("dev.ynagai.agui:agui-a2ui:$aguiVersion")
+        getByName("drawingMain").dependencies {
             implementation("dev.ynagai.agui:agui-compose:$aguiVersion")
             implementation("dev.ynagai.agui:agui-material3:$aguiVersion")
             implementation("dev.ynagai.agui:agui-markdown:$aguiVersion")
+        }
+        getByName("a2uiMain").dependencies {
+            implementation("dev.ynagai.agui:agui-a2ui:$aguiVersion")
             implementation("dev.ynagai.agui:agui-a2ui-compose:$aguiVersion")
             implementation("dev.ynagai.agui:agui-a2ui-material3:$aguiVersion")
         }

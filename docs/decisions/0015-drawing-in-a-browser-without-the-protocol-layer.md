@@ -76,6 +76,11 @@ decision is taken, and is recorded on #29 as such.
   out of memory at 4G, as `a2ui-compose` found before.
 - **CI runs the web backends on Linux, in their own jobs.** The macOS job keeps the Apple targets and
   the ABI check; it excludes the browser tests and bundles, which need no Apple toolchain.
+- **The release still runs everything on one runner.** `cd.yml` and `release-dry-run.yml` verify with
+  the full `build checkKotlinAbi` on macOS, web backends included -- as `a2ui-compose`'s release
+  does on the same runner at the same heap.
+- **The consumer smoke test has four shared source sets, one per target list**, and compiles `js`
+  and `wasmJs` against the published variants. See `smoke-test/README.md`.
 - **Each affected ABI dump's target list changed**, and nothing else in them did: the published
   signatures are the same on the web targets as on the others.
 - **`kotlin-js-store/` is checked in**: the yarn lock files for the npm packages the JS and Wasm
