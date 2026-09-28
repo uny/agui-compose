@@ -72,9 +72,9 @@ kotlin {
     // The default template plus three groups, one per target list in the header. `protocol` and
     // `drawing` overlap -- the JVM, Android and two iOS targets are in both -- and `a2ui` is their
     // intersection, nested under `drawing` because what it touches names Compose types. Groups in
-    // the template rather than hand-written `dependsOn` edges, because KGP refuses to apply the default template alongside explicit
-    // edges, and without the template there would be no `iosMain` and no `commonMain`-to-target
-    // wiring to start from.
+    // the template rather than hand-written `dependsOn` edges, because KGP refuses to apply the
+    // default template alongside explicit edges, and without the template there would be no
+    // `iosMain` and no `commonMain`-to-target wiring to start from.
     //
     // Android by platform type, not `withAndroidTarget()`: that matcher covers the old
     // `com.android.library` target only, and against the `com.android.kotlin.multiplatform.library`

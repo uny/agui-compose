@@ -81,8 +81,9 @@ run there says nothing about the Apple variants -- which is why both workflows r
 the producer's `../gradle.properties`, so it cannot go on naming a version the producer has left
 behind.
 
-The four `compile*MainKotlinMetadata` tasks, not `compileKotlinMetadata`: the latter is a task that exists but is disabled under the hierarchical
-source-set model, so naming it compiles nothing. See the second control below.
+The four `compile*MainKotlinMetadata` tasks, not `compileKotlinMetadata`: the latter is a task
+that exists but is disabled under the hierarchical source-set model, so naming it compiles
+nothing. See the second control below.
 
 ## What it does not check
 
