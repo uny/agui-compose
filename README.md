@@ -39,6 +39,8 @@ multimodal input and steering — this library is aimed at all of it.
 > signature is covered by a checked-in ABI dump, so a change to one is a visible diff rather than
 > a surprise, but nothing is promised across versions yet.
 
+The API reference for the released version is at <https://uny.github.io/agui-compose/>.
+
 ## Installation
 
 ```kotlin
