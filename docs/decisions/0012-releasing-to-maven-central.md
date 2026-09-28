@@ -94,6 +94,12 @@ but `iosX64`, depends on the six four-target ones. Each holds one file. Both wor
 both metadata compilations by name, because `compileKotlinMetadata` -- the task a reader would
 reach for -- is disabled under the hierarchical model and compiles nothing.
 
+*Amended 2026-09-29, in [0015](0015-drawing-in-a-browser-without-the-protocol-layer.md):* four
+shared source sets now, one per published target list -- `commonMain` for `agui-model`,
+`protocolMain` for `agui-core` and `agui-agent`, `drawingMain` for the three drawing modules and
+`a2uiMain` for the three A2UI ones -- and `noIosX64Main` is gone. `smoke-test/build.gradle.kts`
+and `smoke-test/README.md` describe the current split.
+
 **The first version is `0.1.0`.** `VERSION_NAME` in `gradle.properties` stays `0.1.0-SNAPSHOT`;
 the tag `v0.1.0` is what decides the released version, and nothing in the tree has to change to
 cut it.
@@ -135,7 +141,8 @@ passed as `cd.yml` passes it lands 48 POMs with an `.asc` beside every file.
 
 - `a2ui-compose` publishing `iosX64`, or Compose Multiplatform doing so. Six modules would then
   publish five targets and the second source set would have nothing to hold; `commonMain` would
-  take all nine and `noIosX64Main` would go.
+  take all nine and `noIosX64Main` would go. (Superseded by the four-group split recorded in
+  0015: the `iosX64` gap now separates `protocolMain` from `drawingMain` and `a2uiMain`.)
 - `publishAndReleaseToMavenCentral` replacing the portal button, once a release has gone through
   by hand and the path is trusted. Done after 0.2.0 -- see Status.
 - A module that must not publish -- `agui-sample` and `agui-replay` today -- gaining a
