@@ -117,16 +117,25 @@ public class ReplayServer(
     }
 }
 
-/** `./gradlew :agui-replay:run [--args="<port> [<delay-ms>]"]`. */
+/**
+ * `./gradlew :agui-replay:run [--args="<port> [<delay-ms> [<trace-dir>...]]"]`.
+ *
+ * Each `<trace-dir>` adds its `*.json` recordings (see [ReplayTrace.directory]) to the ones this
+ * module ships. A name already taken is an error rather than a silent replacement: two routes
+ * cannot share a path, and which of the two answered would depend on the order of the arguments.
+ */
 public object ReplayMain {
     @JvmStatic
     public fun main(args: Array<String>) {
         val port = args.getOrNull(0)?.toIntOrNull() ?: ReplayServer.DEFAULT_PORT
         val delay = args.getOrNull(1)?.toLongOrNull() ?: ReplayServer.DEFAULT_DELAY_MILLIS
-        val server = ReplayServer(port = port, delayMillis = delay)
+        val traces = ReplayTrace.RESOURCES.map(ReplayTrace::resource) +
+            args.drop(2).flatMap { ReplayTrace.directory(java.io.File(it)) }
+        val duplicates = traces.groupBy { it.name }.filterValues { it.size > 1 }.keys
+        require(duplicates.isEmpty()) { "More than one trace named ${duplicates.joinToString { "`$it`" }}" }
+        val server = ReplayServer(traces = traces, port = port, delayMillis = delay)
         println("Replaying ${server.traces.size} recorded traces on http://localhost:$port/ :")
         for (trace in server.traces) println("  http://localhost:$port/${trace.name}  (${trace.runs.size} run(s))")
         server.start(wait = true)
     }
 }
-

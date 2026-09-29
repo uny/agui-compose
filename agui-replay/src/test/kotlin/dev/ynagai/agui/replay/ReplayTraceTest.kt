@@ -51,4 +51,19 @@ class ReplayTraceTest {
     fun `an empty recording plays as nothing rather than throwing`() {
         assertEquals(emptyList(), ReplayTrace.parse("e", "[]").run(0, "t", "r"))
     }
+
+    @Test
+    fun `a directory yields its json recordings by file name, in name order`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "b.json").writeText("""[{"type":"RUN_STARTED"},{"type":"RUN_FINISHED"}]""")
+            java.io.File(dir, "a.json").writeText("""[{"type":"RUN_STARTED"},{"type":"RUN_STARTED"}]""")
+            java.io.File(dir, "notes.md").writeText("not a trace")
+            val traces = ReplayTrace.directory(dir)
+            assertEquals(listOf("a", "b"), traces.map { it.name })
+            assertEquals(listOf(2, 1), traces.map { it.runs.size })
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
 }

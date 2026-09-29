@@ -69,6 +69,21 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
             return parse(name, stream.bufferedReader().use { it.readText() })
         }
 
+        /**
+         * Every `*.json` in [directory], each named by its file name without `.json`, sorted by name.
+         *
+         * For recordings that belong to an application rather than to this module -- a client's
+         * own catalog, with its own data -- kept beside that application's code instead of here.
+         *
+         * @throws IllegalArgumentException when [directory] is not a directory.
+         */
+        public fun directory(directory: java.io.File): List<ReplayTrace> {
+            require(directory.isDirectory) { "Not a directory: $directory" }
+            return directory.listFiles { file -> file.isFile && file.extension == "json" }.orEmpty()
+                .sortedBy { it.name }
+                .map { parse(it.nameWithoutExtension, it.readText()) }
+        }
+
         /** Every recording this module ships. Listed by hand: a jar has no directory listing. */
         public val RESOURCES: List<String> = listOf(
             "advanced-hotel-comparison",
