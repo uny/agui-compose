@@ -94,8 +94,9 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
                 .map { file ->
                     val name = file.nameWithoutExtension
                     require(name.matches(PLAIN_NAME)) { "Not a plain trace name: `$name`, from $file" }
+                    val text = file.readText()
                     try {
-                        parse(name, file.readText())
+                        parse(name, text)
                     } catch (e: Exception) {
                         throw IllegalArgumentException("Not a recording: $file", e)
                     }

@@ -75,6 +75,7 @@ class ReplayTraceTest {
         try {
             java.io.File(dir, "a.json").writeText("[]")
             dir.setReadable(false)
+            if (dir.listFiles() != null) return // Run as root, which reads it anyway.
             assertFailsWith<IllegalArgumentException> { ReplayTrace.directory(dir) }
         } finally {
             dir.setReadable(true)
