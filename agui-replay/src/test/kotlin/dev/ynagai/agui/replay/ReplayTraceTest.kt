@@ -4,6 +4,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class ReplayTraceTest {
     @Test
@@ -91,6 +92,18 @@ class ReplayTraceTest {
             } finally {
                 dir.deleteRecursively()
             }
+        }
+    }
+
+    @Test
+    fun `a directory names the recording that does not parse`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "broken.json").writeText("{}")
+            val error = assertFailsWith<IllegalArgumentException> { ReplayTrace.directory(dir) }
+            assertTrue("broken.json" in error.message.orEmpty(), error.message)
+        } finally {
+            dir.deleteRecursively()
         }
     }
 }

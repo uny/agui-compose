@@ -80,7 +80,7 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
          * and `50%` a malformed escape that stops the server from starting.
          *
          * @throws IllegalArgumentException when [directory] is not a directory, or cannot be listed,
-         *   or holds a recording whose name is not a plain path segment.
+         *   or holds a recording whose name is not a plain path segment, or that does not parse.
          */
         public fun directory(directory: java.io.File): List<ReplayTrace> {
             require(directory.isDirectory) { "Not a directory: ${directory.absoluteFile}" }
@@ -94,7 +94,11 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
                 .map { file ->
                     val name = file.nameWithoutExtension
                     require(name.matches(PLAIN_NAME)) { "Not a plain trace name: `$name`, from $file" }
-                    parse(name, file.readText())
+                    try {
+                        parse(name, file.readText())
+                    } catch (e: Exception) {
+                        throw IllegalArgumentException("Not a recording: $file", e)
+                    }
                 }
         }
 
