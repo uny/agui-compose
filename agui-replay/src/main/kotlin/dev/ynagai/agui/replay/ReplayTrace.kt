@@ -69,6 +69,42 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
             return parse(name, stream.bufferedReader().use { it.readText() })
         }
 
+        /**
+         * Every `*.json` in [directory], each named by its file name without `.json`, sorted by name.
+         *
+         * For recordings that belong to an application rather than to this module -- a client's
+         * own catalog, with its own data -- kept beside that application's code instead of here.
+         *
+         * A name becomes a route path as it stands, so it is held to letters, digits, `.`, `_` and `-`,
+         * starting with a letter or a digit: `{id}` would be a route parameter answering every path,
+         * and `50%` a malformed escape that stops the server from starting.
+         *
+         * @throws IllegalArgumentException when [directory] is not a directory, or cannot be listed,
+         *   or holds a recording whose name is not a plain path segment, or that does not parse.
+         */
+        public fun directory(directory: java.io.File): List<ReplayTrace> {
+            require(directory.isDirectory) { "Not a directory: ${directory.absoluteFile}" }
+            // `listFiles` answers null, not empty, for a directory it cannot read: an error, not a
+            // directory without recordings.
+            val files = requireNotNull(directory.listFiles { file -> file.isFile && file.extension == "json" }) {
+                "Cannot list ${directory.absoluteFile}"
+            }
+            return files
+                .sortedBy { it.name }
+                .map { file ->
+                    val name = file.nameWithoutExtension
+                    require(name.matches(PLAIN_NAME)) { "Not a plain trace name: `$name`, from $file" }
+                    val text = file.readText()
+                    try {
+                        parse(name, text)
+                    } catch (e: Exception) {
+                        throw IllegalArgumentException("Not a recording: $file", e)
+                    }
+                }
+        }
+
+        private val PLAIN_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]*")
+
         /** Every recording this module ships. Listed by hand: a jar has no directory listing. */
         public val RESOURCES: List<String> = listOf(
             "advanced-hotel-comparison",

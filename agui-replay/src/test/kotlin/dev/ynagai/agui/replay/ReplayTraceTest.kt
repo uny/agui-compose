@@ -3,6 +3,8 @@ package dev.ynagai.agui.replay
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class ReplayTraceTest {
     @Test
@@ -50,5 +52,59 @@ class ReplayTraceTest {
     @Test
     fun `an empty recording plays as nothing rather than throwing`() {
         assertEquals(emptyList(), ReplayTrace.parse("e", "[]").run(0, "t", "r"))
+    }
+
+    @Test
+    fun `a directory yields its json recordings by file name, in name order`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "b.json").writeText("""[{"type":"RUN_STARTED"},{"type":"RUN_FINISHED"}]""")
+            java.io.File(dir, "a.json").writeText("""[{"type":"RUN_STARTED"},{"type":"RUN_STARTED"}]""")
+            java.io.File(dir, "notes.md").writeText("not a trace")
+            val traces = ReplayTrace.directory(dir)
+            assertEquals(listOf("a", "b"), traces.map { it.name })
+            assertEquals(listOf(2, 1), traces.map { it.runs.size })
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `a directory that cannot be listed is an error, not an empty one`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "a.json").writeText("[]")
+            dir.setReadable(false)
+            if (dir.listFiles() != null) return // Run as root, which reads it anyway.
+            assertFailsWith<IllegalArgumentException> { ReplayTrace.directory(dir) }
+        } finally {
+            dir.setReadable(true)
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `a directory refuses a recording whose name is not a plain path segment`() {
+        for (name in listOf("{id}", "*", "50%", "")) {
+            val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+            try {
+                java.io.File(dir, "$name.json").writeText("[]")
+                assertFailsWith<IllegalArgumentException>(name) { ReplayTrace.directory(dir) }
+            } finally {
+                dir.deleteRecursively()
+            }
+        }
+    }
+
+    @Test
+    fun `a directory names the recording that does not parse`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "broken.json").writeText("{}")
+            val error = assertFailsWith<IllegalArgumentException> { ReplayTrace.directory(dir) }
+            assertTrue("broken.json" in error.message.orEmpty(), error.message)
+        } finally {
+            dir.deleteRecursively()
+        }
     }
 }
