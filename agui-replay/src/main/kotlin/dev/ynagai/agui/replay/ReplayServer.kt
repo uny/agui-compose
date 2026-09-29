@@ -37,6 +37,8 @@ import kotlin.concurrent.atomics.incrementAndFetch
  *
  * Runs are counted per thread, so a client that keeps its `threadId` across turns walks through a
  * multi-run recording, and one that starts a new thread starts the recording over.
+ *
+ * @throws IllegalArgumentException when two of [traces] share a name.
  */
 @OptIn(ExperimentalAtomicApi::class)
 public class ReplayServer(
@@ -45,6 +47,12 @@ public class ReplayServer(
     public val port: Int = DEFAULT_PORT,
     public val delayMillis: Long = DEFAULT_DELAY_MILLIS,
 ) {
+    init {
+        // Two routes cannot share a path, and which of the two answered would depend on their order.
+        val duplicates = traces.groupBy { it.name }.filterValues { it.size > 1 }.keys
+        require(duplicates.isEmpty()) { "More than one trace named ${duplicates.joinToString { "`$it`" }}" }
+    }
+
     private val byName = traces.associateBy { it.name }
     private val turns = mutableMapOf<String, AtomicInt>()
 
@@ -121,8 +129,8 @@ public class ReplayServer(
  * `./gradlew :agui-replay:run [--args="<port> [<delay-ms> [<trace-dir>...]]"]`.
  *
  * Each `<trace-dir>` adds its `*.json` recordings (see [ReplayTrace.directory]) to the ones this
- * module ships. A name already taken is an error rather than a silent replacement: two routes
- * cannot share a path, and which of the two answered would depend on the order of the arguments.
+ * module ships. A name already taken is an error rather than a silent replacement (see
+ * [ReplayServer]).
  */
 public object ReplayMain {
     @JvmStatic
@@ -131,8 +139,6 @@ public object ReplayMain {
         val delay = args.getOrNull(1)?.toLongOrNull() ?: ReplayServer.DEFAULT_DELAY_MILLIS
         val traces = ReplayTrace.RESOURCES.map(ReplayTrace::resource) +
             args.drop(2).flatMap { ReplayTrace.directory(java.io.File(it)) }
-        val duplicates = traces.groupBy { it.name }.filterValues { it.size > 1 }.keys
-        require(duplicates.isEmpty()) { "More than one trace named ${duplicates.joinToString { "`$it`" }}" }
         val server = ReplayServer(traces = traces, port = port, delayMillis = delay)
         println("Replaying ${server.traces.size} recorded traces on http://localhost:$port/ :")
         for (trace in server.traces) println("  http://localhost:$port/${trace.name}  (${trace.runs.size} run(s))")
