@@ -135,8 +135,12 @@ public class ReplayServer(
 public object ReplayMain {
     @JvmStatic
     public fun main(args: Array<String>) {
-        val port = args.getOrNull(0)?.toIntOrNull() ?: ReplayServer.DEFAULT_PORT
-        val delay = args.getOrNull(1)?.toLongOrNull() ?: ReplayServer.DEFAULT_DELAY_MILLIS
+        // Positional, so a word where a number belongs is an error: `8000 traces` would otherwise
+        // take `traces` for a delay, fall back to the default one, and never read the directory.
+        val port = args.getOrNull(0)?.let { requireNotNull(it.toIntOrNull()) { "Not a port: `$it`" } }
+            ?: ReplayServer.DEFAULT_PORT
+        val delay = args.getOrNull(1)?.let { requireNotNull(it.toLongOrNull()) { "Not a delay in milliseconds: `$it`" } }
+            ?: ReplayServer.DEFAULT_DELAY_MILLIS
         val traces = ReplayTrace.RESOURCES.map(ReplayTrace::resource) +
             args.drop(2).flatMap { ReplayTrace.directory(java.io.File(it)) }
         val server = ReplayServer(traces = traces, port = port, delayMillis = delay)
