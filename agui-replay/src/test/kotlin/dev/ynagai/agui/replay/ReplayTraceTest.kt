@@ -80,4 +80,17 @@ class ReplayTraceTest {
             dir.deleteRecursively()
         }
     }
+
+    @Test
+    fun `a directory refuses a recording whose name is not a plain path segment`() {
+        for (name in listOf("{id}", "*", "50%", "")) {
+            val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+            try {
+                java.io.File(dir, "$name.json").writeText("[]")
+                assertFailsWith<IllegalArgumentException>(name) { ReplayTrace.directory(dir) }
+            } finally {
+                dir.deleteRecursively()
+            }
+        }
+    }
 }
