@@ -75,11 +75,16 @@ public class ReplayTrace(public val name: String, public val events: List<JsonOb
          * For recordings that belong to an application rather than to this module -- a client's
          * own catalog, with its own data -- kept beside that application's code instead of here.
          *
-         * @throws IllegalArgumentException when [directory] is not a directory.
+         * @throws IllegalArgumentException when [directory] is not a directory, or cannot be listed.
          */
         public fun directory(directory: java.io.File): List<ReplayTrace> {
-            require(directory.isDirectory) { "Not a directory: $directory" }
-            return directory.listFiles { file -> file.isFile && file.extension == "json" }.orEmpty()
+            require(directory.isDirectory) { "Not a directory: ${directory.absoluteFile}" }
+            // `listFiles` answers null, not empty, for a directory it cannot read: an error, not a
+            // directory without recordings.
+            val files = requireNotNull(directory.listFiles { file -> file.isFile && file.extension == "json" }) {
+                "Cannot list ${directory.absoluteFile}"
+            }
+            return files
                 .sortedBy { it.name }
                 .map { parse(it.nameWithoutExtension, it.readText()) }
         }

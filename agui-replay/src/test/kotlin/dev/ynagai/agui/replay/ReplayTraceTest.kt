@@ -3,6 +3,7 @@ package dev.ynagai.agui.replay
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class ReplayTraceTest {
     @Test
@@ -63,6 +64,19 @@ class ReplayTraceTest {
             assertEquals(listOf("a", "b"), traces.map { it.name })
             assertEquals(listOf(2, 1), traces.map { it.runs.size })
         } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `a directory that cannot be listed is an error, not an empty one`() {
+        val dir = kotlin.io.path.createTempDirectory("traces").toFile()
+        try {
+            java.io.File(dir, "a.json").writeText("[]")
+            dir.setReadable(false)
+            assertFailsWith<IllegalArgumentException> { ReplayTrace.directory(dir) }
+        } finally {
+            dir.setReadable(true)
             dir.deleteRecursively()
         }
     }
