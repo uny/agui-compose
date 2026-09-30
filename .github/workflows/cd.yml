@@ -213,14 +213,13 @@ jobs:
       # second copy of `gradle-wrapper.jar` to keep pinned. It is still a separate build: its own
       # `settings.gradle.kts` is what makes the dependency resolve by coordinate.
       #
-      # `compileCommonMainKotlinMetadata` and `compileNoIosX64MainKotlinMetadata`, not
-      # `compileKotlinMetadata`. The latter exists as a task but is disabled under the hierarchical
-      # source-set model and can never run (`> Task :compileKotlinMetadata SKIPPED`, and
-      # `--rerun-tasks` does not force it), so naming it compiles nothing, and the metadata
-      # variants -- the ones a consumer's own shared source sets resolve -- would be the published
-      # variants this gate did not cover. Two of them here, because `smoke-test` has two shared
-      # source sets: `commonMain` for the three modules that publish `iosX64`, `noIosX64Main` for
-      # the six that do not.
+      # The four `compile*MainKotlinMetadata` tasks, not `compileKotlinMetadata`. The latter exists
+      # as a task but is disabled under the hierarchical source-set model and can never run
+      # (`> Task :compileKotlinMetadata SKIPPED`, and `--rerun-tasks` does not force it), so naming
+      # it compiles nothing, and the metadata variants -- the ones a consumer's own shared source
+      # sets resolve -- would be the published variants this gate did not cover. Four of them here,
+      # because `smoke-test` has four shared source sets, one per target list the nine modules
+      # publish; `smoke-test/build.gradle.kts` names them.
       #
       # `:floor:assemble` is the `compileSdk` floor, and it is a second consumer rather than a
       # second source set: the root project compiles its Android target at 37, and one Android
@@ -233,9 +232,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
         run: |
           ./gradlew -p smoke-test \
-            compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
+            compileCommonMainKotlinMetadata compileProtocolMainKotlinMetadata \
+            compileDrawingMainKotlinMetadata compileA2uiMainKotlinMetadata compileKotlinJvm \
             compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-            compileAndroidMain :floor:assemble \
+            compileKotlinJs compileKotlinWasmJs compileAndroidMain :floor:assemble \
             -PaguiVersion="$VERSION" --stacktrace
 
       # Uploads, waits for Central's validation, and releases. No portal button: the human gate

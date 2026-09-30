@@ -57,6 +57,11 @@ still supports it and dropping it would break an Intel simulator that upstream d
 browser gap is real and is written down here rather than papered over; it closes when upstream
 publishes web targets, or when a consumer's need makes (2) worth its price.
 
+*Amended 2026-09-29, in [0015](0015-drawing-in-a-browser-without-the-protocol-layer.md):* the five
+bind the modules that name upstream's types. `agui-model` names none and now publishes `js` and
+`wasmJs` too, as do the drawing modules built only on it. Replacing JSON Patch would not reopen
+option (3) by itself: `agui-core` would still name `kotlin-core`'s types.
+
 Two smaller measurements that came with it:
 
 - **Kotlin 2.4.10 consumes upstream's 2.1.20 klibs.** Verified with a throwaway project that

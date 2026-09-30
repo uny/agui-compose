@@ -41,22 +41,37 @@ kotlin {
 
     jvm()
 
-    // Four targets, matching `agui-compose`, and for its reason rather than this module's:
+    // Six targets, matching `agui-compose`, and for its reason rather than this module's:
     // Compose Multiplatform 1.12.0 publishes no `ios_x64` variant of `foundation`, `ui` or
-    // `runtime`. intellij-markdown publishes `jvm`, `ios_arm64` and `ios_simulator_arm64` (Android
-    // takes the jvm one) among others, so it adds no constraint of its own.
+    // `runtime`. intellij-markdown publishes `jvm`, `ios_arm64`, `ios_simulator_arm64`, `js` and
+    // `wasm` (Android takes the jvm one), so it adds no constraint of its own.
     iosArm64()
     iosSimulatorArm64()
+
+    // The two web backends, which Compose Multiplatform 1.12.0 publishes for `foundation`, `ui` and
+    // `runtime`. `binaries.executable()` is required by the Compose plugin even for a library:
+    // without it the Skiko runtime is not bundled by webpack and the UI tests cannot load (CMP-4906).
+    // The same block as `a2ui-compose`'s.
+    js {
+        browser()
+        binaries.executable()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
 
     sourceSets {
         /**
          * Tests that need a composition on screen.
          *
          * As in `agui-material3`: the renderer draws, so its tests live here. `commonTest` is not
-         * empty, though -- the two style factories are pure, and testing them there rather than
-         * here is what gets them onto Android. Of the three targets compiled, two run --
-         * `iosArm64` is a device target, so Kotlin links the test binary without creating a task
-         * that runs it.
+         * empty, though -- the style factories and the parsing that needs no composition are
+         * pure, and testing them there rather than here is what gets them onto Android and `js`.
+         * Of the four targets compiled, three run -- `iosArm64` is a device target, so Kotlin
+         * links the test binary without creating a task that runs it.
          */
         val composeUiTest = create("composeUiTest") {
             dependsOn(commonTest.get())
@@ -66,6 +81,7 @@ kotlin {
         jvmTest.get().dependsOn(composeUiTest)
         iosArm64Test.get().dependsOn(composeUiTest)
         iosSimulatorArm64Test.get().dependsOn(composeUiTest)
+        wasmJsTest.get().dependsOn(composeUiTest)
 
         commonMain.dependencies {
             // `api`: what this module publishes is an `AguiTextRenderer`, and a consumer who could

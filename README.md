@@ -118,10 +118,20 @@ module can reach an Intel simulator regardless of how it is configured. The lowe
 the fifth target rather than being trimmed to match — folding an event stream needs no Compose, and
 a consumer on an Intel simulator can still do it and render the result with something else.
 
-**There is no browser target and no Kotlin/Native macOS target,** because upstream publishes
-neither and its `STATE_DELTA` dependency cannot reach them either. Compose Multiplatform on the
-desktop — macOS included — is the `jvm` target and is supported. The full reasoning, and what would
-change the answer, is in [docs/decisions/0001](docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md).
+`agui-model`, `agui-compose`, `agui-material3` and `agui-markdown` also publish **`js` and
+`wasmJs`**. None of them names an upstream type, so a browser — a WebView inside a native app,
+say — can draw a transcript that was folded somewhere else. The Compose tests run under
+Kotlin/Wasm; under Kotlin/JS the renderers compile but are not drawn by a test, because Compose's
+test harness cannot start there. See
+[docs/decisions/0015](docs/decisions/0015-drawing-in-a-browser-without-the-protocol-layer.md).
+
+**The protocol modules have no browser target, and nothing has a Kotlin/Native macOS target.**
+Upstream publishes neither, and its `STATE_DELTA` dependency has no `wasmJs` or `macosArm64`
+variant either. So `agui-core`, `agui-agent` and the A2UI modules cannot run in a browser yet, and
+folding an event stream there is not possible today. Compose Multiplatform on the desktop — macOS
+included — is the `jvm` target and is supported. The full reasoning, and what would change the
+answer, is in [docs/decisions/0001](docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md) and
+[#29](https://github.com/uny/agui-compose/issues/29).
 
 ## Why the render model is not the SDK's transcript
 

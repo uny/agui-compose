@@ -42,7 +42,7 @@ kotlin {
 
     jvm()
 
-    // Four targets, matching `agui-compose`. `iosX64` is absent because Compose Multiplatform
+    // Six targets, matching `agui-compose`. `iosX64` is absent because Compose Multiplatform
     // 1.12.0 publishes no `ios_x64` variant of `foundation`, `ui` or `runtime`.
     //
     // Not because of Material 3: `org.jetbrains.compose.material3:material3:1.9.0` does publish
@@ -52,17 +52,32 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    // The two web backends, which Compose Multiplatform 1.12.0 publishes for `foundation`, `ui` and
+    // `runtime`. `binaries.executable()` is required by the Compose plugin even for a library:
+    // without it the Skiko runtime is not bundled by webpack and the UI tests cannot load (CMP-4906).
+    // The same block as `a2ui-compose`'s.
+    js {
+        browser()
+        binaries.executable()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
     sourceSets {
         /**
          * Tests that need a composition on screen.
          *
-         * The set of targets, and the reason Android is not among them, are `agui-compose`'s and
-         * are explained there. Every renderer in this module draws, so everything here lives in
-         * this source set and `commonTest` stays empty.
+         * The set of targets, and the reasons Android and `js` are not among them, are
+         * `agui-compose`'s and are explained there. Every renderer in this module draws, so
+         * everything here lives in this source set and `commonTest` stays empty.
          *
-         * Of the three targets compiled, two run: `iosArm64` is a device target, so Kotlin links
-         * the test binary without creating a task that executes it. Assertions execute on `jvm`
-         * and `iosSimulatorArm64`.
+         * Of the four targets compiled, three run: `iosArm64` is a device target, so Kotlin links
+         * the test binary without creating a task that executes it. Assertions execute on `jvm`,
+         * `iosSimulatorArm64` and `wasmJs`.
          */
         val composeUiTest = create("composeUiTest") {
             dependsOn(commonTest.get())
@@ -72,6 +87,7 @@ kotlin {
         jvmTest.get().dependsOn(composeUiTest)
         iosArm64Test.get().dependsOn(composeUiTest)
         iosSimulatorArm64Test.get().dependsOn(composeUiTest)
+        wasmJsTest.get().dependsOn(composeUiTest)
 
         commonMain.dependencies {
             // `api`: this module's whole published surface is `agui-compose`'s types with Material

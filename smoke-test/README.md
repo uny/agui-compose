@@ -19,15 +19,21 @@ the nine modules, on every target each module publishes. Resolution alone would 
 artifact can resolve and still be missing the class, because a `.module` file can point a variant
 at a jar that does not carry it.
 
-## Two source sets, because two target lists
+## Four source sets, because four target lists
 
-`agui-model`, `agui-core` and `agui-agent` publish the five targets the upstream SDK does,
-`iosX64` among them. The other six ride on Compose Multiplatform or on `a2ui-compose`, neither of
-which publishes `iosX64`, so they publish four. One `commonMain` naming all nine would fail to
-resolve on `iosX64`; dropping `iosX64` from this build would leave a published variant of three
-modules uncovered. So `commonMain` depends on the three and `noIosX64Main` -- a group added to the
-default hierarchy template in `build.gradle.kts` -- depends on the six, and each source set holds
-one file touching one symbol per module.
+The nine modules publish four different target lists:
+
+| Source set | Modules | Targets |
+| --- | --- | --- |
+| `commonMain` | `agui-model` | the upstream SDK's five, plus `js` and `wasmJs` |
+| `protocolMain` | `agui-core`, `agui-agent` | the upstream SDK's five, `iosX64` among them |
+| `drawingMain` | `agui-compose`, `agui-material3`, `agui-markdown` | no `iosX64` (Compose publishes none), plus `js` and `wasmJs` |
+| `a2uiMain` | `agui-a2ui`, `agui-a2ui-compose`, `agui-a2ui-material3` | neither `iosX64` nor the web |
+
+One `commonMain` naming all nine would fail to resolve on `iosX64`, `js` and `wasmJs`; dropping a
+target from this build would leave a published variant uncovered. So each list is a group added to
+the default hierarchy template in `build.gradle.kts`, and each source set holds one file touching one
+symbol per module.
 
 The first draft put `agui-a2ui` in the first group, on the grounds that it carries no Compose. The
 gate said otherwise: its `.module` lists no `iosX64` variant, because `a2ui-core`'s does not. That
@@ -59,9 +65,10 @@ copy of `gradle-wrapper.jar` is a second thing to keep pinned:
 ```bash
 ./gradlew publishToMavenLocal
 ./gradlew -p smoke-test \
-  compileCommonMainKotlinMetadata compileNoIosX64MainKotlinMetadata compileKotlinJvm \
+  compileCommonMainKotlinMetadata compileProtocolMainKotlinMetadata \
+  compileDrawingMainKotlinMetadata compileA2uiMainKotlinMetadata compileKotlinJvm \
   compileKotlinIosArm64 compileKotlinIosSimulatorArm64 compileKotlinIosX64 \
-  compileAndroidMain :floor:assemble
+  compileKotlinJs compileKotlinWasmJs compileAndroidMain :floor:assemble
 ```
 
 Needs an Android SDK (`ANDROID_HOME`, or `sdk.dir` in `smoke-test/local.properties` -- the root
@@ -74,9 +81,9 @@ run there says nothing about the Apple variants -- which is why both workflows r
 the producer's `../gradle.properties`, so it cannot go on naming a version the producer has left
 behind.
 
-`compileCommonMainKotlinMetadata` and `compileNoIosX64MainKotlinMetadata`, not
-`compileKotlinMetadata`: the latter is a task that exists but is disabled under the hierarchical
-source-set model, so naming it compiles nothing. See the second control below.
+The four `compile*MainKotlinMetadata` tasks, not `compileKotlinMetadata`: the latter is a task
+that exists but is disabled under the hierarchical source-set model, so naming it compiles
+nothing. See the second control below.
 
 ## What it does not check
 
@@ -125,7 +132,10 @@ mv ~/.m2/repository/dev/ynagai/agui/agui-core-iosx64 /tmp/
 mv /tmp/agui-core-iosx64 ~/.m2/repository/dev/ynagai/agui/
 ```
 
-`Could not find dev.ynagai.agui:agui-core-iosx64:<version>`. This keeps working after a version
+`Could not find dev.ynagai.agui:agui-core-iosx64:<version>`. The web variants bite the same way,
+measured on 2026-09-29 against a `0.3.0-webprobe-SNAPSHOT` publish: with `agui-compose-wasm-js`
+moved out, `compileKotlinWasmJs` fails with `Could not find
+dev.ynagai.agui:agui-compose-wasm-js:<version>`. This keeps working after a version
 is on Central because `dev.ynagai.agui` is bound to `mavenLocal()` by `exclusiveContent` and is
 not looked up anywhere else -- otherwise the fallback would answer and the control would stop
 biting.
@@ -135,13 +145,14 @@ per-target-only gate cannot see, and the reason the task names above are what th
 
 ```bash
 mv ~/.m2/repository/dev/ynagai/agui/agui-core/<version>/agui-core-<version>.jar /tmp/
-./gradlew -p smoke-test compileCommonMainKotlinMetadata --rerun-tasks   # must fail
+./gradlew -p smoke-test compileProtocolMainKotlinMetadata --rerun-tasks # must fail
 ./gradlew -p smoke-test compileKotlinMetadata --rerun-tasks             # the old name: SKIPPED, green
 mv /tmp/agui-core-<version>.jar ~/.m2/repository/dev/ynagai/agui/agui-core/<version>/
 ```
 
-`compileCommonMainKotlinMetadata` fails in `transformCommonMainDependenciesMetadata` with
-`Could not find dev.ynagai.agui:agui-core:<version>`; `compileKotlinMetadata` reports `SKIPPED`
+`compileProtocolMainKotlinMetadata` fails in `transformCommonMainDependenciesMetadata` with
+`Could not find dev.ynagai.agui:agui-core:<version>` (re-measured on 2026-09-29, after `agui-core`
+moved from `commonMain` to `protocolMain`); `compileKotlinMetadata` reports `SKIPPED`
 and exits 0. A consumer writing `commonMain` against that publication could not have compiled,
 and a gate naming the old task would have passed it.
 
