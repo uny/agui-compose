@@ -34,15 +34,16 @@ agui = "0.4.1"
 # upstream client applies STATE_DELTA with, so a graph containing both resolves to one copy.
 jsonPatch = "1.0.0"
 
-# The A2UI renderer `agui-a2ui` maps activities and tool calls onto. `0.2.0` is the newest release
+# The A2UI renderer `agui-a2ui` maps activities and tool calls onto. `0.3.0` is the newest release
 # and its API is declared unstable; it targets A2UI v1.0 only, which is why the translation from
-# the v0.9 envelopes upstream's a2ui-middleware emits lives here and not there. It is also the
+# the v0.9 envelopes upstream's a2ui-middleware emits lives here and not there. `0.2.0` was the
 # release that lowered that repository's own floors -- built on Kotlin 2.3.21, and `a2ui-core`'s
-# AAR now asks for `minCompileSdk=24` rather than 37 (uny/a2ui-compose#64, #88), which is what
-# lets this repository follow on both axes.
+# AAR asks for `minCompileSdk=24` rather than 37 (uny/a2ui-compose#64, #88), which is what lets
+# this repository follow on both axes; `0.3.0` keeps both. It changes no public API but refuses a
+# catalog that references a `common_types.json` schema outside rule 3's list (uny/a2ui-compose#116).
 # Publishes `android`, `jvm`, `iosArm64`, `iosSimulatorArm64` plus web and macOS -- and no
 # `iosX64`, so no module that depends on it can keep the fifth target `agui-agent` ships.
-a2ui = "0.2.0"
+a2ui = "0.3.0"
 
 # Ktor, for the replay server only. Pinned to the version `kotlin-client` 0.4.1 requires -- its
 # module metadata says `ktor-client-core` 3.2.4 -- so that the sample's test classpath, which holds
@@ -65,7 +66,7 @@ datetime = "0.8.0-0.6.x-compat"
 #
 # `android-coreCompileSdk` is for `agui-model`, `agui-core`, `agui-agent` and `agui-a2ui`, none of
 # which draws. Their Android dependencies -- the upstream SDK's three AARs, `kotlin-json-patch`,
-# and `a2ui-core` 0.2.0 -- all carry `minCompileSdk` of 1 or 24. It sits at `minSdk`, the lowest AGP
+# and `a2ui-core` 0.3.0 -- all carry `minCompileSdk` of 1 or 24. It sits at `minSdk`, the lowest AGP
 # accepts, so a consumer whose `compileSdk` is below 37 can take the transport before it can take
 # the UI. `checkAndroidMainAarMetadata`, which `assemble` runs, fails the build if a dependency bump
 # ever asks for more; raising this value is a compatibility decision for consumers, not a dependency
