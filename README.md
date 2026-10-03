@@ -124,6 +124,9 @@ say — can draw a transcript that was folded somewhere else. The Compose tests 
 Kotlin/Wasm; under Kotlin/JS the renderers compile but are not drawn by a test, because Compose's
 test harness cannot start there. See
 [docs/decisions/0015](docs/decisions/0015-drawing-in-a-browser-without-the-protocol-layer.md).
+How the transcript reaches the WebView, and how the user's input gets back, is the host's to
+define: `agui-model`'s types carry no serializers, and this library defines no bridge format. See
+[docs/decisions/0016](docs/decisions/0016-leaving-the-webview-bridge-to-the-host.md).
 
 **The protocol modules have no browser target, and nothing has a Kotlin/Native macOS target.**
 Upstream publishes neither, and its `STATE_DELTA` dependency has no `wasmJs` or `macosArm64`
