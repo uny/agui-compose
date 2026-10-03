@@ -4,7 +4,7 @@ Date: 2026-09-15
 
 ## Status
 
-Accepted, and exercised twice.
+Accepted, and exercised three times.
 
 `v0.1.0` went through this path on 2026-09-16: the dry run first (all steps green, 48 POMs signed,
 every POM named), then the tag, the environment's approval, the upload as deployment `160098bf`,
@@ -27,6 +27,14 @@ when it also releases -- so a deployment Central rejects fails the run instead o
 FAILED only in the portal. And the `release` concurrency group queues pending runs (`queue: max`),
 because a pending run the default would cancel is now a release that silently never happens
 rather than an upload to redo.
+
+`v0.3.0` on 2026-10-03 was the first release through that path, and the first to carry `js` and
+`wasmJs` variants ([decision 15](0015-drawing-in-a-browser-without-the-protocol-layer.md)). The dry
+run went first and was green with the web backends inside `Verify` on macOS -- the configuration
+that had not yet run anywhere in this repository. Then the tag, the environment's approval, and
+`Release to Maven Central` green on its first execution; all nine coordinates resolved from
+`repo1.maven.org` about ten minutes after the run finished, and `docs.yml`'s `workflow_run`
+published the API reference on its first trigger. Nobody opened the portal.
 
 ## Context
 

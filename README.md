@@ -35,7 +35,7 @@ Chat is the first surface, not the boundary. AG-UI's 33 events cover streaming t
 tool calls, human-in-the-loop approval, shared state, generative UI surfaces, run lifecycle,
 multimodal input and steering — this library is aimed at all of it.
 
-> **Status: `0.2.0` is on Maven Central, and the API is not stable.** A `0.x` line: every public
+> **Status: `0.3.0` is on Maven Central, and the API is not stable.** A `0.x` line: every public
 > signature is covered by a checked-in ABI dump, so a change to one is a visible diff rather than
 > a surprise, but nothing is promised across versions yet.
 
@@ -45,8 +45,8 @@ The API reference for the released version is at <https://uny.github.io/agui-com
 
 ```kotlin
 dependencies {
-    implementation("dev.ynagai.agui:agui-material3:0.2.0")
-    implementation("dev.ynagai.agui:agui-agent:0.2.0")
+    implementation("dev.ynagai.agui:agui-material3:0.3.0")
+    implementation("dev.ynagai.agui:agui-agent:0.3.0")
 }
 ```
 
@@ -55,12 +55,12 @@ That is the usual pair: `agui-material3` brings `agui-compose`, `agui-model` and
 Markdown, and `agui-a2ui-material3` -- which brings `agui-a2ui-compose` and `agui-a2ui` -- when
 the agent draws. Each lower module is published on its own for a host that wants less: `agui-core`
 to fold events with no Compose at all, `agui-compose` to draw with a design system other than
-Material 3. Coordinates are `dev.ynagai.agui:<module>:0.2.0`; the [Modules](#modules) table says
+Material 3. Coordinates are `dev.ynagai.agui:<module>:0.3.0`; the [Modules](#modules) table says
 what each carries, and [Targets](#targets) which platforms.
 
 ### What a consumer has to be on
 
-Three floors, and they are not the same for every module. Each is what the published `0.2.0`
+Three floors, and they are not the same for every module. Each is what the published `0.3.0`
 artifacts declare, read from them rather than from this file's intentions. `0.1.0` predates both
 splits — it declares `compileSdk` 37 for all nine modules and a Kotlin 2.4 floor — so a consumer
 who cannot move off it is reading the wrong table.
@@ -72,8 +72,8 @@ who cannot move off it is reading the wrong table.
 | Kotlin | **2.3** line | **2.3** line | A 2.4 compiler reads all of it. A 2.2 one reads the JVM and Android artifacts (class-file metadata is read one language release ahead) and refuses the iOS klibs (`incompatible ABI version`). |
 
 `agui-model`, `agui-core`, `agui-agent` and `agui-a2ui` are the four: none carries Compose, and
-every AAR they depend on asks for 24 or less — including `a2ui-core` 0.2.0, which lowered its own
-floor (uny/a2ui-compose#88) so that this one could follow.
+every AAR they depend on asks for 24 or less — including `a2ui-core`, whose 0.2.0 lowered its own
+floor (uny/a2ui-compose#88) so that this one could follow, and whose 0.3.0 kept it.
 
 **Both floors follow Compose Multiplatform, and that is the whole rule.** A drawing module's
 `compileSdk` is the `minCompileSdk` the current stable Compose declares (37 at 1.12.0); the Kotlin
@@ -91,15 +91,15 @@ Kotlin 2.4 project, so Room, Dagger or Moshi do not pin anyone here.
 
 | Module | What it is | Version |
 | --- | --- | --- |
-| `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | `0.2.0` |
-| `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | `0.2.0` |
-| `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | `0.2.0` |
-| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | `0.2.0` |
-| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, re-parsing only the unsettled tail while a run is still arriving. Depends on `agui-compose` and intellij-markdown; the rendering layer is its own, and no design system. | `0.2.0` |
-| `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | `0.2.0` |
-| `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | `0.2.0` |
-| `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | `0.2.0` |
-| `agui-a2ui-material3` | The basic catalog's Material 3 renderers and a Material 3 "building UI" state, so a Material 3 transcript draws A2UI with one call. | `0.2.0` |
+| `agui-model` | The render model: `UiMessage` as an ordered list of parts, each with its own streaming state. No UI framework, no protocol types. | `0.3.0` |
+| `agui-core` | Folds an AG-UI event stream into that model, including the `ACTIVITY_*` events the upstream reducer does not handle. | `0.3.0` |
+| `agui-compose` | Draws a `UiTranscript`. Compose runtime and foundation only — no design system, no Markdown parser, one overridable slot per part kind. | `0.3.0` |
+| `agui-material3` | Fills every one of those slots with Material 3: bubbles, a reasoning disclosure, tool-call and attachment surfaces, an approval card. The first layer that is meant to be looked at. | `0.3.0` |
+| `agui-markdown` | Draws prose as GitHub Flavored Markdown through the text renderer slot, re-parsing only the unsettled tail while a run is still arriving. Depends on `agui-compose` and intellij-markdown; the rendering layer is its own, and no design system. | `0.3.0` |
+| `agui-agent` | Runs an upstream `AbstractAgent` and keeps its transcript: one render model per thread, fed by every run, observable as a `StateFlow`. Brings the upstream client — and the Ktor engine it chose per platform. | `0.3.0` |
+| `agui-a2ui` | Reads A2UI out of a transcript — from an `a2ui-surface` activity, a streamed `render_a2ui` call, or a tool result carrying `a2ui_operations` — and turns upstream's v0.9 envelopes into the v1.0 messages [a2ui-compose](https://github.com/uny/a2ui-compose) parses. Decides which carrier draws a surface that arrived in several. No Compose. | `0.3.0` |
+| `agui-a2ui-compose` | Keeps an `A2uiRenderer` up to date with a transcript and fills the `activity` and `toolCall` slots with its surfaces. No design system. | `0.3.0` |
+| `agui-a2ui-material3` | The basic catalog's Material 3 renderers and a Material 3 "building UI" state, so a Material 3 transcript draws A2UI with one call. | `0.3.0` |
 | `agui-replay` | A Ktor server that replays upstream's recorded A2UI traffic over SSE — the sample's server, and the trace-driven tests' fixtures. JVM only. See [Replaying upstream](#replaying-upstream). | never |
 | `agui-sample` | A desktop window that talks to a real AG-UI server: the whole stack above, assembled the way an application would. See [The sample](#the-sample). | never |
 
@@ -108,8 +108,8 @@ The `agui-provider-*` adapters come next.
 ## Targets
 
 `agui-model`, `agui-core` and `agui-agent`: `androidTarget`, `jvm`, `iosArm64`, `iosSimulatorArm64`, `iosX64` —
-the five the upstream SDK publishes. From the next release their Android variant compiles against
-API 24, not the 37 the rest of the repository needs; see
+the five the upstream SDK publishes. Their Android variant compiles against API 24, not the 37
+the rest of the repository needs; see
 [what a consumer has to be on](#what-a-consumer-has-to-be-on).
 
 `agui-compose`, and every module that draws: the same set **minus `iosX64`**. Compose Multiplatform
@@ -119,7 +119,7 @@ the fifth target rather than being trimmed to match — folding an event stream 
 a consumer on an Intel simulator can still do it and render the result with something else.
 
 `agui-model`, `agui-compose`, `agui-material3` and `agui-markdown` also publish **`js` and
-`wasmJs`**. None of them names an upstream type, so a browser — a WebView inside a native app,
+`wasmJs`**, from `0.3.0`. None of them names an upstream type, so a browser — a WebView inside a native app,
 say — can draw a transcript that was folded somewhere else. The Compose tests run under
 Kotlin/Wasm; under Kotlin/JS the renderers compile but are not drawn by a test, because Compose's
 test harness cannot start there. See
