@@ -97,5 +97,12 @@ decision is taken, and is recorded on #29 as such.
   1's choice of option (1), with a new decision saying so. Replacing JSON Patch comes first, with a
   conformance corpus and a differential test against the current library before the dependency
   goes. `agui-agent` would need a browser transport as well.
-- **Upstream publishing web targets.** ag-ui-protocol/ag-ui#2787 is the open surface to watch.
-  With web variants of `kotlin-core`, `agui-core` needs only the JSON Patch replacement.
+- **Upstream publishing web targets.** With web variants of `kotlin-core`, `agui-core` needs only
+  the JSON Patch replacement. The signal is a `js` or `wasmJs` target in upstream's
+  `sdks/community/kotlin/library/core/build.gradle.kts`, and then in a `kotlin-core` release on
+  Central. A web target on `client` or `tools` alone leaves `agui-core` where it is.
+
+*Corrected 2026-10-02:* this entry named ag-ui-protocol/ag-ui#2787 as the surface to watch. That PR
+merged on 2026-09-30 and aligns the Kotlin SDK with the AG-UI 1.0 schema; it touches sources and
+tests only, and adds no target. Upstream's `kotlin-core` still publishes decision 1's five, so
+nothing above changes.
