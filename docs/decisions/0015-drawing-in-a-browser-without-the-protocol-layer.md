@@ -8,6 +8,10 @@ Accepted. Amends the target sets recorded in [0001](0001-riding-on-the-upstream-
 [0002](0002-what-the-ui-layer-does-not-depend-on.md) for four modules, and takes the first step on
 [#29](https://github.com/uny/agui-compose/issues/29) without closing it.
 
+The WebView bridge this decision left open is settled by
+[0016](0016-leaving-the-webview-bridge-to-the-host.md): it is the host's, and `agui-model` gains no
+serializers.
+
 ## Context
 
 The use case is one chat screen that runs natively and inside a WebView, the latter compiled to
