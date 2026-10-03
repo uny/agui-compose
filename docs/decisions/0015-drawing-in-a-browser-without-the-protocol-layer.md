@@ -8,9 +8,9 @@ Accepted. Amends the target sets recorded in [0001](0001-riding-on-the-upstream-
 [0002](0002-what-the-ui-layer-does-not-depend-on.md) for four modules, and takes the first step on
 [#29](https://github.com/uny/agui-compose/issues/29) without closing it.
 
-The WebView bridge this decision left open is settled by
-[0016](0016-leaving-the-webview-bridge-to-the-host.md): it is the host's, and `agui-model` gains no
-serializers.
+The WebView bridge this decision left open was settled by
+[decision 16](0016-leaving-the-webview-bridge-to-the-host.md) on 2026-10-03: it is the host's, and
+`agui-model` gains no serializers.
 
 ## Context
 
@@ -92,7 +92,9 @@ decision is taken, and is recorded on #29 as such.
 - **A WebView host still has a bridge to build.** `agui-model`'s types are not `@Serializable`, so
   handing a `UiTranscript` from the native side to the WebView needs either serializers here or a
   mapping in the host. The other direction, sending a message or answering an interrupt from the
-  WebView, has no shape in this library yet. Both are open on #29.
+  WebView, has no shape in this library yet. Both are open on #29. *Settled by decision 16: both
+  directions are the host's to map, and `agui-model` gains no serializers. The rest of #29 stays
+  open.*
 
 ## What would change the answer
 
