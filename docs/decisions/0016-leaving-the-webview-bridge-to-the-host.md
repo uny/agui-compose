@@ -20,8 +20,9 @@ undefined, in both directions:
   not. A tool call's raw `arguments` is a `String`, because it holds the JSON while it is still
   streaming in and incomplete.
 - **WebView to native: what the user does.** A chat screen needs `send(String)`, `resume(List<UiResumeEntry>)`
-  and `run()` on `AgentSession`. All three already take plain values, the optional
-  `RunAgentParameters` aside, which stays on the native side.
+  and `run()` on `AgentSession`. `send` and `run` take plain values, the optional
+  `RunAgentParameters` aside, which stays on the native side. `resume` takes `UiResumeEntry`, a
+  model type: an interrupt id, a `UiResumeStatus` and an optional `JsonElement` payload.
 
 #29 put it as two options:
 
@@ -60,8 +61,11 @@ Option 1 is not rejected on its merits. It is deferred for three reasons:
 - **`agui-model`'s public surface and ABI dumps do not change.**
 - **A WebView host writes a mapping and a call dispatcher.** The mapping covers `UiTranscript`,
   `UiMessage`, the `UiPart` subtypes, `RunState` and `UiInterrupt` one way, and `UiResumeEntry` the
-  other. The `JsonElement` fields pass through as they are. A host that draws arguments while they
-  stream sends `ToolCallPart.arguments`, not only `parsedArguments`.
+  other, with the enums and values nested in them. The `JsonElement` fields pass through as they
+  are. What comes back is input from web content, so the dispatcher checks it before it reaches
+  `AgentSession`: a `resume` entry answers what a run stopped to ask, an approval included. A host
+  that draws arguments while they stream sends `ToolCallPart.arguments`, not only
+  `parsedArguments`.
 - **Tool execution stays native.** `AgentSession` runs tools from upstream's `ToolRegistry`, and
   `agui-agent` has no browser target; a tool whose effect is in the WebView is the host's to
   forward.
