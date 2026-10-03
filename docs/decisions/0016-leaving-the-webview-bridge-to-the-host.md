@@ -15,8 +15,10 @@ undefined, in both directions:
 
 - **Native to WebView: the transcript.** `AgentSession.transcript` is a `StateFlow<UiTranscript>`
   and `pendingInterrupts` a `StateFlow<List<UiInterrupt>>`. None of `agui-model`'s types is
-  `@Serializable`. The payloads inside them -- tool arguments, activity content, shared state --
-  are `JsonElement` and already serialize; the message, part and run-state hierarchy does not.
+  `@Serializable`. The payloads inside them -- parsed tool arguments, activity content, shared
+  state -- are `JsonElement` and already serialize; the message, part and run-state hierarchy does
+  not. A tool call's raw `arguments` is a `String`, because it holds the JSON while it is still
+  streaming in and incomplete.
 - **WebView to native: what the user does.** A chat screen needs `send(String)`, `resume(List<UiResumeEntry>)`
   and `run()` on `AgentSession`. All three already take plain values, the optional
   `RunAgentParameters` aside, which stays on the native side.
@@ -24,7 +26,8 @@ undefined, in both directions:
 #29 put it as two options:
 
 1. **Serializers in `agui-model`.** Every public type gains a serializer, so `UiTranscript`,
-   `UiInterrupt` and `UiResumeEntry` cross a bridge as JSON with no host code.
+   `UiInterrupt` and `UiResumeEntry` cross a bridge as JSON with no hand-written mapping. The
+   host still carries the bytes and dispatches the calls.
 2. **No change here.** Each host maps the model to its own bridge format.
 
 Measured on `3cb4df0`: nothing in this repository hosts a WebView. `agui-sample` runs natively, and
@@ -57,9 +60,11 @@ Option 1 is not rejected on its merits. It is deferred for three reasons:
 - **`agui-model`'s public surface and ABI dumps do not change.**
 - **A WebView host writes a mapping and a call dispatcher.** The mapping covers `UiTranscript`,
   `UiMessage`, the `UiPart` subtypes, `RunState` and `UiInterrupt` one way, and `UiResumeEntry` the
-  other. The `JsonElement` fields pass through as they are.
-- **Tool execution stays native.** `ToolRegistry` belongs to `agui-agent`, which has no browser
-  target; a tool whose effect is in the WebView is the host's to forward.
+  other. The `JsonElement` fields pass through as they are. A host that draws arguments while they
+  stream sends `ToolCallPart.arguments`, not only `parsedArguments`.
+- **Tool execution stays native.** `AgentSession` runs tools from upstream's `ToolRegistry`, and
+  `agui-agent` has no browser target; a tool whose effect is in the WebView is the host's to
+  forward.
 - **The README says the bridge is the host's**, next to the browser targets.
 
 ## What would change the answer
