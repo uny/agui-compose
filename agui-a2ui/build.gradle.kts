@@ -1,5 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -25,19 +27,55 @@ kotlin {
         compileSdk = libs.versions.android.coreCompileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
-        // Runs `commonTest` on the JVM against the Android variant, for the reason `agui-agent`
-        // gives: a published target the suite is silent about is a target nothing has checked.
+        // Runs `commonTest` and `upstreamTest` on the JVM against the Android variant, for the
+        // reason `agui-agent` gives: a published target the suite is silent about is a target
+        // nothing has checked.
         withHostTest {}
     }
 
     jvm()
 
-    // Four targets, not the five `agui-agent` publishes, and not for the reason the Compose
+    // Four native targets, not the five `agui-agent` publishes, and not for the reason the Compose
     // modules give. This module draws nothing; what it lacks is `a2ui-core`, which publishes
     // `ios_arm64` and `ios_simulator_arm64` and no `ios_x64` -- measured from its module metadata.
     // A protocol translation that cannot resolve its target on a platform cannot promise it.
     iosArm64()
     iosSimulatorArm64()
+
+    // And the two web backends, for the drawing path only: see `upstream` below and
+    // `docs/decisions/0017`. `a2ui-core` 0.3.0 publishes both. No `binaries.executable()`, unlike
+    // the modules that draw -- nothing here needs Skiko bundled for its tests.
+    js { browser() }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs { browser() }
+
+    // The default template plus one group, `upstream`: the four native targets, which are the ones
+    // upstream's SDK publishes for. It holds the three declarations that name upstream's types --
+    // `A2uiRequest`, `catalogContext` and `RenderA2UiTool` -- and the tests that exercise them.
+    // `commonMain` holds everything else, the translation and the surfaces the A2UI drawing modules
+    // are built on, and compiles for the web as well. So this module's API differs by target, and
+    // is the only one in the repository that does; `docs/decisions/0017` says why that is the
+    // shape rather than a separate module.
+    //
+    // A group in the template rather than hand-written `dependsOn` edges, because KGP refuses to
+    // apply the default template alongside explicit edges. Android by platform type, not
+    // `withAndroidTarget()`, for the reason `smoke-test/build.gradle.kts` measured: that matcher
+    // does not match the `com.android.kotlin.multiplatform.library` target. Here the failure is
+    // worse than a skipped compile -- `androidMain` builds without `upstreamMain`, so the AAR ships
+    // without the three declarations, and nothing checks the Android ABI to say so. What did say
+    // so was `testAndroidHostTest` running 22 tests rather than 34.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("upstream") {
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+                withJvm()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -45,7 +83,8 @@ kotlin {
             // `a2ui-core`'s messages. A consumer holds both to call anything here.
             api(projects.aguiModel)
             api(libs.a2ui.core)
-
+        }
+        getByName("upstreamMain").dependencies {
             // `api`: `RenderA2UiTool` is an `AbstractToolExecutor`, and `catalogContext` builds
             // upstream's `Context`. Both types are in the signature, so the artifacts that carry
             // them are declared where the signature is -- the rule `agui-agent` follows.
@@ -55,6 +94,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+        }
+        getByName("upstreamTest").dependencies {
             // For the one test that runs `RenderA2UiTool` through `AgentSession`: the executor's
             // contract is with 0008's loop, and only the loop can say whether it is kept.
             implementation(projects.aguiAgent)

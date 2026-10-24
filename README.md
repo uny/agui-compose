@@ -128,10 +128,19 @@ How the transcript reaches the WebView, and how the user's input gets back, is t
 define: `agui-model`'s types carry no serializers, and this library defines no bridge format. See
 [docs/decisions/0016](docs/decisions/0016-leaving-the-webview-bridge-to-the-host.md).
 
+The three A2UI modules publish **`js` and `wasmJs`** too, from the release after `0.3.0`, so the
+same WebView can draw the A2UI surfaces in that transcript. One part of `agui-a2ui` stays native:
+`A2uiRequest`, `catalogContext` and `RenderA2UiTool` name upstream's types, so they exist on the
+JVM, Android and iOS only. They are what the native side sends with a run and answers a tool call
+with, so a WebView that only draws does not need them. Shared code that targets the web does not
+see them; shared code that targets only the native platforms still does. As with the other drawing
+modules, the A2UI Compose tests run under Kotlin/Wasm, and Kotlin/JS gets a compile. See
+[docs/decisions/0017](docs/decisions/0017-drawing-a2ui-in-a-browser.md).
+
 **The protocol modules have no browser target, and nothing has a Kotlin/Native macOS target.**
 Upstream publishes neither, and its `STATE_DELTA` dependency has no `wasmJs` or `macosArm64`
-variant either. So `agui-core`, `agui-agent` and the A2UI modules cannot run in a browser yet, and
-folding an event stream there is not possible today. Compose Multiplatform on the desktop — macOS
+variant either. So `agui-core` and `agui-agent` cannot run in a browser yet: neither the
+transport nor the folding of an event stream into a transcript is possible there today. Compose Multiplatform on the desktop — macOS
 included — is the `jvm` target and is supported. The full reasoning, and what would change the
 answer, is in [docs/decisions/0001](docs/decisions/0001-riding-on-the-upstream-kotlin-sdk.md) and
 [#29](https://github.com/uny/agui-compose/issues/29).
@@ -475,6 +484,9 @@ val request = A2uiRequest(BasicCatalog.definition)
 val parameters = RunAgentParameters(context = request.context(), forwardedProps = request.forwardedProps())
 session.send("Show me the hotels", parameters)
 ```
+
+`A2uiRequest` is not on `js` or `wasmJs`: it builds upstream's `Context`, and it belongs with
+the session that sends the run.
 
 Without it, upstream's adapters never inject their tool: the agent answers in text and the stream
 says nothing about why. An agent that calls `render_a2ui` itself, through a `RenderA2UiTool` the

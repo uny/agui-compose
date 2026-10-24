@@ -12,6 +12,10 @@ The WebView bridge this decision left open was settled by
 [decision 16](0016-leaving-the-webview-bridge-to-the-host.md) on 2026-10-03: it is the host's, and
 `agui-model` gains no serializers.
 
+The three A2UI modules, which this decision kept on their targets, publish `js` and `wasmJs` from
+[decision 17](0017-drawing-a2ui-in-a-browser.md) on 2026-10-24. Three declarations of
+`agui-a2ui` that name upstream's types stay native.
+
 ## Context
 
 The use case is one chat screen that runs natively and inside a WebView, the latter compiled to

@@ -43,6 +43,10 @@ import kotlinx.serialization.json.JsonPrimitive
  * Send it on every run. Both methods take what the caller already carries and add to it,
  * replacing an entry of the same description or key rather than adding a second.
  *
+ * Not on `js` or `wasmJs`: it names upstream's `Context`, and upstream publishes no web variant. A
+ * WebView draws what a native host folded, and the host is where this runs. See
+ * `docs/decisions/0017`.
+ *
  * @param catalog the catalog this client draws -- the one its renderer holds.
  * @param renderToolName the render tool's name, for an agent configured with a custom one.
  * @param guidelines whether to send the usage guide.

@@ -30,6 +30,10 @@ import kotlinx.serialization.json.putJsonObject
  * holds, so the decision is made by what is put in the registry -- which is why nothing here
  * registers itself.
  *
+ * Not on `js` or `wasmJs`: it is upstream's `AbstractToolExecutor`, and upstream publishes no web
+ * variant. A WebView draws what a native host folded, and the host is where this runs. See
+ * `docs/decisions/0017`.
+ *
  * @param name the tool's name, for a middleware configured with a custom one.
  * @param translation what the arguments are checked with. The check is that they would draw:
  *   arguments that name no surface or carry no components are answered with a failure, the

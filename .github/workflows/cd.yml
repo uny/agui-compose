@@ -219,7 +219,8 @@ jobs:
       # it compiles nothing, and the metadata variants -- the ones a consumer's own shared source
       # sets resolve -- would be the published variants this gate did not cover. Four of them here,
       # because `smoke-test` has four shared source sets, one per target list the nine modules
-      # publish; `smoke-test/build.gradle.kts` names them.
+      # and `agui-a2ui`'s native-only declarations publish; `smoke-test/build.gradle.kts` names
+      # them.
       #
       # `:floor:assemble` is the `compileSdk` floor, and it is a second consumer rather than a
       # second source set: the root project compiles its Android target at 37, and one Android
