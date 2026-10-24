@@ -39,25 +39,41 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    js { browser() }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs { browser() }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("upstream") {
+                withJvm()
+                withCompilations { it.target.platformType == org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.androidJvm }
+                withIos()
+            }
+        }
+    }
+
     sourceSets {
+        // SPIKE (#29): the three files that name upstream's types, compiled for the four native
+        // targets only. The web targets get the rest of the module.
+        named("upstreamMain").dependencies {
+            api(libs.agui.core)
+            api(libs.agui.tools)
+        }
+        named("upstreamTest").dependencies { implementation(projects.aguiAgent) }
+
         commonMain.dependencies {
             // `api`: the entry points take `agui-model`'s parts and `UiTranscript`, and hand back
             // `a2ui-core`'s messages. A consumer holds both to call anything here.
             api(projects.aguiModel)
             api(libs.a2ui.core)
 
-            // `api`: `RenderA2UiTool` is an `AbstractToolExecutor`, and `catalogContext` builds
-            // upstream's `Context`. Both types are in the signature, so the artifacts that carry
-            // them are declared where the signature is -- the rule `agui-agent` follows.
-            api(libs.agui.core)
-            api(libs.agui.tools)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
-            // For the one test that runs `RenderA2UiTool` through `AgentSession`: the executor's
-            // contract is with 0008's loop, and only the loop can say whether it is kept.
-            implementation(projects.aguiAgent)
         }
         jvmTest.dependencies {
             // The recorded upstream traffic the trace-driven tests fold. JVM-only because the
@@ -82,3 +98,4 @@ mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
 }
+

@@ -46,6 +46,18 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    // SPIKE (#29): the same web block as `agui-compose`'s.
+    js {
+        browser()
+        binaries.executable()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
     sourceSets {
         // Tests that need a composition on screen: compiled for the JVM and both iOS targets, not
         // Android, as in `agui-compose`, and for the reasons given there.
@@ -57,6 +69,7 @@ kotlin {
         jvmTest.get().dependsOn(composeUiTest)
         iosArm64Test.get().dependsOn(composeUiTest)
         iosSimulatorArm64Test.get().dependsOn(composeUiTest)
+        wasmJsTest.get().dependsOn(composeUiTest)
 
         commonMain.dependencies {
             // `api`, all four: `A2uiHost` holds an `A2uiRenderer`, `withA2ui` takes a
