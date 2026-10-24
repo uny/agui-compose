@@ -62,9 +62,10 @@ bind the modules that name upstream's types. `agui-model` names none and now pub
 `wasmJs` too, as do the drawing modules built only on it. Replacing JSON Patch would not reopen
 option (3) by itself: `agui-core` would still name `kotlin-core`'s types.
 
-*Amended 2026-10-24, in [0017](0017-drawing-a2ui-in-a-browser.md):* the five bind the
-declarations that name upstream's types, not always the whole module. `agui-a2ui` publishes `js`
-and `wasmJs`, and keeps its three such declarations in a source set over the native targets.
+*Amended 2026-10-24, in [0017](0017-drawing-a2ui-in-a-browser.md):* upstream's targets bind the
+declarations that name its types, not always the whole module. `agui-a2ui` publishes `js` and
+`wasmJs`, and keeps its three such declarations on its four native targets -- upstream's five less
+`iosX64`, which `a2ui-core` does not publish.
 
 Two smaller measurements that came with it:
 
