@@ -82,6 +82,10 @@ than Compose — to make one number uniform across a table in the README.
 now differ in the other direction as well. `agui-model`, `agui-compose`, `agui-material3` and
 `agui-markdown` add `js` and `wasmJs`, which none of the protocol modules can.
 
+*Amended 2026-10-24, in [0017](0017-drawing-a2ui-in-a-browser.md):* `agui-a2ui`,
+`agui-a2ui-compose` and `agui-a2ui-material3` add them too. Three declarations of `agui-a2ui`
+stay native.
+
 **`agui-compose` sits below any design system.** The defaults draw structure and no colour, spacing
 or shape. Every part kind goes through a slot in `AguiComponents`, replaced one at a time by `copy`.
 `agui-material3` is where visual decisions get made.

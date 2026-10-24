@@ -118,6 +118,10 @@ here: what a real server said, over a real socket, minus the model that said it.
 
 - **`agui-a2ui` is four targets, not five.** `a2ui-core` publishes no `iosX64`, so nothing
   depending on it can. The lower layers keep the fifth target as before.
+
+  *Amended 2026-10-24, in [0017](0017-drawing-a2ui-in-a-browser.md):* six now. `agui-a2ui` adds
+  `js` and `wasmJs`, and still has no `iosX64`. `A2uiRequest`, `catalogContext` and
+  `RenderA2UiTool` stay on the four native targets.
 - **A surface changes hands at run end, and redraws.** The run's closing `MESSAGES_SNAPSHOT` is the
   server's history, which never held the middleware's synthetic activity; the reducer replaces the
   transcript with it, the activity carrier disappears, and the outer tool's result -- which the

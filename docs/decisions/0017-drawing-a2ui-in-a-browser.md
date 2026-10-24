@@ -83,9 +83,11 @@ has a check now that it did not have before: the A2UI Compose tests run in a bro
   the smoke test's `a2uiMain` resolves the three declarations against the published Android
   variant. With `withAndroidTarget()` put back, that check fails, as `smoke-test/README.md`
   records.
-- **The tests run on every target the code reaches.** `agui-a2ui`'s 22 common tests run on `js`
-  and `wasmJs`. The 12 that need upstream run on Android, the JVM and iOS. The A2UI Compose tests
-  run under Kotlin/Wasm. Kotlin/JS gets a compile, for the reason decision 15 gives.
+- **The tests run wherever a test task can run them.** `agui-a2ui`'s 22 common tests run on `js`
+  and `wasmJs`. The 12 that need upstream run on Android, the JVM and the iOS simulator; on
+  `iosArm64`, a device target, they are built and linked but not run. The A2UI Compose UI tests
+  run under Kotlin/Wasm. Under Kotlin/JS, the A2UI Compose modules' own code compiles and their UI
+  tests are not built, for the reason decision 15 gives.
 - **The consumer smoke test still has four shared source sets, and one of them changed meaning.**
   The A2UI modules move to `drawingMain`. `a2uiMain` keeps the four native targets, adds no
   dependency, and touches the three declarations. That makes it the check that a consumer whose

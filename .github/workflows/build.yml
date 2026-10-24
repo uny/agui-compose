@@ -33,7 +33,7 @@ jobs:
   # Everything that is not a web backend: the Apple targets, JVM, Android, the metadata and
   # publication artifacts, and the public API check. The web backends run in the two jobs below --
   # the split `a2ui-compose` uses, where Kotlin/JS and Kotlin/Wasm are the larger part of the build.
-  # Four modules publish them (`docs/decisions/0015`), so the same split applies here.
+  # Seven modules publish them (`docs/decisions/0015` and `0017`), so the same split applies here.
   #
   # The union of the three jobs' task graphs is the task graph of `build checkKotlinAbi`. Re-check
   # that when changing any command line below:
