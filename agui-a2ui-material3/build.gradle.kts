@@ -40,14 +40,28 @@ kotlin {
 
     jvm()
 
-    // Four targets, for the reason `agui-compose` gives and for `agui-a2ui`'s as well: neither
-    // Compose Multiplatform nor `a2ui-compose` publishes `iosX64`.
+    // Six targets, `agui-compose`'s: neither Compose Multiplatform nor `a2ui-compose` publishes
+    // `iosX64`, and both publish the two web backends. The web needs nothing this module names
+    // from `agui-a2ui` to be upstream's: what is native-only there is the request and the render
+    // tool, which a host runs where its agent runs. See `docs/decisions/0017`.
     iosArm64()
     iosSimulatorArm64()
 
+    // The same web block as `agui-compose`'s, and for the same reason.
+    js {
+        browser()
+        binaries.executable()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
     sourceSets {
-        // Tests that need a composition on screen: compiled for the JVM and both iOS targets, not
-        // Android, as in `agui-compose`, and for the reasons given there.
+        // Tests that need a composition on screen: compiled for the JVM, both iOS targets and
+        // `wasmJs`, not Android or `js`, as in `agui-compose`, and for the reasons given there.
         val composeUiTest = create("composeUiTest") {
             dependsOn(commonTest.get())
             dependencies { implementation(libs.compose.ui.test) }
@@ -56,6 +70,7 @@ kotlin {
         jvmTest.get().dependsOn(composeUiTest)
         iosArm64Test.get().dependsOn(composeUiTest)
         iosSimulatorArm64Test.get().dependsOn(composeUiTest)
+        wasmJsTest.get().dependsOn(composeUiTest)
 
         commonMain.dependencies {
             // `api`: `withMaterial3A2ui` is `withA2ui` with Material 3 defaults filled in, so a

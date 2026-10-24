@@ -108,6 +108,10 @@ shared source sets now, one per published target list -- `commonMain` for `agui-
 `a2uiMain` for the three A2UI ones -- and `noIosX64Main` is gone. `smoke-test/build.gradle.kts`
 and `smoke-test/README.md` describe the current split.
 
+*Amended 2026-10-24, in [0017](0017-drawing-a2ui-in-a-browser.md):* the three A2UI modules move to
+`drawingMain`, and `a2uiMain` keeps the native targets to touch the three declarations of
+`agui-a2ui` that stay native.
+
 **The first version is `0.1.0`.** `VERSION_NAME` in `gradle.properties` stays `0.1.0-SNAPSHOT`;
 the tag `v0.1.0` is what decides the released version, and nothing in the tree has to change to
 cut it.

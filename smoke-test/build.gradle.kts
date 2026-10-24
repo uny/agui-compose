@@ -9,14 +9,19 @@
  * publish succeeds, and the consumer cannot resolve.
  *
  * It declares every target the library publishes, and depends on every module from the source
- * set that matches the module's own target list. There are four lists:
+ * set that matches the module's own target list. There are four lists, the fourth of them a list
+ * of declarations rather than of modules:
  *
  * - `agui-model`: seven -- the upstream SDK's five, plus `js` and `wasmJs`. `commonMain`.
  * - `agui-core`, `agui-agent`: the upstream SDK's five, `iosX64` among them. `protocolMain`.
- * - `agui-compose`, `agui-material3`, `agui-markdown`: six -- no `iosX64`, because Compose
- *   Multiplatform publishes none, and the two web backends. `drawingMain`.
- * - `agui-a2ui`, `agui-a2ui-compose`, `agui-a2ui-material3`: four -- neither `iosX64` nor the web,
- *   because they reach the upstream SDK and `a2ui-compose` both. `a2uiMain`, under `drawingMain`.
+ * - `agui-compose`, `agui-material3`, `agui-markdown`, `agui-a2ui`, `agui-a2ui-compose`,
+ *   `agui-a2ui-material3`: six -- no `iosX64`, because neither Compose Multiplatform nor
+ *   `a2ui-core` publishes one, and the two web backends. `drawingMain`.
+ * - `agui-a2ui`'s three declarations that name upstream's types -- `A2uiRequest`,
+ *   `catalogContext`, `RenderA2UiTool`: four -- the six less the web, which upstream does not
+ *   publish for. `a2uiMain`, under `drawingMain`. It adds no dependency; it is where a consumer
+ *   whose shared code has no web target sees declarations a web one does not
+ *   (`docs/decisions/0017`).
  *
  * One `commonMain` naming all nine would resolve on none of `iosX64`, `js` or `wasmJs`, and
  * dropping a target from this build would leave a published variant uncovered. The first draft of
@@ -71,10 +76,10 @@ kotlin {
 
     // The default template plus three groups, one per target list in the header. `protocol` and
     // `drawing` overlap -- the JVM, Android and two iOS targets are in both -- and `a2ui` is their
-    // intersection, nested under `drawing` because what it touches names Compose types. Groups in
-    // the template rather than hand-written `dependsOn` edges, because KGP refuses to apply the
-    // default template alongside explicit edges, and without the template there would be no
-    // `iosMain` and no `commonMain`-to-target wiring to start from.
+    // intersection, nested under `drawing` because the module it touches is resolved there.
+    // Groups in the template rather than hand-written `dependsOn` edges, because KGP refuses to
+    // apply the default template alongside explicit edges, and without the template there would be
+    // no `iosMain` and no `commonMain`-to-target wiring to start from.
     //
     // Android by platform type, not `withAndroidTarget()`: that matcher covers the old
     // `com.android.library` target only, and against the `com.android.kotlin.multiplatform.library`
@@ -139,8 +144,6 @@ kotlin {
             implementation("dev.ynagai.agui:agui-compose:$aguiVersion")
             implementation("dev.ynagai.agui:agui-material3:$aguiVersion")
             implementation("dev.ynagai.agui:agui-markdown:$aguiVersion")
-        }
-        getByName("a2uiMain").dependencies {
             implementation("dev.ynagai.agui:agui-a2ui:$aguiVersion")
             implementation("dev.ynagai.agui:agui-a2ui-compose:$aguiVersion")
             implementation("dev.ynagai.agui:agui-a2ui-material3:$aguiVersion")

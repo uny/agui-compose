@@ -21,19 +21,22 @@ at a jar that does not carry it.
 
 ## Four source sets, because four target lists
 
-The nine modules publish four different target lists:
+The nine modules publish three different target lists, and one module publishes part of its API
+on fewer targets than the rest:
 
 | Source set | Modules | Targets |
 | --- | --- | --- |
 | `commonMain` | `agui-model` | the upstream SDK's five, plus `js` and `wasmJs` |
 | `protocolMain` | `agui-core`, `agui-agent` | the upstream SDK's five, `iosX64` among them |
-| `drawingMain` | `agui-compose`, `agui-material3`, `agui-markdown` | no `iosX64` (Compose publishes none), plus `js` and `wasmJs` |
-| `a2uiMain` | `agui-a2ui`, `agui-a2ui-compose`, `agui-a2ui-material3` | neither `iosX64` nor the web |
+| `drawingMain` | `agui-compose`, `agui-material3`, `agui-markdown`, `agui-a2ui`, `agui-a2ui-compose`, `agui-a2ui-material3` | no `iosX64` (Compose and `a2ui-core` publish none), plus `js` and `wasmJs` |
+| `a2uiMain` | `agui-a2ui`'s `A2uiRequest`, `catalogContext` and `RenderA2UiTool` | the `drawingMain` list less the web, because they name upstream's types |
 
 One `commonMain` naming all nine would fail to resolve on `iosX64`, `js` and `wasmJs`; dropping a
 target from this build would leave a published variant uncovered. So each list is a group added to
-the default hierarchy template in `build.gradle.kts`, and each source set holds one file touching one
-symbol per module.
+the default hierarchy template in `build.gradle.kts`, and each source set touches one symbol per
+module -- or, in `a2uiMain`, each of the three declarations. `a2uiMain` adds no dependency of its
+own: it is a consumer's shared code with no web target, which is where `docs/decisions/0017`
+promises those three are still visible.
 
 The first draft put `agui-a2ui` in the first group, on the grounds that it carries no Compose. The
 gate said otherwise: its `.module` lists no `iosX64` variant, because `a2ui-core`'s does not. That
@@ -170,3 +173,19 @@ each naming a dependency that `requires libraries and applications that depend o
 against version 37 or later of the Android APIs` and stating `:floor is currently compiled against
 android-24`. Which is what a consumer at 24 would see, and why the four modules' floor is a
 checked claim rather than a stated one.
+
+**`agui-a2ui`'s native-only declarations left out of the Android variant** -- the fourth control,
+measured on 2026-10-24 against a `0.4.0-probe-SNAPSHOT` publish. Select Android in
+`agui-a2ui/build.gradle.kts`'s `upstream` group with `withAndroidTarget()` instead of by platform
+type, publish `agui-a2ui` alone, and the gate must refuse it:
+
+```bash
+# with withAndroidTarget() in agui-a2ui's upstream group
+./gradlew :agui-a2ui:publishToMavenLocal
+./gradlew -p smoke-test compileAndroidMain compileA2uiMainKotlinMetadata --rerun-tasks # must fail
+```
+
+`compileAndroidMain` fails with `Unresolved reference` for `A2uiRequest`, `RenderA2UiTool` and
+`catalogContext`, and `compileA2uiMainKotlinMetadata` fails as well. The producer's own build
+passed with the same setting: its ABI check covers no Android API, and only its Android host test
+count dropped. See `docs/decisions/0017`.

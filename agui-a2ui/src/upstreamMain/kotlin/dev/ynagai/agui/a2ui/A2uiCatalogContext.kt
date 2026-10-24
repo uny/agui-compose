@@ -18,6 +18,10 @@ import dev.ynagai.a2ui.core.protocol.CatalogDefinition
  * Send it on every run, in `RunAgentParameters.context`. The middleware replaces it with a
  * server-side schema when one is configured, and passes it through when not. On its own it
  * tells an agent what the client draws, not that the agent may draw; [A2uiRequest] sends both.
+ *
+ * Not on `js` or `wasmJs`: it names upstream's `Context`, and upstream publishes no web variant. A
+ * WebView draws what a native host folded, and the host is where this runs. See
+ * `docs/decisions/0017`.
  */
 public fun catalogContext(catalog: CatalogDefinition): Context = Context(
     description = AguiA2ui.SCHEMA_CONTEXT_DESCRIPTION,
